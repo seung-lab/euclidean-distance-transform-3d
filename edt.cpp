@@ -134,7 +134,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
     }
 
     d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
-    envelope = std::fminf(sq(i + 1), sq(n - i));
+    envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
     d[i * stride] = std::fminf(envelope, d[i * stride]);
   }
 
@@ -151,44 +151,39 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
 //  * i(z) = 0   if voxel out of set (f[p] == 0)
 //  *        inf if voxel in set (f[p] == 1)
 //  */
-// template <typename T>
-// float* dt3d(T* input, 
-//   const size_t sx, const size_t sy, const size_t sz, 
-//   const float wx, const float wy, const float wz) {
+template <typename T>
+float* dt3d(T* input, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz) {
 
-//   const size_t sxy = sx * sy;
+  const size_t sxy = sx * sy;
 
-//   float *f = new float[sx]();
-//   float *xaxis = new float[sx * sy * sz]();
-//   for (int z = 0; z < sz; z++) {
-//     for (int y = 0; y < sy; y++) { 
-//       indicator<T>(input + sx * y + sxy * z, f, sx);
-//       dt(f, (xaxis + sx * y + sxy * z), sx, 1, wx);
-//     }
-//   }
+  // xaxis
+  float *xaxis = new float[sx * sy * sz]();
+  for (int z = 0; z < sz; z++) {
+    for (int y = 0; y < sy; y++) { 
+      squared_edt_1d_multi_seg<T>(input, (xaxis + sx * y + sxy * z), sx, 1, wx); 
+    }
+  }
 
-//   delete []f;
+  float *yaxis = new float[sx * sy * sz]();
+  for (int z = 0; z < sz; z++) {
+    for (int x = 0; x < sx; x++) {
+      squared_edt_1d_parabolic((xaxis + x + sxy * z), (yaxis + x + sxy * z), sy, sx, wy);
+    }
+  }
 
-//   float *yaxis = new float[sx * sy * sz]();
-//   for (int z = 0; z < sz; z++) {
-//     for (int x = 0; x < sx; x++) {
-//       printf("x: %d z: %d\n", x, z);
-//       dt((xaxis + x + sxy * z), (yaxis + x + sxy * z), sy, sx, wy);
-//     }
-//   }
+  // reuse xaxis memory for z
+  for (int y = 0; y < sy; y++) {
+    for (int x = 0; x < sx; x++) {
+      squared_edt_1d_parabolic((yaxis + x + sx * y), (xaxis + x + sx * y), sz, sxy, wz);
+    }
+  }
 
-//   // delete []xaxis;
+  delete [] yaxis;
 
-//   float *zaxis = new float[sx * sy * sz]();
-//   for (int y = 0; y < sy; y++) {
-//     for (int x = 0; x < sx; x++) {
-//       dt((yaxis + x + sx * y), (zaxis + x + sx * y), sz, sxy, wz);
-//     }
-//   }
-
-//   return yaxis;
-//   // return xaxis;
-// }
+  return xaxis; // zaxis
+}
 
 
 template <typename T>
@@ -249,27 +244,30 @@ void test2d(int n) {
   delete [] input;
 }
 
-// void test3d(int n) {
-//   int N = n*n*n;
-//   int* input = new int[N]();
-//   memset(input, 1, N * sizeof(int));
+void test3d(int n) {
+  int N = n*n*n;
+  int* input = new int[N]();
+  
+  for (int i = 0; i < N; i++) {
+    input[i] = 1;
+  }
 
-//   float* dest = dt3d<int>(input, n,n,n, 1.,1.,1.);
+  float* dest = dt3d<int>(input, n,n,n, 1.,1.,1.);
 
-//   for (int i = 0; i < n*n*n; i++) {
-//     if (i % n == 0 && i > 0) {
-//       printf("\n");
-//     }
-//     if (i % (n*n) == 0 && i > 0) {
-//       printf("\n");
-//     }
-//     printf("%.2f, ", dest[i]);
-//   }
+  // for (int i = 0; i < n*n*n; i++) {
+  //   if (i % n == 0 && i > 0) {
+  //     printf("\n");
+  //   }
+  //   if (i % (n*n) == 0 && i > 0) {
+  //     printf("\n");
+  //   }
+  //   printf("%.2f, ", dest[i]);
+  // }
 
-//   printf("\n\n\n");
+  // printf("\n\n\n");
 
-//   delete []dest;
-// }
+  delete []dest;
+}
 
 
 void printint(int16_t *f, int n) {
@@ -312,7 +310,8 @@ void test_multiseg_1d() {
 
 int main() {
 
-  test2d(1024*4);
+  test3d(512);
+
 
   return 0;
 }
