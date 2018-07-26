@@ -17,6 +17,17 @@ float* dt3d(T* input,
 
 
 
+void print2d(int* dest, int n) {
+  for (int i = 0; i < n*n; i++) {
+    if (i % n == 0 && i > 0) {
+      printf("\n");
+    }
+    printf("%d, ", dest[i]);
+  }
+
+  printf("\n\n");
+}
+
 
 void print2d(float* dest, int n) {
   for (int i = 0; i < n*n; i++) {
@@ -41,36 +52,6 @@ void printflt(float *f, int n) {
   for (int i = 0; i < n; i++) {
     printf("%.2f, ", f[i]);
   }
-}
-
-void test3d(int n) {
-  int N = n*n*n;
-  int* input = new int[N]();
-  
-  for (int i = 0; i < N; i++) {
-    input[i] = 1;
-  }
-
-  input[13] = 0;
-  input[14] = 2;
-  input[15] = 0;
-  input[16] = 0;
-
-  float* dest = dt3d<int>(input, n,n,n, 1.,1.,1.);
-
-  for (int i = 0; i < n*n*n; i++) {
-    if (i % n == 0 && i > 0) {
-      printf("\n");
-    }
-    if (i % (n*n) == 0 && i > 0) {
-      printf("\n");
-    }
-    printf("%.2f, ", dest[i]);
-  }
-
-  printf("\n\n\n");
-
-  delete []dest;
 }
 
 /* 1D Euclidean Distance Transform for Multiple Segids
@@ -187,6 +168,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
       k++;
     }
 
+    // if compiled with stride, ~50% perf improvement
     d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
     envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
     d[i * stride] = std::fminf(envelope, d[i * stride]);
@@ -212,33 +194,37 @@ float* dt3d(T* input,
 
   const size_t sxy = sx * sy;
 
-  // xaxis
-  float *xaxis = new float[sx * sy * sz]();
+  float *workspace = new float[sx * sy * sz]();
   for (int z = 0; z < sz; z++) {
     for (int y = 0; y < sy; y++) { 
       // Might be possible to write this as a single pass, might be faster
       // however, it's already only using about 3-5% of total CPU time.
-      squared_edt_1d_multi_seg<T>(input, (xaxis + sx * y + sxy * z), sx, 1, wx); 
+      squared_edt_1d_multi_seg<T>(
+        (input + sx * y + sxy * z), 
+        (workspace + sx * y + sxy * z), 
+        sx, 1, wx); 
     }
   }
 
-  float *yaxis = new float[sx * sy * sz]();
   for (int z = 0; z < sz; z++) {
     for (int x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic((xaxis + x + sxy * z), (yaxis + x + sxy * z), sy, sx, wy);
+      squared_edt_1d_parabolic(
+        (workspace + x + sxy * z), 
+        (workspace + x + sxy * z), 
+        sy, sx, wy);
     }
   }
 
-  // reuse xaxis memory for z
   for (int y = 0; y < sy; y++) {
     for (int x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic((yaxis + x + sx * y), (xaxis + x + sx * y), sz, sxy, wz);
+      squared_edt_1d_parabolic(
+        (workspace + x + sx * y), 
+        (workspace + x + sx * y), 
+        sz, sxy, wz);
     }
   }
 
-  delete [] yaxis;
-
-  return xaxis; // actually zaxis
+  return workspace; 
 }
 
 
@@ -249,17 +235,14 @@ float* dt2d(T* input,
 
   float *xaxis = new float[sx * sy]();
   for (int y = 0; y < sy; y++) { 
-    squared_edt_1d_multi_seg<T>(input, (xaxis + sx * y), sx, 1, wx); 
+    squared_edt_1d_multi_seg<T>((input + sx * y), (xaxis + sx * y), sx, 1, wx); 
   }
 
-  float *yaxis = new float[sx * sy]();
   for (int x = 0; x < sx; x++) {
-    squared_edt_1d_parabolic((xaxis + x), (yaxis + x), sy, sx, wy);
+    squared_edt_1d_parabolic((xaxis + x), (xaxis + x), sy, sx, wy);
   }
 
-  delete [] xaxis;
-
-  return yaxis;
+  return xaxis;
 }
 
 void test_multiseg_1d() {

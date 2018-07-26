@@ -30,12 +30,41 @@ void test2d(int n) {
     input[i] = 1;
   }
 
+  input[12] = 0;
+
   float* dest = dt2d<int>(input, n,n, 1.,1.);
 
-  // print2d(dest, n);
+  print2d(dest, n);
 
   delete [] dest;
   delete [] input;
+}
+
+void test3d(int n) {
+  int N = n*n*n;
+  int* input = new int[N]();
+  
+  for (int i = 0; i < N; i++) {
+    input[i] = 1;
+  }
+
+  input[13] = 0;
+
+  float* dest = dt3d<int>(input, n,n,n, 1.,1.,1.);
+
+  // for (int i = 0; i < n*n*n; i++) {
+  //   if (i % n == 0 && i > 0) {
+  //     printf("\n");
+  //   }
+  //   if (i % (n*n) == 0 && i > 0) {
+  //     printf("\n");
+  //   }
+  //   printf("%.2f, ", dest[i]);
+  // }
+
+  // printf("\n\n\n");
+
+  delete []dest;
 }
 
 void print(int *in, float* f, float* ans, int n) {
@@ -135,12 +164,12 @@ void test_one_d_parabola () {
 
 
 int main () {
-	try {
-		test_one_d_parabola();
-	}
-	catch (char const *c) {
-		printf("%s", c);
-	}
+	// try {
+	// 	test_one_d_parabola();
+	// }
+	// catch (char const *c) {
+	// 	printf("%s", c);
+	// }
 
-	// test2d(512);
+	test3d(512);
 }
