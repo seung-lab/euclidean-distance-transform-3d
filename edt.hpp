@@ -87,7 +87,6 @@ void squared_edt_1d_multi_seg(T* segids, float *d, const int n, const int stride
 
   d[0] = (float)(working_segid > 0) * anistropy; // 0 or 1
   for (i = stride; i < n * stride; i += stride) {
-    // printf("d[%d]: %.1f\n", i, d[i]);
     if (segids[i] == 0) {
       d[i] = 0.0;
     }

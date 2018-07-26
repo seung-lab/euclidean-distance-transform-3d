@@ -76,6 +76,14 @@ void test_one_d_x () {
 	squared_edt_1d_multi_seg<int>(unbordered_single, xform, 7, 1, 1.0);
 	print(unbordered_single, xform, ans2, 7);
 	assert(xform, ans2, 7);
+
+	delete [] xform;
+	xform = new float[13]();
+	int unbordered_3x[13] = { 1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 3, 1, 1 };
+	float ans3[13] = { 1., 4., 9., 4., 1., 1., 4., 4., 1., 0., 1., 1., 1. };
+	squared_edt_1d_multi_seg<int>(unbordered_3x, xform, 13, 1, 1.0);
+	print(unbordered_3x, xform, ans3, 13);
+	assert(xform, ans3, 13);
 }
 
 int main () {
