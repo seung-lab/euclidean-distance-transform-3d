@@ -22,21 +22,21 @@
 //   delete []output;
 // }
 
-// void test2d(int n) {
-//   int N = n*n;
-//   int* input = new int[N]();
+void test2d(int n) {
+  int N = n*n;
+  int* input = new int[N]();
   
-//   for (int i = 0; i < N; i++) {
-//     input[i] = 1;
-//   }
+  for (int i = 0; i < N; i++) {
+    input[i] = 1;
+  }
 
-//   float* dest = dt2d<int>(input, n,n, 1.,1.);
+  float* dest = dt2d<int>(input, n,n, 1.,1.);
 
-//   print2d(dest, n);
+  // print2d(dest, n);
 
-//   delete [] dest;
-//   delete [] input;
-// }
+  delete [] dest;
+  delete [] input;
+}
 
 void print(int *in, float* f, float* ans, int n) {
 	printf("in: ");
@@ -47,6 +47,18 @@ void print(int *in, float* f, float* ans, int n) {
 	printflt(ans, n);
 	printf("\n");
 }
+
+
+void print(float *in, float* f, float* ans, int n) {
+	printf("in: ");
+	printflt(in, n);
+	printf("\nout: ");
+	printflt(f, n);
+	printf("\nans: ");
+	printflt(ans, n);
+	printf("\n");
+}
+
 
 void assert(float *xform, float *ans, int n) {
 	for (int i = 0; i < n; i++) {
@@ -86,11 +98,49 @@ void test_one_d_x () {
 	assert(xform, ans3, 13);
 }
 
+void test_one_d_parabola () {
+	float bordered_single[7] = { 0, 100, 100, 100, 100, 100, 0 };
+	float ans1[7] = { 0., 1., 4., 9., 4., 1., 0. };
+	float *xform = new float[7]();
+
+	squared_edt_1d_parabolic(bordered_single, xform, 7, 1, 1.0);
+	print(bordered_single, xform, ans1, 7);
+	assert(xform, ans1, 7);
+
+	float ans1_a[7] = { 0., 4., 16., 36., 16., 4., 0. };
+	squared_edt_1d_parabolic(bordered_single, xform, 7, 1, 2.0);
+	print(bordered_single, xform, ans1_a, 7);
+	assert(xform, ans1_a, 7);
+
+	float unbordered_interrupted[7] = { 1, 1, 1, 0, 1, 1, 1 };	
+	float ans1_b[7] = { 1., 1., 1., 0., 1., 1., 1. };
+	squared_edt_1d_parabolic(unbordered_interrupted, xform, 7, 1, 1.0);
+	print(unbordered_interrupted, xform, ans1_b, 7);
+	assert(xform, ans1_b, 7);
+
+	float unbordered_single[7] = { 100, 100, 100, 100, 100, 100, 100 };
+	float ans2[7] = { 1., 4., 9., 16., 9., 4., 1. };
+	squared_edt_1d_parabolic(unbordered_single, xform, 7, 1, 1.0);
+	print(unbordered_single, xform, ans2, 7);
+	assert(xform, ans2, 7);
+
+	delete [] xform;
+	xform = new float[13]();
+	float unbordered_3x[13] = { 1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 3, 1, 1 };
+	float ans3[13] = { 1., 4., 9., 4., 1., 1., 4., 4., 1., 0., 1., 1., 1. };
+	squared_edt_1d_parabolic(unbordered_3x, xform, 13, 1, 1.0);
+	print(unbordered_3x, xform, ans3, 13);
+	assert(xform, ans3, 13);
+}
+
+
 int main () {
 	try {
-		test_one_d_x();
+		test_one_d_parabola();
 	}
 	catch (char const *c) {
 		printf("%s", c);
 	}
+
+	// test2d(512);
 }

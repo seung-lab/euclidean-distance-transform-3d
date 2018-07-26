@@ -144,7 +144,6 @@ void squared_edt_1d_multi_seg(T* segids, float *d, const int n, const int stride
 void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride, const float anistropy) {
   int k = 0;
   int* v = new int[n]();
-  float* vf = new float[n]();
   float* ranges = new float[n + 1]();
 
   ranges[0] = -INFINITY;
@@ -165,6 +164,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
     factor1 = i - v[k];
     factor2 = i + v[k];
     s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
+
     while (s <= ranges[k]) {
       k--;
       factor1 = i - v[k];
@@ -174,7 +174,6 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
 
     k++;
     v[k] = i;
-    vf[k] = factor1; //compare later using mult instead of div
     ranges[k] = s;
     ranges[k + 1] = +INFINITY;
   }
@@ -184,7 +183,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
   for (int i = 0; i < n; i++) {
     // compensate for not dividing ranges by 2.0 earlier w/ bit shift left
     // and use factor1 from earlier
-    while (ranges[k + 1] < (i << 2) * vf[k]) { 
+    while (ranges[k + 1] < (i << 2) * (i - v[k])) { 
       k++;
     }
 
@@ -194,7 +193,6 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
   }
 
   delete [] v;
-  delete [] vf;
   delete [] ranges;
 }
 

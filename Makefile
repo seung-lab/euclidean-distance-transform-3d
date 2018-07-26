@@ -8,4 +8,4 @@ shared:
 
 test:
 
-	g++ -pg -std=c++11 -g -O0 test.cpp -ffast-math -o test
+	g++ -pg -std=c++11 -g -O3 test.cpp -ffast-math -o test
