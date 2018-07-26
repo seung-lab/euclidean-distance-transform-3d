@@ -32,7 +32,7 @@ void test2d(int n) {
 
   input[12] = 0;
 
-  float* dest = dt2d<int>(input, n,n, 1.,1.);
+  float* dest = edt2dsq<int>(input, n,n, 1.,1.);
 
   print2d(dest, n);
 
@@ -50,7 +50,7 @@ void test3d(int n) {
 
   input[13] = 0;
 
-  float* dest = dt3d<int>(input, n,n,n, 1.,1.,1.);
+  float* dest = edt3dsq<int>(input, n,n,n, 1.,1.,1.);
 
   // for (int i = 0; i < n*n*n; i++) {
   //   if (i % n == 0 && i > 0) {

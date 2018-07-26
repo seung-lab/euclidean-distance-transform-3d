@@ -10,13 +10,6 @@
 
 #define sq(x) ((x) * (x))
 
-template <typename T>
-float* dt3d(T* input, 
-  const size_t sx, const size_t sy, const size_t sz, 
-  const float wx, const float wy, const float wz);
-
-
-
 void print2d(int* dest, int n) {
   for (int i = 0; i < n*n; i++) {
     if (i % n == 0 && i > 0) {
@@ -188,7 +181,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
 //  *        inf if voxel in set (f[p] == 1)
 //  */
 template <typename T>
-float* dt3d(T* input, 
+float* edt3dsq(T* input, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
@@ -227,9 +220,22 @@ float* dt3d(T* input,
   return workspace; 
 }
 
+template <typename T>
+float* edt3d(T* input, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz) {
+
+  float* transform = edt3dsq<T>(input, sx, sy, sz, wx, wy, wz);
+
+  for (int i = 0; i < sx * sy * sz; i++) {
+    transform[i] = std::sqrt(transform[i]);
+  }
+
+  return transform;
+}
 
 template <typename T>
-float* dt2d(T* input, 
+float* edt2dsq(T* input, 
   const size_t sx, const size_t sy,
   const float wx, const float wy) {
 
@@ -243,6 +249,20 @@ float* dt2d(T* input,
   }
 
   return xaxis;
+}
+
+template <typename T>
+float* edt2d(T* input, 
+  const size_t sx, const size_t sy,
+  const float wx, const float wy) {
+
+  float* transform = edt2dsq<T>(input, sx, sy, wx, wy);
+
+  for (int i = 0; i < sx * sy; i++) {
+    transform[i] = std::sqrt(transform[i]);
+  }
+
+  return transform;
 }
 
 void test_multiseg_1d() {
