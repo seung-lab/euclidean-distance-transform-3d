@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+
+# Python
+*.pyc
+.eggs
+*.egg-info

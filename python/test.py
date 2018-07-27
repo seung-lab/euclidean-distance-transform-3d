@@ -5,9 +5,9 @@ from scipy import ndimage
 import time
 
 for d in (np.uint8, np.uint16, np.uint32, np.uint64):
-  labels = np.ones(shape=(256 * 1024**2,), dtype=d)
+  labels = np.ones(shape=(4,4), dtype=d)
   start = time.time()
-  edt.edt1dsq(labels)
+  print(edt.edt2dsq(labels))
   print(d, time.time() - start)
 
 

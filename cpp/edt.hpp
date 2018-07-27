@@ -265,7 +265,7 @@ void squared_edt_1d_parabolic_multi_seg(T* segids, float* f, float *d, const int
 //  *        inf if voxel in set (f[p] == 1)
 //  */
 template <typename T>
-float* edt3dsq(T* labels, 
+float* _edt3dsq(T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
@@ -308,11 +308,11 @@ float* edt3dsq(T* labels,
 }
 
 template <typename T>
-float* edt3d(T* input, 
+float* _edt3d(T* input, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
-  float* transform = edt3dsq<T>(input, sx, sy, sz, wx, wy, wz);
+  float* transform = _edt3dsq<T>(input, sx, sy, sz, wx, wy, wz);
 
   for (int i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
@@ -322,7 +322,7 @@ float* edt3d(T* input,
 }
 
 template <typename T>
-float* edt2dsq(T* input, 
+float* _edt2dsq(T* input, 
   const size_t sx, const size_t sy,
   const float wx, const float wy) {
 
@@ -339,11 +339,11 @@ float* edt2dsq(T* input,
 }
 
 template <typename T>
-float* edt2d(T* input, 
+float* _edt2d(T* input, 
   const size_t sx, const size_t sy,
   const float wx, const float wy) {
 
-  float* transform = edt2dsq<T>(input, sx, sy, wx, wy);
+  float* transform = _edt2dsq<T>(input, sx, sy, wx, wy);
 
   for (int i = 0; i < sx * sy; i++) {
     transform[i] = std::sqrt(transform[i]);

@@ -17,7 +17,7 @@ setuptools.setup(
       'edt',
       sources=[ 'edt.cpp' ],
       language='c++',
-      include_dirs=[ np.get_include() ],
+      include_dirs=[ '../cpp', np.get_include() ],
       extra_compile_args=[
         '-std=c++11', '-O3', '-ffast-math'
       ]
