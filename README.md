@@ -95,12 +95,12 @@ I modify this to include consideration of multi-labels as follows:
 	f(a_i, l_i) = a_i + w    ; l_i = l_i-1, l_i != 0
 
 	f(a_i, l_i) = w          ; l_i != l_i-1, l_i != 0 
-		f(a_i-1, l_i-1) = w 	 ; l_i-1 != 0
-		f(a_i-1, l_i-1) = 0 	 ; l_i-1 = 0
+	  f(a_i-1, l_i-1) = w 	 ; l_i-1 != 0
+	  f(a_i-1, l_i-1) = 0 	 ; l_i-1 = 0
 
 The backwards pass is unchanged:  
 
-	from n -2 to 1:
+	from n-2 to 1:
 		f(a_i) = min(a_i, a_i+1 + 1)
 	from 0 to n-1:
 		f(a_i) = f(a_i)^2
@@ -108,16 +108,39 @@ The backwards pass is unchanged:
 
 ### Multi-Label Felzenszwalb and Huttenlocher Algorithm
 
+The parabola method attempts to find the lower envelope of the parabols described by vertices (i, f(i)).
 
- * The parabola method attempts to find the lower envelope
- * of the parabols described by vertices (i, f(i)).
- *
- * We handle multiple labels by preprocessing the image as follows:
- * 
- * 1. If a pixel corresponds to the label 0, set the vertex height to zero.
- * 2. Track the label, if it changes, set the vertex height to the current
- *    unit distance setting (anisotropy) for both the current index and 
- *    the previous index (if its label is non-zero).
+We handle multiple labels by preprocessing the image as follows:
+
+1. If a pixel corresponds to the label 0, set the vertex height to zero. 
+2. Track the label, if it changes, set the vertex height to the current
+   unit distance setting (anisotropy) for both the current index and 
+   the previous index (if its label is non-zero).
+
+This has the effect of setting all pixel boundaries to unity. In 2D this solves this problem:
+
+
+#### Without Modification
+
+     Original:       X Transform:      Y Transform:
+     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
+     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
+     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 4 4 4 1 0   
+     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 4 4 4 1 0   
+     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
+     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
+
+
+#### With Modification
+
+     Original:       X + Mod:          Y Transform:
+     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
+     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
+     0 1 1 1 1 1 0   0 1 1 1 1 1 0     0 1 1 1 1 1 0   
+     0 2 2 2 2 2 0   0 1 1 1 1 1 0     0 1 1 1 1 1 0   
+     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
+     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
+
 
 ### Side Notes on Further Performance Improvements
 
