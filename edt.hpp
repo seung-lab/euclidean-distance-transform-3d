@@ -8,7 +8,14 @@
 #ifndef EDT_H
 #define EDT_H
 
+namespace edt {
+
 #define sq(x) ((x) * (x))
+
+const int VERSION_MAJOR = 1;
+const int VERSION_MINOR = 0;
+const int VERSION_BUGFIX = 0;
+
 
 void print2d(int* dest, int n) {
   for (int i = 0; i < n*n; i++) {
@@ -54,12 +61,15 @@ void printflt(float *f, int n) {
  * segids. Segments touching the boundary are mapped to 1.
  */
 template <typename T>
-void squared_edt_1d_multi_seg(T* segids, float *d, const int n, const int stride, const float anistropy) {
+void squared_edt_1d_multi_seg(
+    T* segids, float *d, const int n, 
+    const int stride, const float anistropy
+  ) {
   int i;
 
   T working_segid = segids[0];
 
-  d[0] = (float)(working_segid > 0) * anistropy; // 0 or 1
+  d[0] = (float)(working_segid != 0) * anistropy; // 0 or 1
   for (i = stride; i < n * stride; i += stride) {
     if (segids[i] == 0) {
       d[i] = 0.0;
@@ -69,12 +79,12 @@ void squared_edt_1d_multi_seg(T* segids, float *d, const int n, const int stride
     }
     else {
       d[i] = anistropy;
-      d[i - stride] = (float)(segids[i - stride] > 0) * anistropy;
+      d[i - stride] = (float)(segids[i - stride] != 0) * anistropy;
       working_segid = segids[i];
     }
   }
 
-  d[n - stride] = (float)(segids[n - stride] > 0) * anistropy;
+  d[n - stride] = (float)(segids[n - stride] != 0) * anistropy;
   for (i = (n - 2) * stride; i >= stride; i -= stride) {
     d[i] = std::fminf(d[i], d[i + stride] + anistropy);
   }
@@ -161,8 +171,82 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
       k++;
     }
 
-    // if compiled with stride, ~50% perf improvement
     d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
+    // Two lines below only about 3% of perf cost, thought it would be more
+    // They are unnecessary if you add a black border around the image.
+    envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
+    d[i * stride] = std::fminf(envelope, d[i * stride]);
+  }
+
+  delete [] v;
+  delete [] ranges;
+}
+
+template <typename T>
+void squared_edt_1d_parabolic_multi_seg(T* segids, float* f, float *d, const int n, const int stride, const float anistropy) {
+  T working_segid = segids[0];
+  int segid;
+  for (int i = stride; i < n * stride; i += stride) {
+    segid = segids[i];
+    if (segid == 0) {
+      continue;
+    }
+    else if (segid != working_segid) {
+      f[i] = anistropy;
+      f[i - stride] = (float)(segids[i - stride] != 0) * anistropy;
+      working_segid = segid;
+    }
+  }
+
+  int k = 0;
+  int* v = new int[n]();
+  float* ranges = new float[n + 1]();
+
+  ranges[0] = -INFINITY;
+  ranges[1] = +INFINITY;
+
+  /* Some algebraic tricks here for speed. Seems to save ~30% 
+   * at the cost of an extra n*4 bytes memory.
+   * Parabolic intersection equation.
+   *
+   * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
+   * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
+   * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
+   * 3: s = (f(r) - r(p) + (r+p)(r-p)) <-- remove floating division and consider later using integer math
+   */
+  float s; // intersection point
+  float factor1, factor2;
+
+  for (int i = 1; i < n; i++) {
+    factor1 = i - v[k];
+    factor2 = i + v[k];
+    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
+
+    while (s <= ranges[k]) {
+      k--;
+      factor1 = i - v[k];
+      factor2 = i + v[k];
+      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
+    }
+
+    k++;
+    v[k] = i;
+    ranges[k] = s;
+    ranges[k + 1] = +INFINITY;
+  }
+
+  k = 0;
+  float envelope;
+  for (int i = 0; i < n; i++) {
+    // compensate for not dividing ranges by 2.0 earlier w/ bit shift left
+    // and use factor1 from earlier
+    while (ranges[k + 1] < (i << 2) * (i - v[k])) { 
+      k++;
+    }
+
+    d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
+    // Two lines below only about 3% of perf cost, thought it would be more
+    // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
     d[i * stride] = std::fminf(envelope, d[i * stride]);
   }
@@ -181,7 +265,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
 //  *        inf if voxel in set (f[p] == 1)
 //  */
 template <typename T>
-float* edt3dsq(T* input, 
+float* edt3dsq(T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
@@ -192,8 +276,9 @@ float* edt3dsq(T* input,
     for (int y = 0; y < sy; y++) { 
       // Might be possible to write this as a single pass, might be faster
       // however, it's already only using about 3-5% of total CPU time.
+      // NOTE: Tried it, same speed overall.
       squared_edt_1d_multi_seg<T>(
-        (input + sx * y + sxy * z), 
+        (labels + sx * y + sxy * z), 
         (workspace + sx * y + sxy * z), 
         sx, 1, wx); 
     }
@@ -201,7 +286,8 @@ float* edt3dsq(T* input,
 
   for (int z = 0; z < sz; z++) {
     for (int x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic(
+      squared_edt_1d_parabolic_multi_seg<T>(
+        (labels + x + sxy * z),
         (workspace + x + sxy * z), 
         (workspace + x + sxy * z), 
         sy, sx, wy);
@@ -210,7 +296,8 @@ float* edt3dsq(T* input,
 
   for (int y = 0; y < sy; y++) {
     for (int x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic(
+      squared_edt_1d_parabolic_multi_seg<T>(
+        (labels + x + sx * y), 
         (workspace + x + sx * y), 
         (workspace + x + sx * y), 
         sz, sxy, wz);
@@ -265,31 +352,7 @@ float* edt2d(T* input,
   return transform;
 }
 
-void test_multiseg_1d() {
-  int size = 1024 * 1024 * 100;
-  int* segids = new int[size]();
-
-  for (int i = 0; i < size / 2; i++) {
-    segids[i] = 1;
-  }
-
-  for (int i = size / 2; i < size; i++) {
-    segids[i] = 2;
-  }
-
-  segids[10] = 3;
-
-  segids[15] = 0;
-
-  float* d = new float[size]();
-
-  squared_edt_1d_multi_seg<int>(segids, d, size, 1, 1.0);
-
-  printint(segids, 20);
-  printf("\n");
-  printflt(d, 20);
-}
-
+} // namespace edt
 
 #endif
 
