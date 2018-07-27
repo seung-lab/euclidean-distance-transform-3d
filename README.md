@@ -12,6 +12,8 @@ pip install numpy
 python setup.py develop
 ```
 
+I'll likely create a PyPI package soon.  
+
 ### Python Usage
 
 Consult `help(edt)` after importing. The edt module contains: `edt`, `edtsq` which compute the euclidean and squared euclidean distance respectively and select dimension based on the shape of the numpy object fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast.  
@@ -35,14 +37,14 @@ Include the edt.hpp header/implementation. The function names are underscored to
 
 int main () {
 
-	int* labels = new int[3*3*3]();
+    int* labels = new int[3*3*3]();
 
-	int sx = 3, sy = 3, sz = 3;
-	float wx = 6, wy = 6, wz = 30; // anisotropy
+    int sx = 3, sy = 3, sz = 3;
+    float wx = 6, wy = 6, wz = 30; // anisotropy
 
-	float* dt = edt::_edt3d(labels, sx, sy, sz, wx, wy, wz)
+    float* dt = edt::_edt3d(labels, sx, sy, sz, wx, wy, wz)
 
-	return 0;
+    return 0;
 }
 ```
 
@@ -51,7 +53,7 @@ For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.
 
 ### Motivation
 
-The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] require the computation of a 3D Euclidean Distance Transform. We found that the commodity implementation of the distance transform as implemented in [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) (implementing the Voronoi based method of Maurer et al. [2]) was too slow for our needs.  
+The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the commodity implementation of the distance transform as implemented in [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) (implementing the Voronoi based method of Maurer et al. [2]) was too slow for our needs.  
 
 The relatively speedy scipy implementation took about 20 seconds to compute the transform of a 512x512x512 binary image. Unfortunately, there are typically more than 300 distinct labels within a volume, requiring the serial application of the EDT. While cropping to the ROI does help, many ROIs are diagonally oriented and span the volume, requiring a full EDT. I found that in our numpy/scipy based implementation of TEASAR, EDT was taking approximately a quarter of the time on its own. The amount of time the algorithm was taking per a block was estimated to be multiple hours per a core. 
 
@@ -81,29 +83,29 @@ In all, we manage to achieve an EDT in six scans of an image in three directions
 
 The forward sweep looks like:  
 
-	f(a_i) = 0               ; a_i = 0  
-    	   = a_i + 1         ; a_i = 1, i > 0
-    	   = inf             ; a_i = 1, i = 0
+    f(a_i) = 0               ; a_i = 0  
+           = a_i + 1         ; a_i = 1, i > 0
+           = inf             ; a_i = 1, i = 0
 
 I modify this to include consideration of multi-labels as follows:  
 
-	let a_i be the EDT value at i
-	let l_i be the label at i (seperate 1:1 corresponding image)
-	let w be the anisotropy value
-	
-	f(a_i, l_i) = 0          ; l_i = 0
-	f(a_i, l_i) = a_i + w    ; l_i = l_i-1, l_i != 0
+    let a_i be the EDT value at i
+    let l_i be the label at i (seperate 1:1 corresponding image)
+    let w be the anisotropy value
+    
+    f(a_i, l_i) = 0          ; l_i = 0
+    f(a_i, l_i) = a_i + w    ; l_i = l_i-1, l_i != 0
 
-	f(a_i, l_i) = w          ; l_i != l_i-1, l_i != 0 
-	  f(a_i-1, l_i-1) = w 	 ; l_i-1 != 0
-	  f(a_i-1, l_i-1) = 0 	 ; l_i-1 = 0
+    f(a_i, l_i) = w          ; l_i != l_i-1, l_i != 0 
+      f(a_i-1, l_i-1) = w    ; l_i-1 != 0
+      f(a_i-1, l_i-1) = 0    ; l_i-1 = 0
 
 The backwards pass is unchanged:  
 
-	from n-2 to 1:
-		f(a_i) = min(a_i, a_i+1 + 1)
-	from 0 to n-1:
-		f(a_i) = f(a_i)^2
+    from n-2 to 1:
+        f(a_i) = min(a_i, a_i+1 + 1)
+    from 0 to n-1:
+        f(a_i) = f(a_i)^2
 
 
 ### Multi-Label Felzenszwalb and Huttenlocher Algorithm
@@ -113,6 +115,7 @@ The parabola method attempts to find the lower envelope of the parabols describe
 We handle multiple labels by preprocessing the image as follows:
 
 1. If a pixel corresponds to the label 0, set the vertex height to zero. 
+    (Due to the X pass already doing this, this may be unnecessary.)
 2. Track the label, if it changes, set the vertex height to the current
    unit distance setting (anisotropy) for both the current index and 
    the previous index (if its label is non-zero).
@@ -141,6 +144,25 @@ This has the effect of setting all pixel boundaries to unity. In 2D this solves 
      0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
      0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
 
+### Additional Parabolic Envelope  
+
+The methods of RP, ST, and FH all appear to depend on the existence of a black border ringing the ROI. Without it, the Y pass can't propogate a min signal near the border. However, this approach seems wasteful as it requires 6s^2 additional memory and potentially a copy into bordered memory. Instead, I opted to impose an envelope around both RP and FH's method. For an image I with n voxels, I implicitly  place a vertex at (-1, 0) and at (n, 0). This envelope propogates the edge effect through the volume.  
+
+To modify RP's method, I simply mark `I[0] = 1` and `I[n-1] = 1`. FH's method is a little trickier to modify because it uses the vertex location to reference `I[i]`. -1 and n are both off the ends of the array. Instead, I add the following lines right after the second pass write:  
+
+```cpp
+// let w be anisotropy
+// let i be the index
+// let v be the abcissa of the parabola's vertex
+// let n be the number of voxels in this row
+// let d be the transformed (destination) image
+
+d[i] = square(w * (i - v)) + I[v] // line 18, pp. 420 of FH [5]
+envelope = min(square(w * (i+1)), square(w * (n - i))) // envelope computation
+d[i] = min(envelope, d[i]) // application of envelope
+```
+
+These additional lines add about 3% to the running time. 
 
 ### Side Notes on Further Performance Improvements
 
