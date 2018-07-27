@@ -187,28 +187,28 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
   if data.dtype == np.uint8:
     arr_memview8 = data
     xform = _edt3dsq[uint8_t](
-      <uint8_t*>&arr_memview8[0,0],
+      <uint8_t*>&arr_memview8[0,0,0],
       data.shape[0], data.shape[1], data.shape[2],
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint16:
     arr_memview16 = data
     xform = _edt3dsq[uint16_t](
-      <uint16_t*>&arr_memview16[0,0],
+      <uint16_t*>&arr_memview16[0,0,0],
       data.shape[0], data.shape[1], data.shape[2],
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint32:
     arr_memview32 = data
     xform = _edt3dsq[uint32_t](
-      <uint32_t*>&arr_memview32[0,0],
+      <uint32_t*>&arr_memview32[0,0,0],
       data.shape[0], data.shape[1], data.shape[2],
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint64:
     arr_memview64 = data
     xform = _edt3dsq[uint64_t](
-      <uint64_t*>&arr_memview64[0,0],
+      <uint64_t*>&arr_memview64[0,0,0],
       data.shape[0], data.shape[1], data.shape[2],
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
