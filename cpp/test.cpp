@@ -2,6 +2,43 @@
 
 using namespace edt;
 
+void print2d(int* dest, int n) {
+  for (int i = 0; i < n*n; i++) {
+    if (i % n == 0 && i > 0) {
+      printf("\n");
+    }
+    printf("%d, ", dest[i]);
+  }
+
+  printf("\n\n");
+}
+
+
+void print2d(float* dest, int n) {
+  for (int i = 0; i < n*n; i++) {
+    if (i % n == 0 && i > 0) {
+      printf("\n");
+    }
+    printf("%.2f, ", dest[i]);
+  }
+
+  printf("\n\n");
+}
+
+
+void printint(int *f, int n) {
+  for (int i = 0; i < n; i++) {
+    printf("%d, ", f[i]);
+  }
+}
+
+
+void printflt(float *f, int n) {
+  for (int i = 0; i < n; i++) {
+    printf("%.2f, ", f[i]);
+  }
+}
+
 void test2d(int n) {
   int N = n*n;
   int* input = new int[N]();

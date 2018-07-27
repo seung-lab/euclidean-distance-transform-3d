@@ -16,49 +16,20 @@ const int VERSION_MAJOR = 1;
 const int VERSION_MINOR = 0;
 const int VERSION_BUGFIX = 0;
 
-
-void print2d(int* dest, int n) {
-  for (int i = 0; i < n*n; i++) {
-    if (i % n == 0 && i > 0) {
-      printf("\n");
-    }
-    printf("%d, ", dest[i]);
-  }
-
-  printf("\n\n");
-}
-
-
-void print2d(float* dest, int n) {
-  for (int i = 0; i < n*n; i++) {
-    if (i % n == 0 && i > 0) {
-      printf("\n");
-    }
-    printf("%.2f, ", dest[i]);
-  }
-
-  printf("\n\n");
-}
-
-
-void printint(int *f, int n) {
-  for (int i = 0; i < n; i++) {
-    printf("%d, ", f[i]);
-  }
-}
-
-
-void printflt(float *f, int n) {
-  for (int i = 0; i < n; i++) {
-    printf("%.2f, ", f[i]);
-  }
-}
-
 /* 1D Euclidean Distance Transform for Multiple Segids
  *
  * Map a row of segids to a euclidean distance transform.
  * Zero is considered a universal boundary as are differing
  * segids. Segments touching the boundary are mapped to 1.
+ *
+ * T* segids: 1d array of (un)signed integers
+ * *d: write destination, equal sized array as *segids
+ * n: size of segids, d
+ * stride: typically 1, but can be used on a 
+ *    multi dimensional array, in which case it is nx, nx*ny, etc
+ * anisotropy: physical distance of each voxel
+ *
+ * Writes output to *d
  */
 template <typename T>
 void squared_edt_1d_multi_seg(
@@ -118,12 +89,28 @@ void squared_edt_1d_multi_seg(
  * (many binary images). This way we do it correctly
  * without running EDT > 100x in a 512^3 chunk.
  *
+ * The first modification is to apply an envelope 
+ * over the entire volume by defining two additional
+ * vertices just off the ends at x=-1 and x=n. This
+ * avoids needing to create a black border around the
+ * volume (and saves 6s^2 additional memory).
+ *
+ * The second, which at first appeared to be important for
+ * optimization, but after reusing memory appeared less important,
+ * is to avoid the division operation in computing the intersection
+ * point. I describe this manipulation in the code below.
+ *
+ * I make a third modification in squared_edt_1d_parabolic_multi_seg
+ * to enable multiple segments.
+ *
  * Parameters:
  *   *f: the image ("sampled function" in the paper)
- *    n: size of image
- *    wx, wy, wz: anistropy e.g. (4nm, 4nm, 40nm)
+ *    *d: write destination, same size in voxels as *f
+ *    n: number of voxels in *f
+ *    stride: 1, sx, or sx*sy to handle multidimensional arrays
+ *    anistropy: e.g. (4nm, 4nm, 40nm)
  * 
- * Returns: distance transform of f
+ * Returns: writes distance transform of f to d
  */
 void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride, const float anistropy) {
   int k = 0;
@@ -182,8 +169,36 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
   delete [] ranges;
 }
 
+
+/* Same as squared_edt_1d_parabolic except that it handles
+ * a simultaneous transform of multiple labels (like squared_edt_1d_multi_seg).
+ * 
+ * The parabola method attempts to find the lower envelope
+ * of the parabols described by vertices (i, f(i)).
+ *
+ * We handle multiple labels by preprocessing the image as follows:
+ * 
+ * 1. If a pixel corresponds to the label 0, set the vertex height to zero.
+ * 2. Track the label, if it changes, set the vertex height to the current
+ *    unit distance setting (anisotropy) for both the current index and 
+ *    the previous index (if its label is non-zero).
+ *
+ *  Parameters:
+ *    *segids: an integer labeled image where 0 is background
+ *    *f: the image ("sampled function" in the paper)
+ *    *d: write destination, same size in voxels as *f
+ *    n: number of voxels in *f
+ *    stride: 1, sx, or sx*sy to handle multidimensional arrays
+ *    anistropy: e.g. (4.0 = 4nm, 40.0 = 40nm)
+ * 
+ * Returns: writes squared distance transform of f to d
+ */
 template <typename T>
-void squared_edt_1d_parabolic_multi_seg(T* segids, float* f, float *d, const int n, const int stride, const float anistropy) {
+void squared_edt_1d_parabolic_multi_seg(
+    T* segids, float* f, float *d, 
+    const int n, const int stride, const float anistropy
+  ) {
+
   T working_segid = segids[0];
   int segid;
   for (int i = stride; i < n * stride; i += stride) {
@@ -255,15 +270,38 @@ void squared_edt_1d_parabolic_multi_seg(T* segids, float* f, float *d, const int
   delete [] ranges;
 }
 
-// /* Df(x,y,z) = min( wx^2 * (x-x')^2 + Df|x'(y,z) )
-//  *              x'                   
-//  * Df(y,z) = min( wy^2 * (y-y') + Df|x'y'(z) )
-//  *            y'
-//  * Df(z) = wz^2 * min( (z-z') + i(z) )
-//  *          z'
-//  * i(z) = 0   if voxel out of set (f[p] == 0)
-//  *        inf if voxel in set (f[p] == 1)
-//  */
+/* Df(x,y,z) = min( wx^2 * (x-x')^2 + Df|x'(y,z) )
+ *              x'                   
+ * Df(y,z) = min( wy^2 * (y-y') + Df|x'y'(z) )
+ *            y'
+ * Df(z) = wz^2 * min( (z-z') + i(z) )
+ *          z'
+ * i(z) = 0   if voxel in set (f[p] == 1)
+ *        inf if voxel out of set (f[p] == 0)
+ *
+ * In english: a 3D EDT can be accomplished by
+ *    taking the x axis EDT, followed by y, followed by z.
+ * 
+ * The 2012 paper by Felzenszwalb and Huttenlocher describes using
+ * an indicator function (above) to use their sampled function
+ * concept on all three axes. This is unnecessary. The first
+ * transform (x here) can be done very dumbly and cheaply using
+ * the method of Rosenfeld and Pfaltz (1966) in 1D (where the L1
+ * and L2 norms agree). This first pass is extremely fast and so
+ * saves us about 30% in CPU time. 
+ *
+ * The second and third passes use the Felzenszalb and Huttenlocher's
+ * method. The method uses a scan then write sequence, so we are able
+ * to write to our input block, which increases cache coherency and
+ * reduces memory usage.
+ *
+ * Parameters:
+ *    *labels: an integer labeled image where 0 is background
+ *    sx, sy, sz: size of the volume in voxels
+ *    wx, wy, wz: physical dimensions of voxels (weights)
+ *
+ * Returns: writes squared distance transform of f to d
+ */
 template <typename T>
 float* _edt3dsq(T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
@@ -307,6 +345,8 @@ float* _edt3dsq(T* labels,
   return workspace; 
 }
 
+// Same as _edt3dsq, but applies square root to get
+// euclidean distance.
 template <typename T>
 float* _edt3d(T* input, 
   const size_t sx, const size_t sy, const size_t sz, 
@@ -321,6 +361,7 @@ float* _edt3d(T* input,
   return transform;
 }
 
+// 2D version of _edt3dsq
 template <typename T>
 float* _edt2dsq(T* input, 
   const size_t sx, const size_t sy,
@@ -338,6 +379,7 @@ float* _edt2dsq(T* input,
   return xaxis;
 }
 
+// returns euclidean distance instead of squared distance
 template <typename T>
 float* _edt2d(T* input, 
   const size_t sx, const size_t sy,
