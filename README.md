@@ -2,6 +2,11 @@
 
 Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image containing multiple labels in a single pass with support for anisotropic dimensions.
 
+### Use Cases  
+
+1. Compute the distance transform of a volume containing multiple labels simultaneously and then query it using a fast masking operator.
+2. Convert the multi-label volume into a binary image (i.e. a single label) using a masking operator and compute the ordinary distance transform.
+
 ### Python Installation
 
 *Requires a C++ compiler*
@@ -50,7 +55,6 @@ int main () {
 
 For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.  
 
-
 ### Motivation
 
 The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the commodity implementation of the distance transform as implemented in [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) (implementing the Voronoi based method of Maurer et al. [2]) was too slow for our needs.  
@@ -63,7 +67,7 @@ I realized that it's possible to compute the EDT much more quickly by computing 
 
 The implementation presented here uses concepts from the 1994 paper by T. Saito and Toriwaki [3] and combines the 1966 linear sweeping method of Rosenfeld and Pfaltz [4] with that of Felzenszwald and Huttenlocher's 2012 two pass linear time parabolic minmal envelope method [5]. I incorporate a few minor modifications to the algorithms to remove the necessity of a black border. My own contribution here is the modification of both the linear sweep and parabolic methods to account for multiple label boundaries.
 
-This implementation was able to compute the distance transform of a binary image in 7-8 seconds. When adding in the multiple boundary modification, this rose to 9 seconds. 
+This implementation was able to compute the distance transform of a binary image in 7-8 seconds. When adding in the multiple boundary modification, this rose to 9 seconds. Incorporating the cost of querying the distance transformed block with masking operators, the time for all operators rose to about 90 seconds, well short of the over an hour to compute 300 passes. 
 
 ### Basic EDT Algorithm Description
 
