@@ -67,19 +67,57 @@ This implementation was able to compute the distance transform of a binary image
 
 A naive implementation of the distance transform is very expensive as it would require a search that is O(N^2) in the number of voxels. In 1994, Saito and Toriwaki (ST) showed how in principle to decompose this search into three passes, along x, y, and z linear in the number of voxels. After the X-axis EDT is computed, the Y-axis EDT can be computed on top of it by finding the minimum x^2 + y^2 for each pixel within each column. You can extend this argument to N dimensions, but we will halt at Z. The question is then, how to find that minimum efficiently without having to scan each column a quadratic number of times to find that minimum? 
 
-Felzenszwalb and Huttenlocher (FH) and others have described taking advantage of the geometric interpretation of the distance function, as a parabola. Using ST's decomposition of the EDT into three passes, each broken up by row, the problem becomes one dimensional. FH showed that it is possible to compute each pass on each row by finding the minimal envelope of the space created by the parabolas that project from the vertices located (i, f(i)) in a one dimensional image f.   
+Felzenszwalb and Huttenlocher (FH) and others have described taking advantage of the geometric interpretation of the distance function, as a parabola. Using ST's decomposition of the EDT into three passes, each broken up by row, the problem becomes one dimensional. FH showed that it is possible to compute each pass on each row by finding the minimal envelope of the space created by the parabolas that project from the vertices located at (i, f(i)) for a one dimensional image f.   
 
 This method works by first scanning the row and finding a set of parabolas that constitue this lower envelope. During this linear scan, computes the abscissa of the nearest parabola to the left and thereby defines the effective domain of each selected parabola. This linear reading scan is followed by a linear writing scan that records the height of the envelope in each voxel.  
 
 This method is linear and relatively fast, but there's another trick we can do. The first transformation is special as we have to change it from a binary image into something else. If we stayed with FH's method, it was recommended that we use an indicator function that records zeros and infinities on the first pass. However, this is somewhat cumbersome to reason about and is not really adding additional speed as it requires an additional remapping of the image.
 
-However, if we look deeper into the past, the original Rosenfeld and Pfaltz (RP) paper demonstrated a remarkably simple two pass sweeping algorithm for computing the L1 norm ([visualized here](https://github.com/ljubobratovicrelja/distance-transform)). For our very first pass, the L1 and the L2 norm agree as only a single dimension is involved. Using very simple operators, and moving monotonically forward we can compute the increasing distance of a pixel from it's leftmost bound. We can then reconcile that in a backward pass that computes the minimum of the results of the first pass and the distance from the right boundary.  
+However, if we look deeper into the past, the original Rosenfeld and Pfaltz (RP) paper demonstrated a remarkably simple two pass sweeping algorithm for computing the L1 norm ([visualized here](https://github.com/ljubobratovicrelja/distance-transform)). For our very first pass, the L1 and the L2 norm agree as only a single dimension is involved. Using very simple operators, and moving monotonically forward we can compute the increasing distance of a pixel from it's leftmost bound. We can then reconcile that in a backward pass that computes the minimum of the results of the first pass and the distance from the right boundary. 
 
 In all, we manage to achieve an EDT in six scans of an image in three directions. The use of RP's method for the first transformation saves about 30% of the time as it appears to a single digit percentage of the algorithm. In the second and third passes, due to the read and write sequence of FH's method, we can read and write to the same block of memory, increasing cache coherence and reducing memory usage.  
 
-### Modifications to the EDT Algorithm
+### Multi-Label 1D Rosenfeld and Pfaltz Inspired Algorithm
+
+The forward sweep looks like:  
+
+	f(a_i) = 0               ; a_i = 0  
+    	   = a_i + 1         ; a_i = 1, i > 0
+    	   = inf             ; a_i = 1, i = 0
+
+I modify this to include consideration of multi-labels as follows:  
+
+	let a_i be the EDT value at i
+	let l_i be the label at i (seperate 1:1 corresponding image)
+	let w be the anisotropy value
+	
+	f(a_i, l_i) = 0          ; l_i = 0
+	f(a_i, l_i) = a_i + w    ; l_i = l_i-1, l_i != 0
+
+	f(a_i, l_i) = w          ; l_i != l_i-1, l_i != 0 
+		f(a_i-1, l_i-1) = w 	 ; l_i-1 != 0
+		f(a_i-1, l_i-1) = 0 	 ; l_i-1 = 0
+
+The backwards pass is unchanged:  
+
+	from n -2 to 1:
+		f(a_i) = min(a_i, a_i+1 + 1)
+	from 0 to n-1:
+		f(a_i) = f(a_i)^2
 
 
+### Multi-Label Felzenszwalb and Huttenlocher Algorithm
+
+
+ * The parabola method attempts to find the lower envelope
+ * of the parabols described by vertices (i, f(i)).
+ *
+ * We handle multiple labels by preprocessing the image as follows:
+ * 
+ * 1. If a pixel corresponds to the label 0, set the vertex height to zero.
+ * 2. Track the label, if it changes, set the vertex height to the current
+ *    unit distance setting (anisotropy) for both the current index and 
+ *    the previous index (if its label is non-zero).
 
 ### Side Notes on Further Performance Improvements
 
