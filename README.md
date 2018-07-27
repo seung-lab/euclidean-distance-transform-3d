@@ -172,13 +172,13 @@ These additional lines add about 3% to the running time.
 
 If this scheme seems good to you, but you don't care about multi-segment, it is possible to reduce memory usage down to 1x (down from 2x). Additionally, it is possible to convert to nearly all integer operations when using the squared distance. 
 
-The most expensive operation appears to be the Z scan of our 512x512x512 float cubes. This is almost certainly because of L1 cache misses. The X scan has a stride of 4 bytes and is very fast. The Y scan has a stride of 512\*4 bytes (2 KiB), and is also very fast. The Z scan has a stride of 512\*512\*4 bytes (1 MiB) and seems to add 3-5 seconds to the running time. The L1 cache on the tested computer is 32kB. I considered using half precision floats, but that would only bring it down to 512KiB, which is still a cache miss.
+The most expensive operation appears to be the Z scan of our 512x512x512 float cubes. This is almost certainly because of L1 cache misses. The X scan has a stride of 4 bytes and is very fast. The Y scan has a stride of 512\*4 bytes (2 KiB), and is also very fast. The Z scan has a stride of 512\*512\*4 bytes (1 MiB) and seems to add 3-5 seconds to the running time. The L1 cache on the tested computer is 32kB. I considered using half precision floats, but that would only bring it down to 512KiB, which is still a cache miss.  
 
 ### References
 
-1. M. Sato, et al. "TEASAR: Tree-structure Extraction Algorithm for Accurate and Robust Skeletons". Proc. 8th Pacific Conf. on Computer Graphics and Applications. Oct. 2000. doi: 10.1109/PCCGA.2000.883951
-2. C. Maurer, et al. "A Linear Time Algorithm for Computing Exact Euclidean Distance Transforms of Binary Images in Arbitrary Dimensions". IEEE Transactions on Pattern Analysis and Machine Intelligence. Vol. 25, No. 2. February 2003. doi: 10.1109/TPAMI.2003.1177156
-3. T. Saito and J. Toriwaki. "New Algorithms for Euclidean Distance Transformation of an n-Dimensional Digitized Picture with Applications". Pattern Recognition, Vol. 27, Issue 11, Nov. 1994, Pg. 1551-1565. doi: 10.1016/0031-3203(94)90133-3
-4. A. Rosenfeld and J. Pfaltz. "Sequential Operations in Digital Picture Processing". Journal of the ACM. Vol. 13, Issue 4, Oct. 1966, Pg. 471-494. doi: 10.1145/321356.321357
-5. P. Felzenszwald and D. Huttenlocher. "Distance Transforms of Sampled Functions". Theory of Computing, Vol. 8, 2012, Pg. 415-428. doi: 10.4086/toc.2012.v008a019
+1. M. Sato, et al. "TEASAR: Tree-structure Extraction Algorithm for Accurate and Robust Skeletons". Proc. 8th Pacific Conf. on Computer Graphics and Applications. Oct. 2000. doi: 10.1109/PCCGA.2000.883951 ([link](https://ieeexplore.ieee.org/abstract/document/883951/))
+2. C. Maurer, et al. "A Linear Time Algorithm for Computing Exact Euclidean Distance Transforms of Binary Images in Arbitrary Dimensions". IEEE Transactions on Pattern Analysis and Machine Intelligence. Vol. 25, No. 2. February 2003. doi: 10.1109/TPAMI.2003.1177156 ([link](https://ieeexplore.ieee.org/abstract/document/1177156/))
+3. T. Saito and J. Toriwaki. "New Algorithms for Euclidean Distance Transformation of an n-Dimensional Digitized Picture with Applications". Pattern Recognition, Vol. 27, Issue 11, Nov. 1994, Pg. 1551-1565. doi: 10.1016/0031-3203(94)90133-3 ([link](http://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Saito94.pdf))
+4. A. Rosenfeld and J. Pfaltz. "Sequential Operations in Digital Picture Processing". Journal of the ACM. Vol. 13, Issue 4, Oct. 1966, Pg. 471-494. doi: 10.1145/321356.321357 ([link](https://dl.acm.org/citation.cfm?id=321357))
+5. P. Felzenszwald and D. Huttenlocher. "Distance Transforms of Sampled Functions". Theory of Computing, Vol. 8, 2012, Pg. 415-428. doi: 10.4086/toc.2012.v008a019 ([link](http://cs.brown.edu/people/pfelzens/dt/))
 
