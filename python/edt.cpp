@@ -8,7 +8,7 @@
     #error Cython requires Python 2.6+ or Python 3.3+.
 #else
 #define CYTHON_ABI "0_28_2"
-#define CYTHON_FUTURE_DIVISION 0
+#define CYTHON_FUTURE_DIVISION 1
 #include <stddef.h>
 #ifndef offsetof
   #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
@@ -2489,7 +2489,7 @@ static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __red
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
 static const char __pyx_k_unable_to_allocate_shape_and_str[] = "unable to allocate shape and strides.";
 static const char __pyx_k_Format_string_allocated_too_shor_2[] = "Format string allocated too short.";
-static PyObject *__pyx_kp_s_1_0_0;
+static PyObject *__pyx_kp_u_1_0_0;
 static PyObject *__pyx_n_s_ASCII;
 static PyObject *__pyx_kp_s_Buffer_view_does_not_expose_stri;
 static PyObject *__pyx_kp_s_Can_only_create_a_buffer_that_is;
@@ -2509,7 +2509,7 @@ static PyObject *__pyx_kp_s_Invalid_shape_in_axis_d_d;
 static PyObject *__pyx_n_s_MemoryError;
 static PyObject *__pyx_kp_s_MemoryView_of_r_at_0x_x;
 static PyObject *__pyx_kp_s_MemoryView_of_r_object;
-static PyObject *__pyx_kp_s_Multi_Label_EDT_library_only_sup;
+static PyObject *__pyx_kp_u_Multi_Label_EDT_library_only_sup;
 static PyObject *__pyx_kp_u_Non_native_byte_order_not_suppor;
 static PyObject *__pyx_n_b_O;
 static PyObject *__pyx_kp_s_Out_of_bounds_on_buffer_access_a;
@@ -2581,8 +2581,8 @@ static PyObject *__pyx_n_s_new;
 static PyObject *__pyx_kp_s_no_default___reduce___due_to_non;
 static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_numpy;
-static PyObject *__pyx_kp_s_numpy_core_multiarray_failed_to;
-static PyObject *__pyx_kp_s_numpy_core_umath_failed_to_impor;
+static PyObject *__pyx_kp_u_numpy_core_multiarray_failed_to;
+static PyObject *__pyx_kp_u_numpy_core_umath_failed_to_impor;
 static PyObject *__pyx_n_s_obj;
 static PyObject *__pyx_n_s_pack;
 static PyObject *__pyx_n_s_pickle;
@@ -3083,7 +3083,7 @@ static PyObject *__pyx_pf_3edt_edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject 
  * 
  * def edtsq(data, anisotropy):
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 67, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_6 = PyInt_FromSsize_t(__pyx_v_dims); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
@@ -3501,7 +3501,7 @@ static PyObject *__pyx_pf_3edt_2edtsq(CYTHON_UNUSED PyObject *__pyx_self, PyObje
  * 
  * def edt1d(data, anisotropy=1.0):
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_6 = PyInt_FromSsize_t(__pyx_v_dims); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
@@ -4000,7 +4000,7 @@ static PyObject *__pyx_pf_3edt_6edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
  *       <uint8_t*>&arr_memview8[0],
  *       xform,
  */
-    edt::squared_edt_1d_multi_seg<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_7 * __pyx_v_arr_memview8.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
+    pyedt::squared_edt_1d_multi_seg<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_7 * __pyx_v_arr_memview8.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
 
     /* "edt.pyx":92
  *   cdef float* xform = <float*>calloc(data.size, sizeof(float))
@@ -4091,7 +4091,7 @@ static PyObject *__pyx_pf_3edt_6edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
  *       <uint16_t*>&arr_memview16[0],
  *       xform,
  */
-    edt::squared_edt_1d_multi_seg<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_11 * __pyx_v_arr_memview16.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
+    pyedt::squared_edt_1d_multi_seg<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_11 * __pyx_v_arr_memview16.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
 
     /* "edt.pyx":101
  *       anisotropy
@@ -4182,7 +4182,7 @@ static PyObject *__pyx_pf_3edt_6edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
  *       <uint32_t*>&arr_memview32[0],
  *       xform,
  */
-    edt::squared_edt_1d_multi_seg<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_13 * __pyx_v_arr_memview32.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
+    pyedt::squared_edt_1d_multi_seg<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_13 * __pyx_v_arr_memview32.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
 
     /* "edt.pyx":110
  *       anisotropy
@@ -4273,7 +4273,7 @@ static PyObject *__pyx_pf_3edt_6edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
  *       <uint64_t*>&arr_memview64[0],
  *       xform,
  */
-    edt::squared_edt_1d_multi_seg<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_15 * __pyx_v_arr_memview64.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
+    pyedt::squared_edt_1d_multi_seg<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_15 * __pyx_v_arr_memview64.strides[0]) ))))), __pyx_v_xform, __pyx_t_8, 1, __pyx_t_9);
 
     /* "edt.pyx":119
  *       anisotropy
@@ -4820,7 +4820,7 @@ static PyObject *__pyx_pf_3edt_10edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint8_t*>&arr_memview8[0,0],
  *       data.shape[0], data.shape[1],
  */
-    __pyx_v_xform = edt::_edt2dsq<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_6 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_7 * __pyx_v_arr_memview8.strides[1]) ))))), __pyx_t_8, __pyx_t_9, __pyx_t_10, __pyx_t_11);
+    __pyx_v_xform = pyedt::_edt2dsq<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_6 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_7 * __pyx_v_arr_memview8.strides[1]) ))))), __pyx_t_8, __pyx_t_9, __pyx_t_10, __pyx_t_11);
 
     /* "edt.pyx":144
  *   cdef float* xform
@@ -4933,7 +4933,7 @@ static PyObject *__pyx_pf_3edt_10edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint16_t*>&arr_memview16[0,0],
  *       data.shape[0], data.shape[1],
  */
-    __pyx_v_xform = edt::_edt2dsq<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_13 * __pyx_v_arr_memview16.strides[0]) ) + __pyx_t_14 * __pyx_v_arr_memview16.strides[1]) ))))), __pyx_t_11, __pyx_t_10, __pyx_t_9, __pyx_t_8);
+    __pyx_v_xform = pyedt::_edt2dsq<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_13 * __pyx_v_arr_memview16.strides[0]) ) + __pyx_t_14 * __pyx_v_arr_memview16.strides[1]) ))))), __pyx_t_11, __pyx_t_10, __pyx_t_9, __pyx_t_8);
 
     /* "edt.pyx":151
  *       anisotropy[0], anisotropy[1]
@@ -5046,7 +5046,7 @@ static PyObject *__pyx_pf_3edt_10edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint32_t*>&arr_memview32[0,0],
  *       data.shape[0], data.shape[1],
  */
-    __pyx_v_xform = edt::_edt2dsq<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_16 * __pyx_v_arr_memview32.strides[0]) ) + __pyx_t_17 * __pyx_v_arr_memview32.strides[1]) ))))), __pyx_t_8, __pyx_t_9, __pyx_t_10, __pyx_t_11);
+    __pyx_v_xform = pyedt::_edt2dsq<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_16 * __pyx_v_arr_memview32.strides[0]) ) + __pyx_t_17 * __pyx_v_arr_memview32.strides[1]) ))))), __pyx_t_8, __pyx_t_9, __pyx_t_10, __pyx_t_11);
 
     /* "edt.pyx":158
  *       anisotropy[0], anisotropy[1]
@@ -5159,7 +5159,7 @@ static PyObject *__pyx_pf_3edt_10edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint64_t*>&arr_memview64[0,0],
  *       data.shape[0], data.shape[1],
  */
-    __pyx_v_xform = edt::_edt2dsq<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_19 * __pyx_v_arr_memview64.strides[0]) ) + __pyx_t_20 * __pyx_v_arr_memview64.strides[1]) ))))), __pyx_t_11, __pyx_t_10, __pyx_t_9, __pyx_t_8);
+    __pyx_v_xform = pyedt::_edt2dsq<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_19 * __pyx_v_arr_memview64.strides[0]) ) + __pyx_t_20 * __pyx_v_arr_memview64.strides[1]) ))))), __pyx_t_11, __pyx_t_10, __pyx_t_9, __pyx_t_8);
 
     /* "edt.pyx":165
  *       anisotropy[0], anisotropy[1]
@@ -5780,7 +5780,7 @@ static PyObject *__pyx_pf_3edt_14edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint8_t*>&arr_memview8[0,0,0],
  *       data.shape[0], data.shape[1], data.shape[2],
  */
-    __pyx_v_xform = edt::_edt3dsq<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_6 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_7 * __pyx_v_arr_memview8.strides[1]) ) + __pyx_t_8 * __pyx_v_arr_memview8.strides[2]) ))))), __pyx_t_9, __pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14);
+    __pyx_v_xform = pyedt::_edt3dsq<uint8_t>(((uint8_t *)(&(*((uint8_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_6 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_7 * __pyx_v_arr_memview8.strides[1]) ) + __pyx_t_8 * __pyx_v_arr_memview8.strides[2]) ))))), __pyx_t_9, __pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14);
 
     /* "edt.pyx":187
  *   cdef float* xform
@@ -5909,7 +5909,7 @@ static PyObject *__pyx_pf_3edt_14edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint16_t*>&arr_memview16[0,0,0],
  *       data.shape[0], data.shape[1], data.shape[2],
  */
-    __pyx_v_xform = edt::_edt3dsq<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_16 * __pyx_v_arr_memview16.strides[0]) ) + __pyx_t_17 * __pyx_v_arr_memview16.strides[1]) ) + __pyx_t_18 * __pyx_v_arr_memview16.strides[2]) ))))), __pyx_t_14, __pyx_t_13, __pyx_t_12, __pyx_t_11, __pyx_t_10, __pyx_t_9);
+    __pyx_v_xform = pyedt::_edt3dsq<uint16_t>(((uint16_t *)(&(*((uint16_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview16.data + __pyx_t_16 * __pyx_v_arr_memview16.strides[0]) ) + __pyx_t_17 * __pyx_v_arr_memview16.strides[1]) ) + __pyx_t_18 * __pyx_v_arr_memview16.strides[2]) ))))), __pyx_t_14, __pyx_t_13, __pyx_t_12, __pyx_t_11, __pyx_t_10, __pyx_t_9);
 
     /* "edt.pyx":194
  *       anisotropy[0], anisotropy[1], anisotropy[2]
@@ -6038,7 +6038,7 @@ static PyObject *__pyx_pf_3edt_14edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint32_t*>&arr_memview32[0,0,0],
  *       data.shape[0], data.shape[1], data.shape[2],
  */
-    __pyx_v_xform = edt::_edt3dsq<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_20 * __pyx_v_arr_memview32.strides[0]) ) + __pyx_t_21 * __pyx_v_arr_memview32.strides[1]) ) + __pyx_t_22 * __pyx_v_arr_memview32.strides[2]) ))))), __pyx_t_9, __pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14);
+    __pyx_v_xform = pyedt::_edt3dsq<uint32_t>(((uint32_t *)(&(*((uint32_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview32.data + __pyx_t_20 * __pyx_v_arr_memview32.strides[0]) ) + __pyx_t_21 * __pyx_v_arr_memview32.strides[1]) ) + __pyx_t_22 * __pyx_v_arr_memview32.strides[2]) ))))), __pyx_t_9, __pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14);
 
     /* "edt.pyx":201
  *       anisotropy[0], anisotropy[1], anisotropy[2]
@@ -6167,7 +6167,7 @@ static PyObject *__pyx_pf_3edt_14edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       <uint64_t*>&arr_memview64[0,0,0],
  *       data.shape[0], data.shape[1], data.shape[2],
  */
-    __pyx_v_xform = edt::_edt3dsq<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_24 * __pyx_v_arr_memview64.strides[0]) ) + __pyx_t_25 * __pyx_v_arr_memview64.strides[1]) ) + __pyx_t_26 * __pyx_v_arr_memview64.strides[2]) ))))), __pyx_t_14, __pyx_t_13, __pyx_t_12, __pyx_t_11, __pyx_t_10, __pyx_t_9);
+    __pyx_v_xform = pyedt::_edt3dsq<uint64_t>(((uint64_t *)(&(*((uint64_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview64.data + __pyx_t_24 * __pyx_v_arr_memview64.strides[0]) ) + __pyx_t_25 * __pyx_v_arr_memview64.strides[1]) ) + __pyx_t_26 * __pyx_v_arr_memview64.strides[2]) ))))), __pyx_t_14, __pyx_t_13, __pyx_t_12, __pyx_t_11, __pyx_t_10, __pyx_t_9);
 
     /* "edt.pyx":208
  *       anisotropy[0], anisotropy[1], anisotropy[2]
@@ -23399,7 +23399,7 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_s_1_0_0, __pyx_k_1_0_0, sizeof(__pyx_k_1_0_0), 0, 0, 1, 0},
+  {&__pyx_kp_u_1_0_0, __pyx_k_1_0_0, sizeof(__pyx_k_1_0_0), 0, 1, 0, 0},
   {&__pyx_n_s_ASCII, __pyx_k_ASCII, sizeof(__pyx_k_ASCII), 0, 0, 1, 1},
   {&__pyx_kp_s_Buffer_view_does_not_expose_stri, __pyx_k_Buffer_view_does_not_expose_stri, sizeof(__pyx_k_Buffer_view_does_not_expose_stri), 0, 0, 1, 0},
   {&__pyx_kp_s_Can_only_create_a_buffer_that_is, __pyx_k_Can_only_create_a_buffer_that_is, sizeof(__pyx_k_Can_only_create_a_buffer_that_is), 0, 0, 1, 0},
@@ -23419,7 +23419,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_MemoryError, __pyx_k_MemoryError, sizeof(__pyx_k_MemoryError), 0, 0, 1, 1},
   {&__pyx_kp_s_MemoryView_of_r_at_0x_x, __pyx_k_MemoryView_of_r_at_0x_x, sizeof(__pyx_k_MemoryView_of_r_at_0x_x), 0, 0, 1, 0},
   {&__pyx_kp_s_MemoryView_of_r_object, __pyx_k_MemoryView_of_r_object, sizeof(__pyx_k_MemoryView_of_r_object), 0, 0, 1, 0},
-  {&__pyx_kp_s_Multi_Label_EDT_library_only_sup, __pyx_k_Multi_Label_EDT_library_only_sup, sizeof(__pyx_k_Multi_Label_EDT_library_only_sup), 0, 0, 1, 0},
+  {&__pyx_kp_u_Multi_Label_EDT_library_only_sup, __pyx_k_Multi_Label_EDT_library_only_sup, sizeof(__pyx_k_Multi_Label_EDT_library_only_sup), 0, 1, 0, 0},
   {&__pyx_kp_u_Non_native_byte_order_not_suppor, __pyx_k_Non_native_byte_order_not_suppor, sizeof(__pyx_k_Non_native_byte_order_not_suppor), 0, 1, 0, 0},
   {&__pyx_n_b_O, __pyx_k_O, sizeof(__pyx_k_O), 0, 0, 0, 1},
   {&__pyx_kp_s_Out_of_bounds_on_buffer_access_a, __pyx_k_Out_of_bounds_on_buffer_access_a, sizeof(__pyx_k_Out_of_bounds_on_buffer_access_a), 0, 0, 1, 0},
@@ -23491,8 +23491,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_no_default___reduce___due_to_non, __pyx_k_no_default___reduce___due_to_non, sizeof(__pyx_k_no_default___reduce___due_to_non), 0, 0, 1, 0},
   {&__pyx_n_s_np, __pyx_k_np, sizeof(__pyx_k_np), 0, 0, 1, 1},
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
-  {&__pyx_kp_s_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 0, 1, 0},
-  {&__pyx_kp_s_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 0, 1, 0},
+  {&__pyx_kp_u_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 1, 0, 0},
+  {&__pyx_kp_u_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 1, 0, 0},
   {&__pyx_n_s_obj, __pyx_k_obj, sizeof(__pyx_k_obj), 0, 0, 1, 1},
   {&__pyx_n_s_pack, __pyx_k_pack, sizeof(__pyx_k_pack), 0, 0, 1, 1},
   {&__pyx_n_s_pickle, __pyx_k_pickle, sizeof(__pyx_k_pickle), 0, 0, 1, 1},
@@ -23674,7 +23674,7 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_umath() except -1:
  */
-  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(1, 1000, __pyx_L1_error)
+  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(1, 1000, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
 
@@ -23685,7 +23685,7 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_ufunc() except -1:
  */
-  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(1, 1006, __pyx_L1_error)
+  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(1, 1006, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__12);
   __Pyx_GIVEREF(__pyx_tuple__12);
 
@@ -23694,7 +23694,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  */
-  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_kp_s_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(1, 1012, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(1, 1012, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__13);
   __Pyx_GIVEREF(__pyx_tuple__13);
 
@@ -24416,7 +24416,7 @@ if (!__Pyx_RefNanny) {
  * 
  * __VERSION__ = '1.0.0'
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -24426,9 +24426,9 @@ if (!__Pyx_RefNanny) {
  * 
  * __VERSION__ = '1.0.0'             # <<<<<<<<<<<<<<
  * 
- * cdef extern from "../cpp/edt.hpp" namespace "edt":
+ * cdef extern from "../cpp/edt.hpp" namespace "pyedt":
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_VERSION, __pyx_kp_s_1_0_0) < 0) __PYX_ERR(0, 34, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_VERSION, __pyx_kp_u_1_0_0) < 0) __PYX_ERR(0, 34, __pyx_L1_error)
 
   /* "edt.pyx":57
  *   )

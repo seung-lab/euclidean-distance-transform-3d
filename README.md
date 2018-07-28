@@ -1,4 +1,4 @@
-## Multi-Label 3D Euclidean Distance Transform (MLEDT-3D)
+## Multi-Label Anisotropic 3D Euclidean Distance Transform (MLAEDT-3D)
 
 Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image containing multiple labels in a single pass with support for anisotropic dimensions.
 
@@ -81,7 +81,7 @@ This method is linear and relatively fast, but there's another trick we can do. 
 
 However, if we look deeper into the past, the original Rosenfeld and Pfaltz (RP) paper demonstrated a remarkably simple two pass sweeping algorithm for computing the L1 norm ([visualized here](https://github.com/ljubobratovicrelja/distance-transform)). For our very first pass, the L1 and the L2 norm agree as only a single dimension is involved. Using very simple operators, and moving monotonically forward we can compute the increasing distance of a pixel from it's leftmost bound. We can then reconcile that in a backward pass that computes the minimum of the results of the first pass and the distance from the right boundary. 
 
-In all, we manage to achieve an EDT in six scans of an image in three directions. The use of RP's method for the first transformation saves about 30% of the time as it appears to a single digit percentage of the algorithm. In the second and third passes, due to the read and write sequence of FH's method, we can read and write to the same block of memory, increasing cache coherence and reducing memory usage.  
+In all, we manage to achieve an EDT in six scans of an image in three directions. The use of RP's method for the first transformation saves about 30% of the time as it appears to use a single digit percentage of the CPU time. In the second and third passes, due to the read and write sequence of FH's method, we can read and write to the same block of memory, increasing cache coherence and reducing memory usage.  
 
 ### Multi-Label 1D Rosenfeld and Pfaltz Inspired Algorithm
 

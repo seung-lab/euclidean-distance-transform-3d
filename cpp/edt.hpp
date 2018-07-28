@@ -8,7 +8,7 @@
 #ifndef EDT_H
 #define EDT_H
 
-namespace edt {
+namespace pyedt {
 
 #define sq(x) ((x) * (x))
 
@@ -394,7 +394,55 @@ float* _edt2d(T* input,
   return transform;
 }
 
+} // namespace pyedt
+
+namespace edt {
+
+template <typename T>
+float* edt(T* labels, int sx, float wx) {
+  float* d = new float[sx]();
+  pyedt::squared_edt_1d_multi_seg(labels, d, sx, 1, wx);
+
+  for (int i = 0; i < sx; i++) {
+    d[i] = std::sqrt(d[i]);
+  }
+
+  return d;
+}
+
+template <typename T>
+float* edt(T* labels, int sx, int sy, float wx, float wy) {
+  return pyedt::_edt2d(labels, sx, sy, wx, wy);
+}
+
+
+template <typename T>
+float* edt(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
+  return pyedt::_edt3d(labels, sx, sy, sz, wx, wy, wz);
+}
+
+
+template <typename T>
+float* edtsq(T* labels, int sx, float wx) {
+  float* d = new float[sx]();
+  pyedt::squared_edt_1d_multi_seg(labels, d, sx, 1, wx);
+  return d;
+}
+
+
+template <typename T>
+float* edtsq(T* labels, int sx, int sy, float wx, float wy) {
+  return pyedt::_edt2dsq(labels, sx, sy, wx, wy);
+}
+
+template <typename T>
+float* edtsq(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
+  return pyedt::_edt3dsq(labels, sx, sy, sz, wx, wy, wz);
+}
+
 } // namespace edt
+
+
 
 #endif
 

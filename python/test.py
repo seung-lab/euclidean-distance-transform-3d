@@ -8,9 +8,9 @@ import time
 
 
 # for d in (np.uint8, np.uint16, np.uint32, np.uint64):
-labels = np.ones(shape=(512,512,512), dtype=np.uint16)
+labels = np.ones(shape=(8196, 8196), dtype=np.uint64)
 start = time.time()
-res = edt.edtsq(labels, anisotropy=(1,1,1))
+res = edt.edtsq(labels, anisotropy=(1,1))
 
 # for i in range(300):
 #   x = (labels == i) * res
