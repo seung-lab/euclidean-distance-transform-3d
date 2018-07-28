@@ -54,26 +54,38 @@ cdef extern from "../cpp/edt.hpp" namespace "pyedt":
     int wx, int wy, int wz
   )
 
-def edt(data, anisotropy):
+def edt(data, anisotropy=None):
   dims = len(data.shape)
 
+  if data.size <= 1:
+    return np.copy(data).astype(np.float32)
+
   if dims == 1:
+    anisotropy = anisotropy or 1.0
     return edt1d(data, anisotropy)
   elif dims == 2:
+    anisotropy = anisotropy or (1.0, 1.0)
     return edt2d(data, anisotropy)
   elif dims == 3:
+    anisotropy = anisotropy or (1.0, 1.0, 1.0)
     return edt3d(data, anisotropy)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
-def edtsq(data, anisotropy):
+def edtsq(data, anisotropy=None):
   dims = len(data.shape)
 
+  if data.size <= 1:
+    return np.copy(data).astype(np.float32)
+
   if dims == 1:
+    anisotropy = anisotropy or 1.0
     return edt1dsq(data, anisotropy)
   elif dims == 2:
+    anisotropy = anisotropy or (1.0, 1.0)
     return edt2dsq(data, anisotropy)
   elif dims == 3:
+    anisotropy = anisotropy or (1.0, 1.0, 1.0)
     return edt3dsq(data, anisotropy)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
