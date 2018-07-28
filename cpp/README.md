@@ -27,16 +27,16 @@ int* labels3d = new int[512*512*512]();
 // ... populate labels ...
 
 // 1d, 2d, and 3d anisotropic transforms 
-float* dt = edt(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
-float* dt = edt(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
-float* dt = edt(labels3d, 
+float* dt = edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
+float* dt = edt<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
+float* dt = edt<int>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
 	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
 
 // get the squared distance instead (avoids computing sqrt)
-float* dt = edtsq(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
-float* dt = edtsq(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
-float* dt = edtsq(labels3d, 
+float* dt = edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
+float* dt = edtsq<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
+float* dt = edtsq<int>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
 	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
 ```
