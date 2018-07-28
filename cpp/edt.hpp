@@ -373,7 +373,11 @@ float* _edt2dsq(T* input,
   }
 
   for (int x = 0; x < sx; x++) {
-    squared_edt_1d_parabolic((xaxis + x), (xaxis + x), sy, sx, wy);
+    squared_edt_1d_parabolic_multi_seg<T>(
+      (input + x), 
+      (xaxis + x), 
+      (xaxis + x), 
+      sy, sx, wy);
   }
 
   return xaxis;
