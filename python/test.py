@@ -3,38 +3,48 @@ import pytest
 import edt
 import numpy as np
 
+TYPES = [ 
+  np.uint8, np.uint16, np.uint32, np.uint64
+  # np.float32
+  # np.bool
+]
+
 def test_one_d_identity():
-  labels = np.array([ 0 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)
+  for dtype in TYPES:
+    print(dtype)
+    labels = np.array([ 0 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)
 
-  labels = np.array([ 1 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)
+    labels = np.array([ 1 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)
 
-  labels = np.array([ 0, 1 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)
+    labels = np.array([ 0, 1 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)
 
-  labels = np.array([ 1, 0 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)
+    labels = np.array([ 1, 0 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)
 
 
-  labels = np.array([ 0, 1, 0 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)  
+    labels = np.array([ 0, 1, 0 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)  
 
-  labels = np.array([ 0, 1, 1, 0 ], dtype=np.uint32)
-  result = edt.edt(labels)
-  assert np.all(result == labels)  
+    labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
+    result = edt.edt(labels)
+    assert np.all(result == labels)  
 
 def test_one_d():
   def cmp(labels, ans, anisotropy=1.0):
-    labels = np.array(labels, dtype=np.uint32)
-    ans = np.array(ans, dtype=np.float32)
-    result = edt.edtsq(labels, anisotropy=anisotropy)    
-    assert np.all(result == ans)  
+    for dtype in TYPES:
+      print(dtype)
+      labels = np.array(labels, dtype=dtype)
+      ans = np.array(ans, dtype=np.float32)
+      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      assert np.all(result == ans)  
 
   cmp([], [])
 
@@ -65,10 +75,12 @@ def test_one_d():
 
 def test_two_d_ident():  
   def cmp(labels, ans, anisotropy=(1.0, 1.0)):
-    labels = np.array(labels, dtype=np.uint32)
-    ans = np.array(ans, dtype=np.float32)
-    result = edt.edtsq(labels, anisotropy=anisotropy)    
-    assert np.all(result == ans)  
+    for dtype in TYPES:
+      print(dtype)
+      labels = np.array(labels, dtype=dtype)
+      ans = np.array(ans, dtype=np.float32)
+      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      assert np.all(result == ans)  
 
   cmp([[]], [[]])
   cmp([[0]], [[0]])
@@ -83,10 +95,12 @@ def test_two_d_ident():
 
 def test_two_d():  
   def cmp(labels, ans, anisotropy=(1.0, 1.0)):
-    labels = np.array(labels, dtype=np.uint32)
-    ans = np.array(ans, dtype=np.float32)
-    result = edt.edtsq(labels, anisotropy=anisotropy)
-    assert np.all(result == ans)  
+    for dtype in TYPES:
+      print(dtype)
+      labels = np.array(labels, dtype=dtype)
+      ans = np.array(ans, dtype=np.float32)
+      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      assert np.all(result == ans)  
 
   cmp(
     [
@@ -233,10 +247,12 @@ def test_two_d():
 
 def test_three_d():  
   def cmp(labels, ans, anisotropy=(1.0, 1.0, 1.0)):
-    labels = np.array(labels, dtype=np.uint32)
-    ans = np.array(ans, dtype=np.float32)
-    result = edt.edtsq(labels, anisotropy=anisotropy)    
-    assert np.all(result == ans)  
+    for dtype in TYPES:
+      print(dtype)
+      labels = np.array(labels, dtype=dtype)
+      ans = np.array(ans, dtype=np.float32)
+      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      assert np.all(result == ans)  
 
   cmp([[[]]], [[[]]])
   cmp([[[0]]], [[[0]]])
