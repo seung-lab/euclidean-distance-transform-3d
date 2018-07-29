@@ -284,6 +284,63 @@ float* _edt3dsq(T* labels,
   return workspace; 
 }
 
+// about 20% faster on binary images by skipping
+// multisegment logic in parabolic
+float* _edt3dsq(bool* binaryimg, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz) {
+
+  const size_t sxy = sx * sy;
+
+  float *workspace = new float[sx * sy * sz]();
+  for (int z = 0; z < sz; z++) {
+    for (int y = 0; y < sy; y++) { 
+      // Might be possible to write this as a single pass, might be faster
+      // however, it's already only using about 3-5% of total CPU time.
+      // NOTE: Tried it, same speed overall.
+      squared_edt_1d_multi_seg<bool>(
+        (binaryimg + sx * y + sxy * z), 
+        (workspace + sx * y + sxy * z), 
+        sx, 1, wx); 
+    }
+  }
+
+  for (int z = 0; z < sz; z++) {
+    for (int x = 0; x < sx; x++) {
+      squared_edt_1d_parabolic(
+        (workspace + x + sxy * z), 
+        (workspace + x + sxy * z), 
+        sy, sx, wy);
+    }
+  }
+
+  for (int y = 0; y < sy; y++) {
+    for (int x = 0; x < sx; x++) {
+      squared_edt_1d_parabolic(
+        (workspace + x + sx * y), 
+        (workspace + x + sx * y), 
+        sz, sxy, wz);
+    }
+  }
+
+  return workspace; 
+}
+
+// Same as _edt3dsq, but applies square root to get
+// euclidean distance.
+float* _edt3d(bool* input, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz) {
+
+  float* transform = _edt3dsq<bool>(input, sx, sy, sz, wx, wy, wz);
+
+  for (int i = 0; i < sx * sy * sz; i++) {
+    transform[i] = std::sqrt(transform[i]);
+  }
+
+  return transform;
+}
+
 // Same as _edt3dsq, but applies square root to get
 // euclidean distance.
 template <typename T>
@@ -322,6 +379,27 @@ float* _edt2dsq(T* input,
   return xaxis;
 }
 
+// 2D version of _edt3dsq
+template <typename T>
+float* _edt2dsq(bool* binaryimg, 
+  const size_t sx, const size_t sy,
+  const float wx, const float wy) {
+
+  float *xaxis = new float[sx * sy]();
+  for (int y = 0; y < sy; y++) { 
+    squared_edt_1d_multi_seg<bool>((binaryimg + sx * y), (xaxis + sx * y), sx, 1, wx); 
+  }
+
+  for (int x = 0; x < sx; x++) {
+    squared_edt_1d_parabolic(
+      (xaxis + x), 
+      (xaxis + x), 
+      sy, sx, wy);
+  }
+
+  return xaxis;
+}
+
 // returns euclidean distance instead of squared distance
 template <typename T>
 float* _edt2d(T* input, 
@@ -336,6 +414,8 @@ float* _edt2d(T* input,
 
   return transform;
 }
+
+
 
 // Should be trivial to make an N-d version
 // if someone asks for it. Might simplify the interface.
