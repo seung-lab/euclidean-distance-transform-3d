@@ -204,7 +204,7 @@ void squared_edt_1d_parabolic_multi_seg(
     }
   }
 
-  if (last < n - 1) {
+  if (last < n) {
     squared_edt_1d_parabolic(f + last * stride, d + last * stride, n - last, stride, anisotropy);
   }
 }
