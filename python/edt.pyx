@@ -25,6 +25,7 @@ from libc.stdint cimport (
   uint8_t, uint16_t, uint32_t, uint64_t,
    int8_t,  int16_t,  int32_t,  int64_t
 )
+from libcpp cimport bool
 
 cimport numpy as numpy
 from cpython cimport array 
@@ -55,6 +56,27 @@ cdef extern from "../cpp/edt.hpp" namespace "pyedt":
   )
 
 def edt(data, anisotropy=None):
+  """
+  edt(data, anisotropy=None)
+
+  Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
+
+  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
+  The algorithm works both ways, however you'll want to reverse the order of the
+  anisotropic arguments for Fortran order.
+
+  Supports uint8, uint16, uint32, and uint64 data types.
+
+  Required:
+    data: a 1d, 2d, or 3d numpy array with a supported data type.
+  Optional:
+    anisotropy:
+      1D: scalar (default: 1.0)
+      2D: (x, y) (default: (1.0, 1.0) )
+      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
+
+  Returns: EDT of data
+  """
   dims = len(data.shape)
 
   if data.size == 0:
@@ -73,6 +95,29 @@ def edt(data, anisotropy=None):
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
 def edtsq(data, anisotropy=None):
+  """
+  edtsq(data, anisotropy=None)
+
+  Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
+
+  Squaring allows for omitting an sqrt operation, so may be faster if your use case allows for it.
+
+  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
+  The algorithm works both ways, however you'll want to reverse the order of the
+  anisotropic arguments for Fortran order.
+
+  Supports uint8, uint16, uint32, and uint64 data types.
+
+  Required:
+    data: a 1d, 2d, or 3d numpy array with a supported data type.
+  Optional:
+    anisotropy:
+      1D: scalar (default: 1.0)
+      2D: (x, y) (default: (1.0, 1.0) )
+      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
+
+  Returns: Squared EDT of data
+  """
   dims = len(data.shape)
 
   if data.size == 0:
@@ -99,6 +144,7 @@ def edt1dsq(data, anisotropy=1.0):
   cdef uint32_t[:] arr_memview32
   cdef uint64_t[:] arr_memview64
   cdef float[:] arr_memviewfloat
+  cdef bool[:] arr_memviewbool
 
   cdef float* xform = <float*>calloc(data.size, sizeof(float))
 
@@ -147,6 +193,15 @@ def edt1dsq(data, anisotropy=1.0):
       1,
       anisotropy
     )
+  elif data.dtype == np.bool:
+    arr_memviewbool = data
+    squared_edt_1d_multi_seg[bool](
+      <bool*>&arr_memviewbool[0],
+      xform,
+      data.size,
+      1,
+      anisotropy
+    )
   
   cdef float[:] xform_view = <float[:data.size]>xform
   return np.frombuffer(xform_view, dtype=np.float32)
@@ -160,6 +215,7 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
   cdef uint32_t[:,:] arr_memview32
   cdef uint64_t[:,:] arr_memview64
   cdef float[:,:] arr_memviewfloat
+  cdef bool[:,:] arr_memviewbool
 
   cdef float* xform
 
@@ -201,6 +257,13 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
       cols, rows,
       anisotropy[0], anisotropy[1]      
     )
+  elif data.dtype == np.bool:
+    arr_memviewbool = data
+    xform = _edt2dsq[bool](
+      <bool*>&arr_memviewbool[0,0],
+      cols, rows,
+      anisotropy[0], anisotropy[1]      
+    )
 
   cdef float[:] xform_view = <float[:data.size]>xform
   return np.frombuffer(xform_view, dtype=np.float32).reshape( data.shape )
@@ -214,6 +277,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
   cdef uint32_t[:,:,:] arr_memview32
   cdef uint64_t[:,:,:] arr_memview64
   cdef float[:,:,:] arr_memviewfloat
+  cdef bool[:,:,:] arr_memviewbool
 
   cdef float* xform
 
@@ -254,6 +318,13 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
     arr_memviewfloat = data
     xform = _edt3dsq[float](
       <float*>&arr_memviewfloat[0,0,0],
+      cols, rows, depth,
+      anisotropy[0], anisotropy[1], anisotropy[2]
+    )
+  elif data.dtype == np.bool:
+    arr_memviewbool = data
+    xform = _edt3dsq[bool](
+      <bool*>&arr_memviewbool[0,0,0],
       cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
