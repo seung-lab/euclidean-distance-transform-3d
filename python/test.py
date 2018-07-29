@@ -38,6 +38,10 @@ def test_one_d():
 
   cmp([], [])
 
+  cmp([1], [1])
+
+  cmp([5], [1])
+
   cmp(
     [ 0, 1, 1, 1, 0 ],
     [ 0, 1, 4, 1, 0 ]
@@ -215,23 +219,132 @@ def test_two_d():
     ]
   )
 
-# import time
-# # # for d in (np.uint8, np.uint16, np.uint32, np.uint64):
-# labels = np.ones(shape=(512, 512, 512), dtype=np.uint32)
-# # from scipy import ndimage
-# start = time.time()
-# res = edt.edtsq(labels, anisotropy=(1,1,1))
+  cmp(labels, 
+    [
+      [ 0, 0, 0, 0, 0, 0, 0 ], 
+      [ 1, 1, 1, 1, 1, 1, 1 ], 
+      [ 1, 1, 1, 1, 1, 1, 1 ], 
+      [ 1, 1, 1, 1, 1, 1, 1 ], 
+      [ 1, 4, 4, 4, 2, 1, 1 ], 
+      [ 1, 4, 4, 4, 1, 1, 1 ], 
+      [ 1, 1, 1, 1, 1, 1, 1 ], 
+    ]
+  )
 
-# # for i in range(300):
-# #   x = (labels == i) * res
+def test_three_d():  
+  def cmp(labels, ans, anisotropy=(1.0, 1.0, 1.0)):
+    labels = np.array(labels, dtype=np.uint32)
+    ans = np.array(ans, dtype=np.float32)
+    result = edt.edtsq(labels, anisotropy=anisotropy)    
+    assert np.all(result == ans)  
 
-# print('Multi-label EDT: ', time.time() - start, ' sec.')
+  cmp([[[]]], [[[]]])
+  cmp([[[0]]], [[[0]]])
+  cmp([[[1]]], [[[1]]])
+  cmp([[[5]]], [[[1]]])
+
+  cmp([
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+  ], 
+  [
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 4, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+  ])
 
 
-# # x = np.ones((512,512,512), dtype=np.int32)
+  cmp([
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+  ], 
+  [
+    [
+      [16, 16, 16], 
+      [16, 64, 16],
+      [16, 16, 16]
+    ],
+    [
+      [16, 16, 16], 
+      [16, 64, 16],
+      [16, 16, 16]
+    ],
+    [
+      [16, 16, 16], 
+      [16, 64, 16],
+      [16, 16, 16]
+    ],
+  ], anisotropy=(4,4,40))
 
-# # x[1,1,1] = 0
-# start = time.time()
-# ndimage.distance_transform_edt(labels)
-# print('ndimage EDT: ', time.time() - start, ' sec.')
-
+  cmp([
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+    [
+      [1, 1, 1], 
+      [1, 1, 1],
+      [1, 1, 1]
+    ],
+  ], 
+  [
+    [
+      [16, 16, 16], 
+      [16, 16, 16],
+      [16, 16, 16]
+    ],
+    [
+      [16, 64, 16], 
+      [16, 64, 16],
+      [16, 64, 16]
+    ],
+    [
+      [16, 16, 16], 
+      [16, 16, 16],
+      [16, 16, 16]
+    ],
+  ], anisotropy=(4,40,4))

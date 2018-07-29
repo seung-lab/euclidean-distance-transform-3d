@@ -57,8 +57,8 @@ cdef extern from "../cpp/edt.hpp" namespace "pyedt":
 def edt(data, anisotropy=None):
   dims = len(data.shape)
 
-  if data.size <= 1:
-    return np.copy(data).astype(np.float32)
+  if data.size == 0:
+    return np.zeros(shape=data.shape).astype(np.float32)
 
   if dims == 1:
     anisotropy = anisotropy or 1.0
@@ -75,8 +75,8 @@ def edt(data, anisotropy=None):
 def edtsq(data, anisotropy=None):
   dims = len(data.shape)
 
-  if data.size <= 1:
-    return np.copy(data).astype(np.float32)
+  if data.size == 0:
+    return np.zeros(shape=data.shape).astype(np.float32)
 
   if dims == 1:
     anisotropy = anisotropy or 1.0
@@ -98,6 +98,7 @@ def edt1dsq(data, anisotropy=1.0):
   cdef uint16_t[:] arr_memview16
   cdef uint32_t[:] arr_memview32
   cdef uint64_t[:] arr_memview64
+  cdef float[:] arr_memviewfloat
 
   cdef float* xform = <float*>calloc(data.size, sizeof(float))
 
@@ -137,9 +138,17 @@ def edt1dsq(data, anisotropy=1.0):
       1,
       anisotropy
     )
+  elif data.dtype == np.float32:
+    arr_memviewfloat = data
+    squared_edt_1d_multi_seg[float](
+      <float*>&arr_memviewfloat[0],
+      xform,
+      data.size,
+      1,
+      anisotropy
+    )
   
   cdef float[:] xform_view = <float[:data.size]>xform
-
   return np.frombuffer(xform_view, dtype=np.float32)
 
 def edt2d(data, anisotropy=(1.0, 1.0)):
@@ -150,6 +159,7 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
   cdef uint16_t[:,:] arr_memview16
   cdef uint32_t[:,:] arr_memview32
   cdef uint64_t[:,:] arr_memview64
+  cdef float[:,:] arr_memviewfloat
 
   cdef float* xform
 
@@ -184,6 +194,13 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
       cols, rows,
       anisotropy[0], anisotropy[1]      
     )
+  elif data.dtype == np.float32:
+    arr_memviewfloat = data
+    xform = _edt2dsq[float](
+      <float*>&arr_memviewfloat[0,0],
+      cols, rows,
+      anisotropy[0], anisotropy[1]      
+    )
 
   cdef float[:] xform_view = <float[:data.size]>xform
   return np.frombuffer(xform_view, dtype=np.float32).reshape( data.shape )
@@ -196,6 +213,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
   cdef uint16_t[:,:,:] arr_memview16
   cdef uint32_t[:,:,:] arr_memview32
   cdef uint64_t[:,:,:] arr_memview64
+  cdef float[:,:,:] arr_memviewfloat
 
   cdef float* xform
 
@@ -229,6 +247,13 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
     arr_memview64 = data
     xform = _edt3dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0,0],
+      cols, rows, depth,
+      anisotropy[0], anisotropy[1], anisotropy[2]
+    )
+  elif data.dtype == np.float32:
+    arr_memviewfloat = data
+    xform = _edt3dsq[float](
+      <float*>&arr_memviewfloat[0,0,0],
       cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )

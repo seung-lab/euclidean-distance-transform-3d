@@ -116,37 +116,15 @@ The backwards pass is unchanged:
 
 The parabola method attempts to find the lower envelope of the parabols described by vertices (i, f(i)).
 
-We handle multiple labels by preprocessing the image as follows:
+We handle multiple labels by running the FH method on contiguous blocks of labels independently. For example, in the following column:  
 
-1. If a pixel corresponds to the label 0, set the vertex height to zero. 
-    (Due to the X pass already doing this, this may be unnecessary.)
-2. Track the label, if it changes, set the vertex height to the current
-   unit distance setting (anisotropy) for both the current index and 
-   the previous index (if its label is non-zero).
+```
+Y LABELS:  0 1 1 1 1 1 2 0 3 3 3 3 2 2 1 2 3 0
+X AXIS:    0 9 9 1 2 9 7 0 2 3 9 1 1 1 4 4 2 0
+FH Domain: 1 1 1 1 1 1 2 2 3 3 3 3 4 4 5 6 7 7
+```
 
-This has the effect of setting all pixel boundaries to unity. In 2D this solves this problem:
-
-
-#### Without Modification
-
-     Original:       X Transform:      Y Transform:
-     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
-     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
-     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 4 4 4 1 0   
-     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 4 4 4 1 0   
-     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
-     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
-
-
-#### With Modification
-
-     Original:       X + Mod:          Y Transform:
-     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
-     0 1 1 1 1 1 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
-     0 1 1 1 1 1 0   0 1 1 1 1 1 0     0 1 1 1 1 1 0   
-     0 2 2 2 2 2 0   0 1 1 1 1 1 0     0 1 1 1 1 1 0   
-     0 2 2 2 2 2 0   0 1 4 9 4 1 0     0 1 1 1 1 1 0   
-     0 0 0 0 0 0 0   0 0 0 0 0 0 0     0 0 0 0 0 0 0   
+Each domain is processed within the envelope described below. This ensures that edges are labeled 1. Alternatively, one can preprocess the image and set differing label pixels to zero and run the FH method without changes, however, this causes edge pixels to be labeled 0 instead of 1. I felt it was nicer to let the background value be zero rather than something like -1 or infinity since 0 is more commonly used in our processes as background.
 
 ### Additional Parabolic Envelope  
 

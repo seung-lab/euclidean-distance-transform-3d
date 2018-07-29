@@ -36,3 +36,6 @@
 *.pyc
 .eggs
 *.egg-info
+
+.pytest_cache
+cpp/test

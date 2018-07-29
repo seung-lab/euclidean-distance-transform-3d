@@ -337,6 +337,10 @@ float* _edt2d(T* input,
   return transform;
 }
 
+// Should be trivial to make an N-d version
+// if someone asks for it. Might simplify the interface.
+
+
 } // namespace pyedt
 
 namespace edt {
