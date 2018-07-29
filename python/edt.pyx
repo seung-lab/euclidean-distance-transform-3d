@@ -153,32 +153,35 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
 
   cdef float* xform
 
+  cdef int rows = data.shape[0]
+  cdef int cols = data.shape[1]
+
   if data.dtype == np.uint8:
     arr_memview8 = data
     xform = _edt2dsq[uint8_t](
       <uint8_t*>&arr_memview8[0,0],
-      data.shape[0], data.shape[1],
+      cols, rows,
       anisotropy[0], anisotropy[1]      
     )
   elif data.dtype == np.uint16:
     arr_memview16 = data
     xform = _edt2dsq[uint16_t](
       <uint16_t*>&arr_memview16[0,0],
-      data.shape[0], data.shape[1],
+      cols, rows,
       anisotropy[0], anisotropy[1]      
     )
   elif data.dtype == np.uint32:
     arr_memview32 = data
     xform = _edt2dsq[uint32_t](
       <uint32_t*>&arr_memview32[0,0],
-      data.shape[0], data.shape[1],
+      cols, rows,
       anisotropy[0], anisotropy[1]      
     )
   elif data.dtype == np.uint64:
     arr_memview64 = data
     xform = _edt2dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0],
-      data.shape[0], data.shape[1],
+      cols, rows,
       anisotropy[0], anisotropy[1]      
     )
 
@@ -196,32 +199,37 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
 
   cdef float* xform
 
+  cdef int rows = data.shape[2]
+  cdef int cols = data.shape[1]
+  cdef int depth = data.shape[0]
+
+
   if data.dtype == np.uint8:
     arr_memview8 = data
     xform = _edt3dsq[uint8_t](
       <uint8_t*>&arr_memview8[0,0,0],
-      data.shape[0], data.shape[1], data.shape[2],
+      cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint16:
     arr_memview16 = data
     xform = _edt3dsq[uint16_t](
       <uint16_t*>&arr_memview16[0,0,0],
-      data.shape[0], data.shape[1], data.shape[2],
+      cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint32:
     arr_memview32 = data
     xform = _edt3dsq[uint32_t](
       <uint32_t*>&arr_memview32[0,0,0],
-      data.shape[0], data.shape[1], data.shape[2],
+      cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.uint64:
     arr_memview64 = data
     xform = _edt3dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0,0],
-      data.shape[0], data.shape[1], data.shape[2],
+      cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
 

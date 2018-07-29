@@ -108,11 +108,11 @@ void squared_edt_1d_multi_seg(
  *    *d: write destination, same size in voxels as *f
  *    n: number of voxels in *f
  *    stride: 1, sx, or sx*sy to handle multidimensional arrays
- *    anistropy: e.g. (4nm, 4nm, 40nm)
+ *    anisotropy: e.g. (4nm, 4nm, 40nm)
  * 
  * Returns: writes distance transform of f to d
  */
-void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride, const float anistropy) {
+void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride, const float anisotropy) {
   int k = 0;
   int* v = new int[n]();
   float* ranges = new float[n + 1]();
@@ -158,10 +158,10 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
       k++;
     }
 
-    d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
+    d[i * stride] = sq(anisotropy * (i - v[k])) + f[v[k] * stride];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
-    envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
+    envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));
     d[i * stride] = std::fminf(envelope, d[i * stride]);
   }
 
@@ -173,101 +173,40 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
 /* Same as squared_edt_1d_parabolic except that it handles
  * a simultaneous transform of multiple labels (like squared_edt_1d_multi_seg).
  * 
- * The parabola method attempts to find the lower envelope
- * of the parabols described by vertices (i, f(i)).
- *
- * We handle multiple labels by preprocessing the image as follows:
- * 
- * 1. If a pixel corresponds to the label 0, set the vertex height to zero.
- * 2. Track the label, if it changes, set the vertex height to the current
- *    unit distance setting (anisotropy) for both the current index and 
- *    the previous index (if its label is non-zero).
- *
  *  Parameters:
  *    *segids: an integer labeled image where 0 is background
  *    *f: the image ("sampled function" in the paper)
  *    *d: write destination, same size in voxels as *f
  *    n: number of voxels in *f
  *    stride: 1, sx, or sx*sy to handle multidimensional arrays
- *    anistropy: e.g. (4.0 = 4nm, 40.0 = 40nm)
+ *    anisotropy: e.g. (4.0 = 4nm, 40.0 = 40nm)
  * 
  * Returns: writes squared distance transform of f to d
  */
 template <typename T>
 void squared_edt_1d_parabolic_multi_seg(
     T* segids, float* f, float *d, 
-    const int n, const int stride, const float anistropy
+    const int n, const int stride, const float anisotropy
   ) {
 
   T working_segid = segids[0];
-  int segid;
-  for (int i = stride; i < n * stride; i += stride) {
-    segid = segids[i];
+  T segid;
+  int last = 0;
+  for (int i = 1; i < n; i++) {
+    segid = segids[i * stride];
     if (segid == 0) {
       continue;
     }
     else if (segid != working_segid) {
-      f[i] = anistropy;
-      f[i - stride] = (float)(segids[i - stride] != 0) * anistropy;
+      squared_edt_1d_parabolic(f + last * stride, d + last * stride, i - last, stride, anisotropy);
       working_segid = segid;
+      last = i;
     }
   }
 
-  int k = 0;
-  int* v = new int[n]();
-  float* ranges = new float[n + 1]();
-
-  ranges[0] = -INFINITY;
-  ranges[1] = +INFINITY;
-
-  /* Some algebraic tricks here for speed. Seems to save ~30% 
-   * at the cost of an extra n*4 bytes memory.
-   * Parabolic intersection equation.
-   *
-   * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
-   * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
-   * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
-   * 3: s = (f(r) - r(p) + (r+p)(r-p)) <-- remove floating division and consider later using integer math
-   */
-  float s; // intersection point
-  float factor1, factor2;
-
-  for (int i = 1; i < n; i++) {
-    factor1 = i - v[k];
-    factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
-
-    while (s <= ranges[k]) {
-      k--;
-      factor1 = i - v[k];
-      factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
-    }
-
-    k++;
-    v[k] = i;
-    ranges[k] = s;
-    ranges[k + 1] = +INFINITY;
+  if (last < n - 1) {
+    squared_edt_1d_parabolic(f + last * stride, d + last * stride, n - last, stride, anisotropy);
   }
-
-  k = 0;
-  float envelope;
-  for (int i = 0; i < n; i++) {
-    // compensate for not dividing ranges by 2.0 earlier w/ bit shift left
-    // and use factor1 from earlier
-    while (ranges[k + 1] < (i << 2) * (i - v[k])) { 
-      k++;
-    }
-
-    d[i * stride] = sq(anistropy * (i - v[k])) + f[v[k] * stride];
-    // Two lines below only about 3% of perf cost, thought it would be more
-    // They are unnecessary if you add a black border around the image.
-    envelope = std::fminf(sq(anistropy * (i + 1)), sq(anistropy * (n - i)));
-    d[i * stride] = std::fminf(envelope, d[i * stride]);
-  }
-
-  delete [] v;
-  delete [] ranges;
 }
 
 /* Df(x,y,z) = min( wx^2 * (x-x')^2 + Df|x'(y,z) )

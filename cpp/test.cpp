@@ -3,9 +3,9 @@
 using namespace pyedt;
 using namespace edt;
 
-void print2d(int* dest, int n) {
-  for (int i = 0; i < n*n; i++) {
-    if (i % n == 0 && i > 0) {
+void print2d(int* dest, int x, int y) {
+  for (int i = 0; i < x*y; i++) {
+    if (i % x == 0 && i > 0) {
       printf("\n");
     }
     printf("%d, ", dest[i]);
@@ -14,6 +14,14 @@ void print2d(int* dest, int n) {
   printf("\n\n");
 }
 
+
+void print2d(float* dest, int n) {
+  print2d(dest, n, n);
+}
+
+void print2d(int* dest, int n) {
+  print2d(dest, n, n);
+}
 
 void printint(int *f, int n) {
   for (int i = 0; i < n; i++) {
@@ -28,56 +36,56 @@ void printflt(float *f, int n) {
   }
 }
 
-// void test2d(int n) {
-//   int N = n*n;
-//   int* input = new int[N]();
+void test2d(int n) {
+  int N = n*n;
+  int* input = new int[N]();
   
-//   for (int i = 0; i < N; i++) {
-//     input[i] = 1;
-//   }
+  for (int i = 0; i < N; i++) {
+    input[i] = 1;
+  }
 
-//   input[12] = 0;
+  // input[N / 2] = 0;
 
-//   float* dest = edt2dsq<int>(input, n,n, 1.,1.);
+  float* dest = edtsq<int>(input, n,n, 1.,1.);
 
-//   print2d(dest, n);
+  print2d(dest, n);
 
-//   delete [] dest;
-//   delete [] input;
-// }
+  delete [] dest;
+  delete [] input;
+}
 
-// void test3d(int n) {
-//   int N = n*n*n;
-//   int* input = new int[N]();
+void test3d(int n) {
+  int N = n*n*n;
+  int* input = new int[N]();
   
-//   for (int i = 0; i < N / 2; i++) {
-//     input[i] = 1;
-//   }
+  for (int i = 0; i < N / 2; i++) {
+    input[i] = 1;
+  }
 
-//   for (int i = N / 2; i < N; i++) {
-//     input[i] = 1;
-//   }
+  for (int i = N / 2; i < N; i++) {
+    input[i] = 1;
+  }
 
-//   input[N / 2] = 0;
+  input[N / 2] = 0;
 
-//   float* dest = edt3dsq<int>(input, n,n,n, 1.,1.,1.);
+  float* dest = edtsq<int>(input, n,n,n, 1.,1.,1.);
 
-//   if (n < 20) {
-//     for (int i = 0; i < n*n*n; i++) {
-//       if (i % n == 0 && i > 0) {
-//         printf("\n");
-//       }
-//       if (i % (n*n) == 0 && i > 0) {
-//         printf("\n");
-//       }
-//       printf("%.2f, ", dest[i]);
-//     }
+  if (n < 20) {
+    for (int i = 0; i < n*n*n; i++) {
+      if (i % n == 0 && i > 0) {
+        printf("\n");
+      }
+      if (i % (n*n) == 0 && i > 0) {
+        printf("\n");
+      }
+      printf("%.2f, ", dest[i]);
+    }
 
-//     printf("\n\n\n");
-//   }
+    printf("\n\n\n");
+  }
 
-//   delete []dest;
-// }
+  delete []dest;
+}
 
 void print(int *in, float* f, float* ans, int n) {
   printf("in: ");
@@ -175,7 +183,7 @@ void assert(float *xform, float *ans, int n) {
 // }
 
 void test_two_d_parabola () {
-  int bordered_single[5*6] = { 
+  int labels[5*6] = { 
     1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 
     1, 1, 1, 1, 1, 
@@ -184,18 +192,23 @@ void test_two_d_parabola () {
     2, 2, 2, 2, 2
   };
 
-  float* res = edtsq<int>(bordered_single, 5, 6, 1., 1.);
+  float* res = edtsq<int>(labels, 5, 6, 1., 1.);
+
+  printf("INPUT: \n");
+  print2d(labels, 5, 6);
+  printf("OUTPUT: \n");
+  print2d(res, 5, 6);
 }
 
 
 
 int main () {
-  try {
-   test_two_d_parabola();
-  }
-  catch (char const *c) {
-   printf("%s", c);
-  }
+  // try {
+  //  test_two_d_parabola();
+  // }
+  // catch (char const *c) {
+  //  printf("%s", c);
+  // }
 
-  // test2d(10);
+  test2d(5);
 }
