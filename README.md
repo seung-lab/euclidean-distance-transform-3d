@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d.svg?branch=master)](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d)  
+
 ## Multi-Label Anisotropic 3D Euclidean Distance Transform (MLAEDT-3D)
 
 Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image containing multiple labels in a single pass with support for anisotropic dimensions.
