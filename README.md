@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d.svg?branch=master)](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d)  
+[![Build Status](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d.svg?branch=master)](https://travis-ci.org/seung-lab/euclidean-distance-transform-3d)  [![PyPI version](https://badge.fury.io/py/edt.svg)](https://badge.fury.io/py/edt)
 
 ## Multi-Label Anisotropic 3D Euclidean Distance Transform (MLAEDT-3D)
 
