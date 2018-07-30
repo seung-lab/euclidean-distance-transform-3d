@@ -1,0 +1,55 @@
+CHANGES
+=======
+
+* docs: mention fast sweep method for performance improvments
+* docs: added info about boolean arrays in python
+* fix: supported bool numpy array types
+* docs: fixed bug in C++ example
+* docs: updated C++ docs for binary\_edt
+* feat: added edt::binary\_edt to C++
+* docs: replaced 'et al' with actual author list in references
+* fix: Python2.7 compatibility
+* fix: point travis to right test file
+* docs: added travis build indicator
+* test: added travis support
+* docs: adjusted C++ namespace description
+* Update README.md
+* Update README.md
+* Update README.md
+* docs: updated image link
+* docs: added image of labeled cube
+* docs: revised text and included reference to I. Bitter
+* docs: added help info to edt.pyx
+* docs: described bool\* speedup
+* perf: accelerated binary images (denoted with a bool\* datatype)
+* test: added tests for all uint types. floats seem to be failing
+* docs: added reference for Meijister et al
+* test: added simple 3d tests
+* fix: last < n-1 => last < n
+* fix: algorithm now correctly handles label transitions
+* fix: more gracefully handle missing anisotropy
+* test: figuring out this failing test
+* fix: \_edt2dsq was not using the multi segment parabolic
+* docs: forgot to put template invocations in
+* feat: broke out cpp namespaces pyedt and edt to accomodate both usages
+* docs: added links to papers
+* docs: discussed use cases
+* docs: documented envelope modification
+* docs: described FH modification
+* docs: documented changes to RP algo
+* docs: description of basic EDT implementation w/o modifications
+* docs: added references
+* docs: how to use and some motivation
+* fix: compilation error
+* feat: working python edt
+* chore: moved cpp and python into seperate dirs
+* feat: multi-segment EDT for 3d
+* feat: added edt and edtsq for 2d and 3d
+* fix: 2d and 3d EDT are now computing correctly
+* fix: corrected mistake in parabolic EDT
+* fix: allocation error in 1d testing
+* fix: problems with handling zero in 1d multi-seg
+* feat: 3d EDT working
+* feat: 2D EDT working for single seg id
+* feat: squared\_edt\_1d\_multi\_seg working
+* Initial commit
