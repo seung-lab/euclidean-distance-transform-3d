@@ -49,7 +49,7 @@ int main () {
     int sx = 3, sy = 3, sz = 3;
     float wx = 6, wy = 6, wz = 30; // anisotropy
 
-    float* dt = edt::edt(labels, sx, sy, sz, wx, wy, wz);
+    float* dt = edt::edt<int>(labels, sx, sy, sz, wx, wy, wz);
 
     return 0;
 }
