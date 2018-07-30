@@ -204,7 +204,10 @@ def edt1dsq(data, anisotropy=1.0):
     )
   
   cdef float[:] xform_view = <float[:data.size]>xform
-  return np.frombuffer(xform_view, dtype=np.float32)
+  # This construct is required by python 2.
+  # Python 3 can just do np.frombuffer(vec_view, ...)
+  buf = bytearray(xform_view[:])
+  return np.frombuffer(buf, dtype=np.float32)
 
 def edt2d(data, anisotropy=(1.0, 1.0)):
   return np.sqrt(edt2dsq(data, anisotropy))
@@ -266,7 +269,10 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
     )
 
   cdef float[:] xform_view = <float[:data.size]>xform
-  return np.frombuffer(xform_view, dtype=np.float32).reshape( data.shape )
+  # This construct is required by python 2.
+  # Python 3 can just do np.frombuffer(vec_view, ...)
+  buf = bytearray(xform_view[:])
+  return np.frombuffer(buf, dtype=np.float32).reshape( data.shape )
 
 def edt3d(data, anisotropy=(1.0, 1.0, 1.0)):
   return np.sqrt(edt3dsq(data, anisotropy))
@@ -330,4 +336,8 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
     )
 
   cdef float[:] xform_view = <float[:data.size]>xform
-  return np.frombuffer(xform_view, dtype=np.float32).reshape( data.shape )
+  # This construct is required by python 2.
+  # Python 3 can just do np.frombuffer(vec_view, ...)
+  buf = bytearray(xform_view[:])
+  return np.frombuffer(buf, dtype=np.float32).reshape( data.shape )
+
