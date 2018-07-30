@@ -144,8 +144,7 @@ def edt1dsq(data, anisotropy=1.0):
   cdef uint32_t[:] arr_memview32
   cdef uint64_t[:] arr_memview64
   cdef float[:] arr_memviewfloat
-  cdef bool[:] arr_memviewbool
-
+  
   cdef float* xform = <float*>calloc(data.size, sizeof(float))
 
   if data.dtype == np.uint8:
@@ -194,9 +193,9 @@ def edt1dsq(data, anisotropy=1.0):
       anisotropy
     )
   elif data.dtype == np.bool:
-    arr_memviewbool = data
+    arr_memview8 = data.astype(np.uint8)
     squared_edt_1d_multi_seg[bool](
-      <bool*>&arr_memviewbool[0],
+      <bool*>&arr_memview8[0],
       xform,
       data.size,
       1,
@@ -261,9 +260,9 @@ def edt2dsq(data, anisotropy=(1.0, 1.0)):
       anisotropy[0], anisotropy[1]      
     )
   elif data.dtype == np.bool:
-    arr_memviewbool = data
+    arr_memview8 = data.astype(np.uint8)
     xform = _edt2dsq[bool](
-      <bool*>&arr_memviewbool[0,0],
+      <bool*>&arr_memview8[0,0],
       cols, rows,
       anisotropy[0], anisotropy[1]      
     )
@@ -283,7 +282,6 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
   cdef uint32_t[:,:,:] arr_memview32
   cdef uint64_t[:,:,:] arr_memview64
   cdef float[:,:,:] arr_memviewfloat
-  cdef bool[:,:,:] arr_memviewbool
 
   cdef float* xform
 
@@ -328,9 +326,9 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
       anisotropy[0], anisotropy[1], anisotropy[2]
     )
   elif data.dtype == np.bool:
-    arr_memviewbool = data
+    arr_memview8 = data.astype(np.uint8)
     xform = _edt3dsq[bool](
-      <bool*>&arr_memviewbool[0,0,0],
+      <bool*>&arr_memview8[0,0,0],
       cols, rows, depth,
       anisotropy[0], anisotropy[1], anisotropy[2]
     )

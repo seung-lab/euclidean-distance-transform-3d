@@ -3,11 +3,12 @@ import pytest
 import edt
 import numpy as np
 
-TYPES = [ 
-  np.uint8, np.uint16, np.uint32, np.uint64
-  # np.float32
-  # np.bool
+TYPES_NO_BOOL = [
+  np.uint8, np.uint16, np.uint32, np.uint64,
+  np.float32
 ]
+
+TYPES = TYPES_NO_BOOL + [ np.bool ]
 
 def test_one_d_identity():
   for dtype in TYPES:
@@ -38,8 +39,8 @@ def test_one_d_identity():
     assert np.all(result == labels)  
 
 def test_one_d():
-  def cmp(labels, ans, anisotropy=1.0):
-    for dtype in TYPES:
+  def cmp(labels, ans, types=TYPES, anisotropy=1.0):
+    for dtype in types:
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
@@ -70,12 +71,13 @@ def test_one_d():
 
   cmp(
     [ 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 1, 1, 1, 1, 3 ],
-    [ 1, 4, 9, 4, 1, 0, 1, 4, 9, 4, 1, 1, 4, 4, 1, 1 ]
+    [ 1, 4, 9, 4, 1, 0, 1, 4, 9, 4, 1, 1, 4, 4, 1, 1 ],
+    types=TYPES_NO_BOOL,
   )
 
 def test_two_d_ident():  
-  def cmp(labels, ans, anisotropy=(1.0, 1.0)):
-    for dtype in TYPES:
+  def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0)):
+    for dtype in types:
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
@@ -94,8 +96,8 @@ def test_two_d_ident():
   )
 
 def test_two_d():  
-  def cmp(labels, ans, anisotropy=(1.0, 1.0)):
-    for dtype in TYPES:
+  def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0)):
+    for dtype in types:
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
@@ -168,7 +170,8 @@ def test_two_d():
       [ 1, 1, 1, 1, 1 ], 
       [ 1, 2, 1, 2, 1 ], 
       [ 1, 1, 1, 1, 1 ], 
-    ]
+    ],
+    types=TYPES_NO_BOOL
   )
   
   cmp(
@@ -187,7 +190,8 @@ def test_two_d():
       [ 1, 1, 1, 1, 1, 1 ], 
       [ 1, 4, 4, 4, 4, 1 ], 
       [ 1, 1, 1, 1, 1, 1 ], 
-    ]
+    ],
+    types=TYPES_NO_BOOL
   )
 
   labels = np.ones( (6, 5), dtype=np.uint32)
@@ -200,7 +204,9 @@ def test_two_d():
       [ 1, 1, 1, 1, 1 ],
       [ 1, 4, 4, 4, 1 ], 
       [ 1, 1, 1, 1, 1 ], 
-    ])
+    ],
+    types=TYPES_NO_BOOL
+  )
 
   labels = np.ones( (5, 6), dtype=np.uint32)
   labels[3:,:] = 2 # rows 4-5 = 2
@@ -212,7 +218,8 @@ def test_two_d():
       [ 1, 1, 1, 1, 1, 1 ], 
       [ 1, 1, 1, 1, 1, 1 ],
       [ 1, 1, 1, 1, 1, 1 ], 
-    ]
+    ],
+    types=TYPES_NO_BOOL
   )
 
   labels = np.ones( (7, 7), dtype=np.uint32)
@@ -230,24 +237,13 @@ def test_two_d():
       [ 1, 4, 4, 4, 2, 1, 1 ], 
       [ 1, 4, 4, 4, 1, 1, 1 ], 
       [ 1, 1, 1, 1, 1, 1, 1 ], 
-    ]
-  )
-
-  cmp(labels, 
-    [
-      [ 0, 0, 0, 0, 0, 0, 0 ], 
-      [ 1, 1, 1, 1, 1, 1, 1 ], 
-      [ 1, 1, 1, 1, 1, 1, 1 ], 
-      [ 1, 1, 1, 1, 1, 1, 1 ], 
-      [ 1, 4, 4, 4, 2, 1, 1 ], 
-      [ 1, 4, 4, 4, 1, 1, 1 ], 
-      [ 1, 1, 1, 1, 1, 1, 1 ], 
-    ]
+    ],
+    types=TYPES_NO_BOOL
   )
 
 def test_three_d():  
-  def cmp(labels, ans, anisotropy=(1.0, 1.0, 1.0)):
-    for dtype in TYPES:
+  def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0, 1.0)):
+    for dtype in types:
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
