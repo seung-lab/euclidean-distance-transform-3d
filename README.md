@@ -161,6 +161,9 @@ If this scheme seems good to you and you're working with binary images, it is po
 
 The most expensive operation appears to be the Z scan of our 512x512x512 float cubes. This is almost certainly because of L1 cache misses. The X scan has a stride of 4 bytes and is very fast. The Y scan has a stride of 512\*4 bytes (2 KiB), and is also very fast. The Z scan has a stride of 512\*512\*4 bytes (1 MiB) and seems to add 3-5 seconds to the running time. The L1 cache on the tested computer is 32kB. I considered using half precision floats, but that would only bring it down to 512KiB, which is still a cache miss.  
 
+For our use case, this EDT implementation is probably fast enough. I have found that for 512<sup>3</sup> voxels, the dominant factor now is by far the fast masking operation (81 out of 90 seconds for 300 labels). However, there is a class of algorithms  by Hongkai Zhao [8]\[9] called the "fast sweep" method for Eikonal equations (i.e. superset of boundary distance equations) that appear to reduce the number of sweeps from two per a dimension to one. Therefore, I expect that an implementation of fast sweep would improve the EDT by a factor of about 2.  
+
+
 ### References
 
 1. M. Sato, I. Bitter, M.A. Bender, A.E. Kaufman, and M. Nakajima. "TEASAR: Tree-structure Extraction Algorithm for Accurate and Robust Skeletons". Proc. 8th Pacific Conf. on Computer Graphics and Applications. Oct. 2000. doi: 10.1109/PCCGA.2000.883951 ([link](https://ieeexplore.ieee.org/abstract/document/883951/))
@@ -170,3 +173,5 @@ The most expensive operation appears to be the Z scan of our 512x512x512 float c
 5. A. Rosenfeld and J. Pfaltz. "Sequential Operations in Digital Picture Processing". Journal of the ACM. Vol. 13, Issue 4, Oct. 1966, Pg. 471-494. doi: 10.1145/321356.321357 ([link](https://dl.acm.org/citation.cfm?id=321357))
 6. P. Felzenszwald and D. Huttenlocher. "Distance Transforms of Sampled Functions". Theory of Computing, Vol. 8, 2012, Pg. 415-428. doi: 10.4086/toc.2012.v008a019 ([link](http://cs.brown.edu/people/pfelzens/dt/))
 7. A. Meijster, J.B.T.M. Roerdink, and W.H. Hesselink. (2002) "A General Algorithm for Computing Distance Transforms in Linear Time". In: Goutsias J., Vincent L., Bloomberg D.S. (eds) Mathematical Morphology and its Applications to Image and Signal Processing. Computational Imaging and Vision, vol 18. Springer, Boston, MA. doi: 10.1007/0-306-47025-X_36 ([link](http://fab.cba.mit.edu/classes/S62.12/docs/Meijster_distance.pdf))
+8. H. Zhao. "A Fast Sweeping Method for Eikonal Equations". Mathematics of Computation. Vol. 74, Num. 250, Pg. 603-627. May 2004. doi: 10.1090/S0025-5718-04-01678-3 ([link](https://www.ams.org/journals/mcom/2005-74-250/S0025-5718-04-01678-3/))
+9. H. Zhao. "Parallel Implementations of the Fast Sweeping Method". Journal of Computational Mathematics. Vol. 25, No.4, Pg. 421-429. July 2007. Institute of Computational Mathematics and Scientific/Engineering Computing. ([link](https://www.jstor.org/stable/43693378))  
