@@ -146,7 +146,7 @@ To modify the first X-axis pass, I simply mark `I[0] = 1` and `I[n-1] = 1`. The 
 // let n be the number of voxels in this row
 // let d be the transformed (destination) image
 
-d[i] = square(w * (i - v)) + I[v] // line 18, pp. 420 of FH [5]
+d[i] = square(w * (i - v)) + I[v] // line 18, pp. 420 of FH [6]
 envelope = min(square(w * (i+1)), square(w * (n - i))) // envelope computation
 d[i] = min(envelope, d[i]) // application of envelope
 ```
