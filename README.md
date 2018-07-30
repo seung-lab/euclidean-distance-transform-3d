@@ -23,7 +23,7 @@ I'll likely create a PyPI package soon.
 
 ### Python Usage
 
-Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` which compute the euclidean and squared euclidean distance respectively. Both functions select dimension based on the shape of the numpy array fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast.  
+Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` which compute the euclidean and squared euclidean distance respectively. Both functions select dimension based on the shape of the numpy array fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast. Numpy boolean arrays are handled specially for faster processing.  
 
 If for some reason you'd like to use a specific 'D' function, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are available.
 
