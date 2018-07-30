@@ -1,3 +1,18 @@
+/* Multi-Label Anisotropic Euclidean Distance Transform 3D
+ *
+ * edt, edtsq - compute the euclidean distance transform 
+ *     on a single or multi-labeled image all at once.
+ *     boolean images are faster.
+ *
+ * binary_edt, binary_edtsq: Compute the EDT on a binary image
+ *     for all input data types. Multiple labels are not handled
+ *     but it's faster.
+ *
+ * Author: William Silversmith
+ * Affiliation: Seung Lab, Princeton Neuroscience Insitute
+ * Date: July 2018
+ */
+
 #include <cmath>
 #include <cstdint>
 #include <stdio.h>
@@ -7,6 +22,13 @@
 
 #ifndef EDT_H
 #define EDT_H
+
+
+// The pyedt namespace contains the primary implementation,
+// but users will probably want to use the edt namespace (bottom)
+// as the function sigs are a bit cleaner.
+// pyedt names are underscored to prevent namespace collisions
+// in the Cython wrapper.
 
 namespace pyedt {
 
@@ -284,9 +306,9 @@ float* _edt3dsq(T* labels,
   return workspace; 
 }
 
-// about 20% faster on binary images by skipping
-// multisegment logic in parabolic
-float* _edt3dsq(bool* binaryimg, 
+// skipping multi-seg logic results in a large speedup
+template <typename T>
+float* _binary_edt3dsq(T* binaryimg, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
@@ -298,7 +320,7 @@ float* _edt3dsq(bool* binaryimg,
       // Might be possible to write this as a single pass, might be faster
       // however, it's already only using about 3-5% of total CPU time.
       // NOTE: Tried it, same speed overall.
-      squared_edt_1d_multi_seg<bool>(
+      squared_edt_1d_multi_seg<T>(
         (binaryimg + sx * y + sxy * z), 
         (workspace + sx * y + sxy * z), 
         sx, 1, wx); 
@@ -326,19 +348,13 @@ float* _edt3dsq(bool* binaryimg,
   return workspace; 
 }
 
-// Same as _edt3dsq, but applies square root to get
-// euclidean distance.
-float* _edt3d(bool* input, 
+// about 20% faster on binary images by skipping
+// multisegment logic in parabolic
+float* _edt3dsq(bool* binaryimg, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
 
-  float* transform = _edt3dsq<bool>(input, sx, sy, sz, wx, wy, wz);
-
-  for (int i = 0; i < sx * sy * sz; i++) {
-    transform[i] = std::sqrt(transform[i]);
-  }
-
-  return transform;
+  return _binary_edt3dsq(binaryimg, sx, sy, sz, wx, wy, wz);
 }
 
 // Same as _edt3dsq, but applies square root to get
@@ -349,6 +365,21 @@ float* _edt3d(T* input,
   const float wx, const float wy, const float wz) {
 
   float* transform = _edt3dsq<T>(input, sx, sy, sz, wx, wy, wz);
+
+  for (int i = 0; i < sx * sy * sz; i++) {
+    transform[i] = std::sqrt(transform[i]);
+  }
+
+  return transform;
+}
+
+// skipping multi-seg logic results in a large speedup
+template <typename T>
+float* _binary_edt3d(T* input, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz) {
+
+  float* transform = _binary_edt3dsq<T>(input, sx, sy, sz, wx, wy, wz);
 
   for (int i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
@@ -379,15 +410,15 @@ float* _edt2dsq(T* input,
   return xaxis;
 }
 
-// 2D version of _edt3dsq
+// skipping multi-seg logic results in a large speedup
 template <typename T>
-float* _edt2dsq(bool* binaryimg, 
+float* _binary_edt2dsq(T* binaryimg, 
   const size_t sx, const size_t sy,
   const float wx, const float wy) {
 
   float *xaxis = new float[sx * sy]();
   for (int y = 0; y < sy; y++) { 
-    squared_edt_1d_multi_seg<bool>((binaryimg + sx * y), (xaxis + sx * y), sx, 1, wx); 
+    squared_edt_1d_multi_seg<T>((binaryimg + sx * y), (xaxis + sx * y), sx, 1, wx); 
   }
 
   for (int x = 0; x < sx; x++) {
@@ -398,6 +429,29 @@ float* _edt2dsq(bool* binaryimg,
   }
 
   return xaxis;
+}
+
+// skipping multi-seg logic results in a large speedup
+template <typename T>
+float* _binary_edt2d(T* binaryimg, 
+  const size_t sx, const size_t sy,
+  const float wx, const float wy) {
+
+  float *transform = _binary_edt2dsq(binaryimg, sx, sy, wx, wy);
+
+  for (int i = 0; i < sx * sy; i++) {
+    transform[i] = std::sqrt(transform[i]);
+  }
+
+  return transform;
+}
+
+// 2D version of _edt3dsq
+float* _edt2dsq(bool* binaryimg, 
+  const size_t sx, const size_t sy,
+  const float wx, const float wy) {
+
+  return _binary_edt2dsq(binaryimg, sx, sy, wx, wy);
 }
 
 // returns euclidean distance instead of squared distance
@@ -416,10 +470,8 @@ float* _edt2d(T* input,
 }
 
 
-
 // Should be trivial to make an N-d version
 // if someone asks for it. Might simplify the interface.
-
 
 } // namespace pyedt
 
@@ -448,6 +500,20 @@ float* edt(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
   return pyedt::_edt3d(labels, sx, sy, sz, wx, wy, wz);
 }
 
+template <typename T>
+float* binary_edt(T* labels, int sx, float wx) {
+  return edt::edt(labels, sx, wx);
+}
+
+template <typename T>
+float* binary_edt(T* labels, int sx, int sy, float wx, float wy) {
+  return pyedt::_binary_edt2d(labels, sx, sy, wx, wy);
+}
+
+template <typename T>
+float* binary_edt(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
+  return pyedt::_binary_edt3d(labels, sx, sy, sz, wx, wy, wz);
+}
 
 template <typename T>
 float* edtsq(T* labels, int sx, float wx) {
@@ -455,7 +521,6 @@ float* edtsq(T* labels, int sx, float wx) {
   pyedt::squared_edt_1d_multi_seg(labels, d, sx, 1, wx);
   return d;
 }
-
 
 template <typename T>
 float* edtsq(T* labels, int sx, int sy, float wx, float wy) {
@@ -466,6 +531,22 @@ template <typename T>
 float* edtsq(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
   return pyedt::_edt3dsq(labels, sx, sy, sz, wx, wy, wz);
 }
+
+template <typename T>
+float* binary_edtsq(T* labels, int sx, float wx) {
+  return edt::edtsq(labels, sx, wx);
+}
+
+template <typename T>
+float* binary_edtsq(T* labels, int sx, int sy, float wx, float wy) {
+  return pyedt::_binary_edt2dsq(labels, sx, sy, wx, wy);
+}
+
+template <typename T>
+float* binary_edtsq(T* labels, int sx, int sy, int sz, float wx, float wy, float wz) {
+  return pyedt::_binary_edt3dsq(labels, sx, sy, sz, wx, wy, wz);
+}
+
 
 } // namespace edt
 

@@ -14,6 +14,17 @@ void print2d(int* dest, int x, int y) {
   printf("\n\n");
 }
 
+void print2d(float* dest, int x, int y) {
+  for (int i = 0; i < x*y; i++) {
+    if (i % x == 0 && i > 0) {
+      printf("\n");
+    }
+    printf("%.1f, ", dest[i]);
+  }
+
+  printf("\n\n");
+}
+
 
 void print2d(float* dest, int n) {
   print2d(dest, n, n);
