@@ -9,7 +9,7 @@ Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image contai
 
 ### Python Installation
 
-*Requires a C++ compiler*
+*Requires a C++ compiler.*
 
 ```bash
 cd python
@@ -35,7 +35,7 @@ dt = edt.edt(labels, anisotropy=(6, 6, 30)) # e.g. for the S1 dataset by Kasthur
 
 ### C++ Usage
 
-Include the edt.hpp header which includes the implementation in namespace `edt`. The function names are underscored to avoid a namespace collision in Cython.   
+Include the edt.hpp header which includes the implementation in namespace `edt`. 
 
 ```cpp
 #include "edt.hpp"
@@ -78,7 +78,7 @@ This implementation was able to compute the distance transform of a binary image
 
 ### Basic EDT Algorithm Description
 
-A naive implementation of the distance transform is very expensive as it would require a search that is O(N<sup>2</sup>) in the number of voxels. In 1994, Saito and Toriwaki (ST) showed how to decompose this search into passes along x, y, and z linear in the number of voxels. After the X-axis EDT is computed, the Y-axis EDT can be computed on top of it by finding the minimum x^2 + y^2 for each voxel within each column. You can extend this argument to N dimensions. The pertient issue is then finding the minima efficiently without having to scan each column a quadratic number of times.
+A naive implementation of the distance transform is very expensive as it would require a search that is O(N<sup>2</sup>) in the number of voxels. In 1994, Saito and Toriwaki (ST) showed how to decompose this search into passes along x, y, and z linear in the number of voxels. After the X-axis EDT is computed, the Y-axis EDT can be computed on top of it by finding the minimum x<sup>2</sup> + y<sup>2</sup> for each voxel within each column. You can extend this argument to N dimensions. The pertient issue is then finding the minima efficiently without having to scan each column a quadratic number of times.
 
 Felzenszwalb and Huttenlocher (FH) [6] and others have described taking advantage of the geometric interpretation of the distance function, as a parabola. Using ST's decomposition of the EDT into three passes, each broken up by row, the problem becomes one dimensional. FH described computing each pass on each row by finding the minimal envelope of the space created by the parabolas that project from the vertices located at (i, f(i)) for a one dimensional image f.     
 
