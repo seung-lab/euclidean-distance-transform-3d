@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+1.0.0
+-----
+
+* chore: setup for pypi distribution
 * docs: mention fast sweep method for performance improvments
 * docs: added info about boolean arrays in python
 * fix: supported bool numpy array types
