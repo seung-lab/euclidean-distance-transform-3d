@@ -27,9 +27,9 @@ python setup.py develop # compiles edt.cpp and edt.hpp
 
 ### Python Usage
 
-Consult `help(edt)` after importing. The edt module contains: `edt`, `edtsq` which compute the euclidean and squared euclidean distance respectively and select dimension based on the shape of the numpy object fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast.  
+Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` which compute the euclidean and squared euclidean distance respectively. Both functions select dimension based on the shape of the numpy array fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast.  
 
-If for some reason you'd like to use the specific 'D' function you want, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are included.
+If for some reason you'd like to use a specific 'D' function, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are available.  
 
 ```python
 import edt
