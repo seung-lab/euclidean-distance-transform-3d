@@ -447,6 +447,7 @@ float* _binary_edt2d(T* binaryimg,
 }
 
 // 2D version of _edt3dsq
+template <typename T>
 float* _edt2dsq(bool* binaryimg, 
   const size_t sx, const size_t sy,
   const float wx, const float wy) {
