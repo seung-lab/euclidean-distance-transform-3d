@@ -350,6 +350,7 @@ float* _binary_edt3dsq(T* binaryimg,
 
 // about 20% faster on binary images by skipping
 // multisegment logic in parabolic
+template <typename T>
 float* _edt3dsq(bool* binaryimg, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz) {
