@@ -142,27 +142,24 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
 
-  /* Some algebraic tricks here for speed. Seems to save ~30% 
-   * at the cost of an extra n*4 bytes memory.
-   * Parabolic intersection equation.
+  /* Unclear if this adds much but I certainly find it easier to get the parens right.
    *
    * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
    * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
    * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
-   * 3: s = (f(r) - r(p) + (r+p)(r-p)) <-- remove floating division and consider later using integer math
    */
   float s;
   float factor1, factor2;
   for (int i = 1; i < n; i++) {
     factor1 = i - v[k];
     factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
+    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = i - v[k];
       factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2);
+      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
     }
 
     k++;
@@ -176,7 +173,7 @@ void squared_edt_1d_parabolic(float* f, float *d, const int n, const int stride,
   for (int i = 0; i < n; i++) {
     // compensate for not dividing ranges by 2.0 earlier w/ bit shift left
     // and use factor1 from earlier
-    while (ranges[k + 1] < (i << 2) * (i - v[k])) { 
+    while (ranges[k + 1] < i) { 
       k++;
     }
 
