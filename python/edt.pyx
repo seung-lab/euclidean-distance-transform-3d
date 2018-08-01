@@ -34,7 +34,7 @@ import numpy as np
 
 __VERSION__ = '1.0.0'
 
-cdef extern from "../cpp/edt.hpp" namespace "pyedt":
+cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
     T *labels,
     float *dest,

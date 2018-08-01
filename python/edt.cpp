@@ -582,7 +582,7 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "pythread.h"
-#include "../cpp/edt.hpp"
+#include "edt.hpp"
 #include "pystate.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -25549,7 +25549,7 @@ if (!__Pyx_RefNanny) {
  * 
  * __VERSION__ = '1.0.0'             # <<<<<<<<<<<<<<
  * 
- * cdef extern from "../cpp/edt.hpp" namespace "pyedt":
+ * cdef extern from "edt.hpp" namespace "pyedt":
  */
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_VERSION, __pyx_kp_u_1_0_0) < 0) __PYX_ERR(0, 35, __pyx_L1_error)
 
