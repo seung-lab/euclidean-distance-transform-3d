@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.0.4
+-----
+
+* fix: add edt.hpp to MANIFEST.in to ensure packaging
+
+1.0.3
+-----
+
+* fix: change edt.hpp from cpp dir to python dir
+* chore: copy edt.hpp from cpp to python
+
 1.0.2
 -----
 

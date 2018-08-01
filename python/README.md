@@ -11,7 +11,7 @@ The installation process depends on `edt.cpp` for the Python bindings derived fr
 ```bash
 cd python
 pip install numpy
-python setup.py develop
+pip install edt
 ```
 
 ### Recompiling `edt.pyx`
