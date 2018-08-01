@@ -403,7 +403,7 @@ def test_three_d():
   ], anisotropy=(4,40,4))
 
 def test_3d_scipy_comparison():
-  randos = np.random.randint(0, 2, size=(5, 5, 3), dtype=np.uint32)
+  randos = np.random.randint(0, 2, size=(10, 10, 10), dtype=np.uint32)
   labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=np.uint32)
   # Scipy requires zero borders
   labels[1:-1,1:-1,1:-1] = randos
