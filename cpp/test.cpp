@@ -1,5 +1,7 @@
 #include "edt.hpp"
 
+#include <chrono>
+
 using namespace pyedt;
 using namespace edt;
 
@@ -34,14 +36,13 @@ void print2d(int* dest, int n) {
   print2d(dest, n, n);
 }
 
-void printint(int *f, int n) {
+void print(int *f, int n) {
   for (int i = 0; i < n; i++) {
     printf("%d, ", f[i]);
   }
 }
 
-
-void printflt(float *f, int n) {
+void print(float *f, int n) {
   for (int i = 0; i < n; i++) {
     printf("%.2f, ", f[i]);
   }
@@ -65,7 +66,7 @@ void test2d(int n) {
   delete [] input;
 }
 
-void test3d(int n) {
+double test3d(int n) {
   int N = n*n*n;
   int* input = new int[N]();
   
@@ -79,7 +80,11 @@ void test3d(int n) {
 
   input[N / 2] = 0;
 
+  auto begin = std::chrono::high_resolution_clock::now();
+
   float* dest = edtsq<int>(input, n,n,n, 1.,1.,1.);
+
+  auto end = std::chrono::high_resolution_clock::now();
 
   if (n < 20) {
     for (int i = 0; i < n*n*n; i++) {
@@ -96,26 +101,32 @@ void test3d(int n) {
   }
 
   delete []dest;
+
+  auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
+  auto secs = static_cast<double>(duration) / 1000. / 1000.;
+  return secs;
 }
 
 void print(int *in, float* f, float* ans, int n) {
   printf("in: ");
-  printint(in, n);
+  print(in, n);
   printf("\nout: ");
-  printflt(f, n);
+  print(f, n);
   printf("\nans: ");
-  printflt(ans, n);
+  print(ans, n);
   printf("\n");
 }
 
 
 void print(float *in, float* f, float* ans, int n) {
   printf("in: ");
-  printflt(in, n);
+  print(in, n);
   printf("\nout: ");
-  printflt(f, n);
+  print(f, n);
   printf("\nans: ");
-  printflt(ans, n);
+  print(ans, n);
   printf("\n");
 }
 
@@ -211,8 +222,6 @@ void test_two_d_parabola () {
   print2d(res, 5, 6);
 }
 
-
-
 int main () {
   // try {
   //  test_two_d_parabola();
@@ -220,6 +229,6 @@ int main () {
   // catch (char const *c) {
   //  printf("%s", c);
   // }
-
-  test2d(5);
+  auto secs = test3d(512);
+  printf("Took %.3f sec.\n", secs);
 }
