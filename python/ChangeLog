@@ -1,6 +1,16 @@
 CHANGES
 =======
 
+1.0.2
+-----
+
+* test: made 3D test more stringent
+* fix: 3D edt had wrong dimension order
+* test: updated 3d cpp test to be more precise
+* fix: tried to be too clever and screwed up the intercept calculation
+* fix: boolean specialization of edt3dsq now actually selected
+* fix: boolean specialization of edt2dsq now actually selected
+
 1.0.1
 -----
 
