@@ -2,6 +2,7 @@ import pytest
 
 import edt
 import numpy as np
+from scipy import ndimage
 
 TYPES_NO_BOOL = [
   np.uint8, np.uint16, np.uint32, np.uint64,
@@ -75,6 +76,25 @@ def test_one_d():
     types=TYPES_NO_BOOL,
   )
 
+def test_1d_scipy_comparison():
+  randos = np.random.randint(0, 2, size=(100), dtype=np.uint32)
+  labels = np.zeros( (randos.shape[0] + 2,), dtype=np.uint32)
+  # Scipy requires zero borders
+  labels[1:-1] = randos
+
+  print("INPUT")
+  print(labels)
+
+  print("MLAEDT")
+  mlaedt_result = edt.edt(labels)
+  print(mlaedt_result)
+
+  print("SCIPY")
+  scipy_result = ndimage.distance_transform_edt(labels)
+  print(scipy_result)
+
+  assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+
 def test_two_d_ident():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0)):
     for dtype in types:
@@ -102,6 +122,7 @@ def test_two_d():
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
       result = edt.edtsq(labels, anisotropy=anisotropy)    
+      print(result)
       assert np.all(result == ans)  
 
   cmp(
@@ -241,6 +262,26 @@ def test_two_d():
     types=TYPES_NO_BOOL
   )
 
+
+def test_2d_scipy_comparison():
+  randos = np.random.randint(0, 2, size=(5, 5), dtype=np.uint32)
+  labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=np.uint32)
+  # Scipy requires zero borders
+  labels[1:-1,1:-1] = randos
+
+  print("INPUT")
+  print(labels)
+
+  print("MLAEDT")
+  mlaedt_result = edt.edt(labels)
+  print(mlaedt_result)
+
+  print("SCIPY")
+  scipy_result = ndimage.distance_transform_edt(labels)
+  print(scipy_result)
+
+  assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+
 def test_three_d():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0, 1.0)):
     for dtype in types:
@@ -360,3 +401,26 @@ def test_three_d():
       [16, 16, 16]
     ],
   ], anisotropy=(4,40,4))
+
+def test_3d_scipy_comparison():
+  randos = np.random.randint(0, 2, size=(5, 5, 3), dtype=np.uint32)
+  labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=np.uint32)
+  # Scipy requires zero borders
+  labels[1:-1,1:-1,1:-1] = randos
+
+  print("INPUT")
+  print(labels)
+
+  print("MLAEDT")
+  mlaedt_result = edt.edt(labels)
+  print(mlaedt_result)
+
+  print("SCIPY")
+  scipy_result = ndimage.distance_transform_edt(labels)
+  print(scipy_result)
+
+  print("DIFF")
+  print(np.abs(scipy_result == mlaedt_result))
+  print(np.max(np.abs(scipy_result - mlaedt_result)))
+
+  assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )

@@ -285,10 +285,9 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0)):
 
   cdef float* xform
 
-  cdef int rows = data.shape[2]
-  cdef int cols = data.shape[1]
   cdef int depth = data.shape[0]
-
+  cdef int rows = data.shape[1]
+  cdef int cols = data.shape[2]
 
   if data.dtype == np.uint8:
     arr_memview8 = data
