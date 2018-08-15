@@ -14,7 +14,6 @@ Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image contai
 *Requires a C++ compiler.*
 
 ```bash
-cd python
 pip install numpy
 pip install edt
 ```
