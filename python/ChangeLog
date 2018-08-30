@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.0.5
+-----
+
+* fix: memory leak
+* docs: added Mejister et al to comment
+* Update README.md
+* Update README.md
+* docs: added PyPI package installation instructions
+
 1.0.4
 -----
 

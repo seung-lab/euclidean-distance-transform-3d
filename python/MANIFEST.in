@@ -1,1 +1,2 @@
 include edt.hpp
+include LICENSE
