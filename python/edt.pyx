@@ -2,13 +2,11 @@
 Cython binding for the C++ multi-label Euclidean Distance
 Transform library by William Silversmith based on the 
 algorithms of Meijister et al (2002) Felzenzwalb et al. (2012) 
-and Saito et al. 1994.
+and Saito et al. (1994).
 
 Given a 1d, 2d, or 3d volume of labels, compute the Euclidean
 Distance Transform such that label boundaries are marked as
 distance 1 and 0 is always 0.
-
-You can then use 
 
 Key methods: 
   edt, edtsq
