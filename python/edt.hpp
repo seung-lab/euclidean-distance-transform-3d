@@ -226,15 +226,89 @@ void squared_edt_1d_parabolic(
     else if (black_border_right) {
       d[i * stride] = std::fminf(sq(anisotropy * (n - i)), d[i * stride]);      
     }
-    else {
-      d[i * stride] = std::fminf(sq(anisotropy * (i + 1)), d[i * stride]); 
-    }
   }
 
   delete [] v;
   delete [] ranges;
 }
 
+// about 5% faster
+void squared_edt_1d_parabolic(
+    float* f, 
+    float *d, 
+    const int n, 
+    const int stride, 
+    const float anisotropy
+  ) {
+
+  int k = 0;
+  int* v = new int[n]();
+  float* ranges = new float[n + 1]();
+
+  ranges[0] = -INFINITY;
+  ranges[1] = +INFINITY;
+
+  /* Unclear if this adds much but I certainly find it easier to get the parens right.
+   *
+   * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
+   * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
+   * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
+   */
+  float s;
+  float factor1, factor2;
+  for (int i = 1; i < n; i++) {
+    factor1 = i - v[k];
+    factor2 = i + v[k];
+    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+
+    while (s <= ranges[k]) {
+      k--;
+      factor1 = i - v[k];
+      factor2 = i + v[k];
+      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    }
+
+    k++;
+    v[k] = i;
+    ranges[k] = s;
+    ranges[k + 1] = +INFINITY;
+  }
+
+  k = 0;
+  float envelope;
+  for (int i = 0; i < n; i++) {
+    while (ranges[k + 1] < i) { 
+      k++;
+    }
+
+    d[i * stride] = sq(anisotropy * (i - v[k])) + f[v[k] * stride];
+    // Two lines below only about 3% of perf cost, thought it would be more
+    // They are unnecessary if you add a black border around the image.
+    envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));
+    d[i * stride] = std::fminf(envelope, d[i * stride]);
+  }
+
+  delete [] v;
+  delete [] ranges;
+}
+
+void _squared_edt_1d_parabolic(
+    float* f, 
+    float *d, 
+    const int n, 
+    const int stride, 
+    const float anisotropy, 
+    const bool black_border_left,
+    const bool black_border_right
+  ) {
+
+  if (black_border_left && black_border_right) {
+    squared_edt_1d_parabolic(f, d, n, stride, anisotropy);
+  }
+  else {
+   squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
+  }
+}
 
 /* Same as squared_edt_1d_parabolic except that it handles
  * a simultaneous transform of multiple labels (like squared_edt_1d_multi_seg).
@@ -266,7 +340,7 @@ void squared_edt_1d_parabolic_multi_seg(
     }
     else if (segid != working_segid) {
       if (working_segid != 0) {
-        squared_edt_1d_parabolic(
+        _squared_edt_1d_parabolic(
           f + last * stride, 
           d + last * stride, 
           i - last, stride, anisotropy,
@@ -279,11 +353,11 @@ void squared_edt_1d_parabolic_multi_seg(
   }
 
   if (working_segid != 0 && last < n) {
-    squared_edt_1d_parabolic(
+    _squared_edt_1d_parabolic(
       f + last * stride, 
       d + last * stride, 
       n - last, stride, anisotropy,
-      true, black_border
+      black_border || last > 0, black_border
     );
   }
 }
@@ -406,7 +480,7 @@ float* _binary_edt3dsq(T* binaryimg,
 
   for (size_t z = 0; z < sz; z++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic(
+      _squared_edt_1d_parabolic(
         (workspace + x + sxy * z), 
         (workspace + x + sxy * z), 
         sy, sx, wy, 
@@ -417,7 +491,7 @@ float* _binary_edt3dsq(T* binaryimg,
 
   for (size_t y = 0; y < sy; y++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic(
+      _squared_edt_1d_parabolic(
         (workspace + x + sx * y), 
         (workspace + x + sx * y), 
         sz, sxy, wz, 
@@ -538,7 +612,7 @@ float* _binary_edt2dsq(T* binaryimg,
   }
 
   for (size_t x = 0; x < sx; x++) {
-    squared_edt_1d_parabolic(
+    _squared_edt_1d_parabolic(
       (workspace + x), 
       (workspace + x), 
       sy, sx, wy,

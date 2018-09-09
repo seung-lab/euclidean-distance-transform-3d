@@ -375,18 +375,12 @@ def test_two_d():
   )
 
 def test_2d_scipy_comparison_black_border():
-  for dtype in (np.uint8,):
+  for dtype in INTEGER_TYPES:
     print(dtype)
-    # randos = np.random.randint(0, 2, size=(3, 3), dtype=dtype)
-    # labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
-    # # Scipy requires zero borders
-    # labels[1:-1,1:-1] = randos
-    labels = np.array([
-      [0,0,0,0],
-      [0,1,1,1],
-      [0,0,1,0]
-    ])#, dtype=np.uint8)
-    print(labels.dtype)
+    randos = np.random.randint(0, 2, size=(3, 3), dtype=dtype)
+    labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
+    # Scipy requires zero borders
+    labels[1:-1,1:-1] = randos
 
     print("INPUT")
     print(labels)
