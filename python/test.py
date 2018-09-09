@@ -15,28 +15,28 @@ def test_one_d_identity():
   for dtype in TYPES:
     print(dtype)
     labels = np.array([ 0 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
     labels = np.array([ 1 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
     labels = np.array([ 0, 1 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
     labels = np.array([ 1, 0 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
 
     labels = np.array([ 0, 1, 0 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)  
 
     labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
-    result = edt.edt(labels)
+    result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)  
 
 def test_one_d():
@@ -45,7 +45,7 @@ def test_one_d():
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
       assert np.all(result == ans)  
 
   cmp([], [])
@@ -86,7 +86,7 @@ def test_1d_scipy_comparison():
   print(labels)
 
   print("MLAEDT")
-  mlaedt_result = edt.edt(labels)
+  mlaedt_result = edt.edt(labels, black_border=True)
   print(mlaedt_result)
 
   print("SCIPY")
@@ -101,7 +101,7 @@ def test_two_d_ident():
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
       assert np.all(result == ans)  
 
   cmp([[]], [[]])
@@ -121,7 +121,7 @@ def test_two_d():
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
       print(result)
       assert np.all(result == ans)  
 
@@ -273,7 +273,7 @@ def test_2d_scipy_comparison():
   print(labels)
 
   print("MLAEDT")
-  mlaedt_result = edt.edt(labels)
+  mlaedt_result = edt.edt(labels, black_border=True)
   print(mlaedt_result)
 
   print("SCIPY")
@@ -288,7 +288,7 @@ def test_three_d():
       print(dtype)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy)    
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
       assert np.all(result == ans)  
 
   cmp([[[]]], [[[]]])
@@ -412,7 +412,7 @@ def test_3d_scipy_comparison():
   print(labels)
 
   print("MLAEDT")
-  mlaedt_result = edt.edt(labels)
+  mlaedt_result = edt.edt(labels, black_border=True)
   print(mlaedt_result)
 
   print("SCIPY")
