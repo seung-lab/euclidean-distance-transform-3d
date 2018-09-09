@@ -24,13 +24,18 @@ Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` 
 
 If for some reason you'd like to use a specific 'D' function, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are available.
 
+The two optional parameters are `anisotropy` and `black_border`. Anisotropy is used to correct for distortions in voxel space, e.g. if X and Y were acquired with a microscope, but the Z axis was cut more corsely.  
+
+`black_border` allows you to specify that the edges of the image should be considered in computing pixel distances (it's also slightly faster).
+
 ```python
 import edt
 import numpy as np
 
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32)
-dt = edt.edt(labels, anisotropy=(6, 6, 30)) # e.g. for the S1 dataset by Kasthuri et al., 2014
+dt = edt.edt(labels, anisotropy=(6, 6, 30), black_border=True) # e.g. for the S1 dataset by Kasthuri et al., 2014
 ```
+
 
 ### C++ Usage
 

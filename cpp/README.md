@@ -26,19 +26,25 @@ int* labels3d = new int[512*512*512]();
 
 // ... populate labels ...
 
-// 1d, 2d, and 3d anisotropic transforms 
-float* dt = edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
-float* dt = edt<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
+// 1d, 2d, and 3d anisotropic transforms, wx = anisotropy on x-axis 
+float* dt = edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
+float* dt = edt<int>(labels2d, 
+  /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
+  /*black_border=*/true); 
 float* dt = edt<int>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
+	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*black_border=*/true); 
 
 // get the squared distance instead (avoids computing sqrt)
-float* dt = edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0); // wx = anisotropy in x direction
-float* dt = edtsq<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
+float* dt = edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
+float* dt = edtsq<int>(labels2d, 
+  /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
+  /*black_border=*/true); 
 float* dt = edtsq<int>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
+	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*black_border=*/true); 
 ```
 
 ### High Performance Binary Images
@@ -47,7 +53,9 @@ Binary images are treated specially in 2D and 3D to avoid executing the extra mu
 
 The code will easily handle all integer types, and the image only needs to be binary in the sense that there is a single non-zero label, it doesn't have to be ones.  
 
-Boolean typed images are handled specially by a specialization of the edt function, so nothing different from above needs to be done. If you have an integer typed image, you'll need to use `binary_edt` or `binary_edtsq` instead to take advantage of this.
+Boolean typed images are handled specially by a specialization of the edt function, so nothing different from above needs to be done. If you have an integer typed image, you'll need to use `binary_edt` or `binary_edtsq` instead to take advantage of this.  
+
+You'll get slightly higher performance setting `black_border=true`.  
 
 
 ```cpp
@@ -58,10 +66,13 @@ using namespace edt;
 bool* labels2d = new bool[512*512]();
 bool* labels3d = new bool[512*512*512]();
 
-float* dt = edt<bool>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
+float* dt = edt<bool>(labels2d, 
+  /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
+  /*black_border=*/true); 
 float* dt = edt<bool>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
+	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*black_border=*/true); 
 
 
 int* labels2d = new int[512*512]();
@@ -70,6 +81,7 @@ int* labels3d = new int[512*512*512]();
 float* dt = binary_edt<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
 float* dt = binary_edt<int>(labels3d, 
 	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0); 
+	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*black_border=*/true); 
 
 ```
