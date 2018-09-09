@@ -169,7 +169,8 @@ void squared_edt_1d_parabolic(
     const int n, 
     const int stride, 
     const float anisotropy, 
-    const bool black_border=false
+    const bool black_border_left,
+    const bool black_border_right
   ) {
 
   int k = 0;
@@ -215,9 +216,15 @@ void squared_edt_1d_parabolic(
     d[i * stride] = sq(anisotropy * (i - v[k])) + f[v[k] * stride];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
-    if (black_border) {
+    if (black_border_left && black_border_right) {
       envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));
       d[i * stride] = std::fminf(envelope, d[i * stride]);
+    }
+    else if (black_border_left) {
+      d[i * stride] = std::fminf(sq(anisotropy * (i + 1)), d[i * stride]);
+    }
+    else if (black_border_right) {
+      d[i * stride] = std::fminf(sq(anisotropy * (n - i)), d[i * stride]);      
     }
     else {
       d[i * stride] = std::fminf(sq(anisotropy * (i + 1)), d[i * stride]); 
@@ -251,29 +258,33 @@ void squared_edt_1d_parabolic_multi_seg(
   T working_segid = segids[0];
   T segid;
   int last = 0;
+
+  bool black_left = black_border;
   for (int i = 1; i < n; i++) {
     segid = segids[i * stride];
     if (segid == 0) {
       continue;
     }
     else if (segid != working_segid) {
-      squared_edt_1d_parabolic(
-        f + last * stride, 
-        d + last * stride, 
-        i - last, stride, anisotropy,
-        black_border
-      );
+      if (working_segid != 0) {
+        squared_edt_1d_parabolic(
+          f + last * stride, 
+          d + last * stride, 
+          i - last, stride, anisotropy,
+          black_left, (i < n - 1)
+        );
+      }
       working_segid = segid;
       last = i;
     }
   }
 
-  if (last < n) {
+  if (working_segid != 0 && last < n) {
     squared_edt_1d_parabolic(
       f + last * stride, 
       d + last * stride, 
       n - last, stride, anisotropy,
-      black_border
+      true, black_border
     );
   }
 }
@@ -399,7 +410,8 @@ float* _binary_edt3dsq(T* binaryimg,
       squared_edt_1d_parabolic(
         (workspace + x + sxy * z), 
         (workspace + x + sxy * z), 
-        sy, sx, wy, black_border
+        sy, sx, wy, 
+        black_border, black_border
       );
     }
   }
@@ -409,7 +421,8 @@ float* _binary_edt3dsq(T* binaryimg,
       squared_edt_1d_parabolic(
         (workspace + x + sx * y), 
         (workspace + x + sx * y), 
-        sz, sxy, wz, black_border
+        sz, sxy, wz, 
+        black_border, black_border
       );
     }
   }
@@ -530,7 +543,7 @@ float* _binary_edt2dsq(T* binaryimg,
       (workspace + x), 
       (workspace + x), 
       sy, sx, wy,
-      black_border
+      black_border, black_border
     );
   }
 
