@@ -68,7 +68,7 @@ void squared_edt_1d_multi_seg(
     d[0] = (float)(working_segid != 0) * anistropy; // 0 or 1
   }
   else {
-    d[0] = INFINITY;
+    d[0] = working_segid == 0 ? 0 : INFINITY;
   }
 
   for (i = stride; i < n * stride; i += stride) {
@@ -85,14 +85,13 @@ void squared_edt_1d_multi_seg(
     }
   }
 
+  int min_bound = 0;
   if (black_border) {
     d[n - stride] = (float)(segids[n - stride] != 0) * anistropy;
-  }
-  else {
-    d[n - stride] = INFINITY;
+    min_bound = stride;
   }
 
-  for (i = (n - 2) * stride; i >= stride; i -= stride) {
+  for (i = (n - 2) * stride; i >= min_bound; i -= stride) {
     d[i] = std::fminf(d[i], d[i + stride] + anistropy);
   }
 
@@ -468,14 +467,14 @@ float* _binary_edt2dsq(T* binaryimg,
   const bool black_border=false) {
 
   float *xaxis = new float[sx * sy]();
-  for (int y = 0; y < sy; y++) { 
+  for (size_t y = 0; y < sy; y++) { 
     squared_edt_1d_multi_seg<T>(
       (binaryimg + sx * y), (xaxis + sx * y), 
       sx, 1, wx, black_border
     ); 
   }
 
-  for (int x = 0; x < sx; x++) {
+  for (size_t x = 0; x < sx; x++) {
     squared_edt_1d_parabolic(
       (xaxis + x), 
       (xaxis + x), 

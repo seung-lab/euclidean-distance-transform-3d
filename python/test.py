@@ -11,23 +11,35 @@ TYPES_NO_BOOL = [
 
 TYPES = TYPES_NO_BOOL + [ np.bool ]
 
-def test_one_d_identity():
+def test_one_d_simple():
   for dtype in TYPES:
     print(dtype)
     labels = np.array([ 0 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
+    result = edt.edt(labels, black_border=False)
+    assert np.all(result == labels)
+
     labels = np.array([ 1 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
+
+    result = edt.edt(labels, black_border=False)
+    assert np.all(result == np.array([ np.inf ]))
 
     labels = np.array([ 0, 1 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)
 
+    result = edt.edt(labels, black_border=False)
+    assert np.all(result == labels)
+
     labels = np.array([ 1, 0 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
+    assert np.all(result == labels)
+
+    result = edt.edt(labels, black_border=False)
     assert np.all(result == labels)
 
 
