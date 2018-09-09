@@ -32,8 +32,8 @@ float* dt = edt<int>(labels2d,
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
   /*black_border=*/true); 
 float* dt = edt<int>(labels3d, 
-	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*sx=*/512, /*sy=*/512, /*sz=*/512,
+  /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true); 
 
 // get the squared distance instead (avoids computing sqrt)
@@ -42,8 +42,8 @@ float* dt = edtsq<int>(labels2d,
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
   /*black_border=*/true); 
 float* dt = edtsq<int>(labels3d, 
-	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*sx=*/512, /*sy=*/512, /*sz=*/512,
+  /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true); 
 ```
 
@@ -70,8 +70,8 @@ float* dt = edt<bool>(labels2d,
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
   /*black_border=*/true); 
 float* dt = edt<bool>(labels3d, 
-	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*sx=*/512, /*sy=*/512, /*sz=*/512,
+  /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true); 
 
 
@@ -80,8 +80,8 @@ int* labels3d = new int[512*512*512]();
 
 float* dt = binary_edt<int>(labels2d, /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0); 
 float* dt = binary_edt<int>(labels3d, 
-	/*sx=*/512, /*sy=*/512, /*sz=*/512,
-	/*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*sx=*/512, /*sy=*/512, /*sz=*/512,
+  /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true); 
 
 ```
