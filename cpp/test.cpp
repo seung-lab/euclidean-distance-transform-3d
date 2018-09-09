@@ -82,7 +82,7 @@ double test3d(int n) {
 
   auto begin = std::chrono::high_resolution_clock::now();
 
-  float* dest = edtsq<int>(input, n,n,n, 1.,1.,1.);
+  float* dest = edtsq<int>(input, n,n,n, 1.,1.,1., true);
 
   auto end = std::chrono::high_resolution_clock::now();
 
