@@ -375,19 +375,25 @@ def test_two_d():
   )
 
 def test_2d_scipy_comparison_black_border():
-  for dtype in INTEGER_TYPES:
+  for dtype in (np.uint8,):
     print(dtype)
-    randos = np.random.randint(0, 2, size=(5, 5), dtype=dtype)
-    labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
-    # Scipy requires zero borders
-    labels[1:-1,1:-1] = randos
+    # randos = np.random.randint(0, 2, size=(3, 3), dtype=dtype)
+    # labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
+    # # Scipy requires zero borders
+    # labels[1:-1,1:-1] = randos
+    labels = np.array([
+      [0,0,0,0],
+      [0,1,1,1],
+      [0,0,1,0]
+    ])#, dtype=np.uint8)
+    print(labels.dtype)
 
     print("INPUT")
     print(labels)
 
     print("MLAEDT")
     mlaedt_result = edt.edt(labels, black_border=False)
-    mlaedt_result_bb = edt.edt(labels, black_border=True)
+    # mlaedt_result_bb = edt.edt(labels, black_border=True)
     print(mlaedt_result)
 
     print("SCIPY")
@@ -395,7 +401,7 @@ def test_2d_scipy_comparison_black_border():
     print(scipy_result)
 
     assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
-    assert np.all( np.abs(scipy_result - mlaedt_result_bb) < 0.000001 )
+    # assert np.all( np.abs(scipy_result - mlaedt_result_bb) < 0.000001 )
 
 def test_2d_scipy_comparison():
   for _ in range(20):

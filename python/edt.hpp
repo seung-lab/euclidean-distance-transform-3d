@@ -41,14 +41,14 @@ const int VERSION_BUGFIX = 0;
 inline void tofinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
     if (f[i] == INFINITY) {
-      f[i] = 1e6;
+      f[i] = 1e10;
     }
   }
 }
 
 inline void toinfinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
-    if (f[i] >= 1e6) {
+    if (f[i] >= 1e10) {
       f[i] = INFINITY;
     }
   }
@@ -259,7 +259,6 @@ void squared_edt_1d_parabolic_multi_seg(
   T segid;
   int last = 0;
 
-  bool black_left = black_border;
   for (int i = 1; i < n; i++) {
     segid = segids[i * stride];
     if (segid == 0) {
@@ -271,7 +270,7 @@ void squared_edt_1d_parabolic_multi_seg(
           f + last * stride, 
           d + last * stride, 
           i - last, stride, anisotropy,
-          black_left, (i < n - 1)
+          black_border, (i < n - 1)
         );
       }
       working_segid = segid;
