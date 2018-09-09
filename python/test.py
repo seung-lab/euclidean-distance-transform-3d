@@ -42,16 +42,21 @@ def test_one_d_simple():
     result = edt.edt(labels, black_border=False)
     assert np.all(result == labels)
 
-
     labels = np.array([ 0, 1, 0 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
+    assert np.all(result == labels)  
+
+    result = edt.edt(labels, black_border=False)
     assert np.all(result == labels)  
 
     labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
     result = edt.edt(labels, black_border=True)
     assert np.all(result == labels)  
 
-def test_one_d():
+    result = edt.edt(labels, black_border=False)
+    assert np.all(result == labels)  
+
+def test_one_d_black_border():
   def cmp(labels, ans, types=TYPES, anisotropy=1.0):
     for dtype in types:
       print(dtype)
@@ -85,6 +90,55 @@ def test_one_d():
   cmp(
     [ 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 1, 1, 1, 1, 3 ],
     [ 1, 4, 9, 4, 1, 0, 1, 4, 9, 4, 1, 1, 4, 4, 1, 1 ],
+    types=TYPES_NO_BOOL,
+  )
+
+def test_one_d():
+  def cmp(labels, ans, types=TYPES, anisotropy=1.0):
+    for dtype in types:
+      print(dtype)
+      labels = np.array(labels, dtype=dtype)
+      ans = np.array(ans, dtype=np.float32)
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=False)
+      assert np.all(result == ans)  
+
+  inf = np.inf
+
+  cmp([], [])
+
+  cmp([1], [inf])
+
+  cmp([5], [inf])
+
+  cmp(
+    [ 0, 1, 1, 1, 0 ],
+    [ 0, 1, 4, 1, 0 ]
+  )
+
+  cmp(
+    [ 0, 1, 1, 1,  1 ],
+    [ 0, 1, 4, 9, 16 ]
+  )
+
+  cmp(
+    [  1, 1, 1, 1, 0 ],
+    [ 16, 9, 4, 1, 0 ]
+  )
+
+  cmp(
+    [ 1, 1, 1, 1 ],
+    [ inf, inf, inf, inf ]
+  )
+
+  cmp(
+    [ 1, 1, 1, 1 ],
+    [ inf, inf, inf, inf ],
+    anisotropy=2.0
+  )
+
+  cmp(
+    [  1,  1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 1, 1, 1, 1, 3 ],
+    [ 25, 16, 9, 4, 1, 0, 1, 4, 9, 4, 1, 1, 4, 4, 1, 1 ],
     types=TYPES_NO_BOOL,
   )
 
