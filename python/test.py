@@ -143,23 +143,44 @@ def test_one_d():
   )
 
 def test_1d_scipy_comparison():
-  randos = np.random.randint(0, 2, size=(100), dtype=np.uint32)
-  labels = np.zeros( (randos.shape[0] + 2,), dtype=np.uint32)
-  # Scipy requires zero borders
-  labels[1:-1] = randos
+  for _ in range(20):
+    randos = np.random.randint(0, 2, size=(100), dtype=np.uint32)
+    labels = np.zeros( (randos.shape[0] + 2,), dtype=np.uint32)
+    # Scipy requires zero borders
+    labels[1:-1] = randos
 
-  print("INPUT")
-  print(labels)
+    print("INPUT")
+    print(labels)
 
-  print("MLAEDT")
-  mlaedt_result = edt.edt(labels, black_border=True)
-  print(mlaedt_result)
+    print("MLAEDT")
+    mlaedt_result_bb = edt.edt(labels, black_border=True)
+    mlaedt_result = edt.edt(labels, black_border=True)
+    print(mlaedt_result)
 
-  print("SCIPY")
-  scipy_result = ndimage.distance_transform_edt(labels)
-  print(scipy_result)
+    print("SCIPY")
+    scipy_result = ndimage.distance_transform_edt(labels)
+    print(scipy_result)
 
-  assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+    assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+    assert np.all( np.abs(scipy_result - mlaedt_result_bb) < 0.000001 )
+
+def test_1d_scipy_comparison_no_border():
+  for _ in range(20):
+    randos = np.random.randint(0, 2, size=(100), dtype=np.uint32)
+    labels = np.zeros( (randos.shape[0] + 2,), dtype=np.uint32)
+
+    print("INPUT")
+    print(labels)
+
+    print("MLAEDT")
+    mlaedt_result = edt.edt(labels, black_border=False)
+    print(mlaedt_result)
+
+    print("SCIPY")
+    scipy_result = ndimage.distance_transform_edt(labels)
+    print(scipy_result)
+
+    assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_two_d_ident():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0)):
