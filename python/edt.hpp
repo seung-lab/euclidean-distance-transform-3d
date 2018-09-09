@@ -219,6 +219,9 @@ void squared_edt_1d_parabolic(
       envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));
       d[i * stride] = std::fminf(envelope, d[i * stride]);
     }
+    else {
+      d[i * stride] = std::fminf(sq(anisotropy * (i + 1)), d[i * stride]); 
+    }
   }
 
   delete [] v;

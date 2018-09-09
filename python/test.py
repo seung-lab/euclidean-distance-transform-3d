@@ -374,7 +374,6 @@ def test_two_d():
     types=TYPES_NO_BOOL
   )
 
-
 def test_2d_scipy_comparison_black_border():
   for dtype in INTEGER_TYPES:
     print(dtype)
@@ -547,7 +546,6 @@ def test_3d_scipy_comparison():
 
   print("MLAEDT")
   mlaedt_result = edt.edt(labels, black_border=False)
-  mlaedt_result_bb = edt.edt(labels, black_border=True)
   print(mlaedt_result)
 
   print("SCIPY")
@@ -559,4 +557,3 @@ def test_3d_scipy_comparison():
   print(np.max(np.abs(scipy_result - mlaedt_result)))
 
   assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
-  assert np.all( np.abs(scipy_result - mlaedt_result_bb) < 0.000001 )
