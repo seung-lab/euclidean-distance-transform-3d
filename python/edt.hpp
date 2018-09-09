@@ -217,13 +217,15 @@ void squared_edt_1d_parabolic_multi_seg(
       continue;
     }
     else if (segid != working_segid) {
-      squared_edt_1d_parabolic(f + last * stride, d + last * stride, i - last, stride, anisotropy);
+      if (working_segid != 0) {
+        squared_edt_1d_parabolic(f + last * stride, d + last * stride, i - last, stride, anisotropy);
+      }
       working_segid = segid;
       last = i;
     }
   }
 
-  if (last < n) {
+  if (working_segid != 0 && last < n) {
     squared_edt_1d_parabolic(f + last * stride, d + last * stride, n - last, stride, anisotropy);
   }
 }
