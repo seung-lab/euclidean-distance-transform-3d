@@ -511,7 +511,7 @@ float* _binary_edt3dsq(T* binaryimg,
         (workspace + offset + sxy * z), 
         (workspace + offset + sxy * z), 
         sz - z, sxy, wz, 
-        black_border, black_border
+        black_border || (z > 0), black_border
       );
     }
   }
@@ -614,9 +614,10 @@ float* _binary_edt2dsq(T* binaryimg,
   const bool black_border=false) {
 
   const size_t voxels = sx * sy;
+  size_t x,y;
 
   float *workspace = new float[sx * sy]();
-  for (size_t y = 0; y < sy; y++) { 
+  for (y = 0; y < sy; y++) { 
     squared_edt_1d_multi_seg<T>(
       (binaryimg + sx * y), (workspace + sx * y), 
       sx, 1, wx, black_border
@@ -627,12 +628,18 @@ float* _binary_edt2dsq(T* binaryimg,
     tofinite(workspace, voxels);
   }
 
-  for (size_t x = 0; x < sx; x++) {
+  for (x = 0; x < sx; x++) {
+    for (y = 0; y < sy; y++) {
+      if (workspace[x + y * sx]) {
+        break;
+      }
+    }
+
     _squared_edt_1d_parabolic(
-      (workspace + x), 
-      (workspace + x), 
-      sy, sx, wy,
-      black_border, black_border
+      (workspace + x + y * sx), 
+      (workspace + x + y * sx), 
+      sy - y, sx, wy,
+      black_border || (y > 0), black_border
     );
   }
 
