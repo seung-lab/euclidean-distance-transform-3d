@@ -460,9 +460,11 @@ float* _binary_edt3dsq(T* binaryimg,
   const size_t sxy = sx * sy;
   const size_t voxels = sz * sxy;
 
+  size_t x,y,z;
+
   float *workspace = new float[sx * sy * sz]();
-  for (size_t z = 0; z < sz; z++) {
-    for (size_t y = 0; y < sy; y++) { 
+  for (z = 0; z < sz; z++) {
+    for (y = 0; y < sy; y++) { 
       // Might be possible to write this as a single pass, might be faster
       // however, it's already only using about 3-5% of total CPU time.
       // NOTE: Tried it, same speed overall.
@@ -478,23 +480,37 @@ float* _binary_edt3dsq(T* binaryimg,
     tofinite(workspace, voxels);
   }
 
-  for (size_t z = 0; z < sz; z++) {
-    for (size_t x = 0; x < sx; x++) {
+  size_t offset;
+  for (z = 0; z < sz; z++) {
+    for (x = 0; x < sx; x++) {
+      offset = x + sxy * z;
+      for (y = 0; y < sy; y++) {
+        if (workspace[offset + sx*y]) {
+          break;
+        }
+      }
+      
       _squared_edt_1d_parabolic(
-        (workspace + x + sxy * z), 
-        (workspace + x + sxy * z), 
-        sy, sx, wy, 
-        black_border, black_border
+        (workspace + offset + sx * y), 
+        (workspace + offset + sx * y), 
+        sy - y, sx, wy, 
+        black_border || (y > 0), black_border
       );
     }
   }
 
-  for (size_t y = 0; y < sy; y++) {
-    for (size_t x = 0; x < sx; x++) {
+  for (y = 0; y < sy; y++) {
+    for (x = 0; x < sx; x++) {
+      offset = x + sx * y;
+      for (z = 0; z < sz; z++) {
+        if (workspace[offset + sxy*z]) {
+          break;
+        }
+      }
       _squared_edt_1d_parabolic(
-        (workspace + x + sx * y), 
-        (workspace + x + sx * y), 
-        sz, sxy, wz, 
+        (workspace + offset + sxy * z), 
+        (workspace + offset + sxy * z), 
+        sz - z, sxy, wz, 
         black_border, black_border
       );
     }
