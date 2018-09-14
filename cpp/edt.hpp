@@ -173,14 +173,13 @@ void squared_edt_1d_parabolic(
     const bool black_border_right
   ) {
 
+  if (n == 0) {
+    return;
+  }
+
   int k = 0;
   int* v = new int[n]();
   float* ranges = new float[n + 1]();
-  float* vals = new float[n]();
-
-  for (int i = 0; i < n; i++) {
-    vals[i] = f[i * stride];
-  }
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -211,6 +210,11 @@ void squared_edt_1d_parabolic(
     ranges[k + 1] = +INFINITY;
   }
 
+  float* vals = new float[k+1]();
+  for (int i = 0; i <= k; i++) {
+    vals[i] = f[v[i] * stride];
+  }
+
   k = 0;
   float envelope;
   for (int i = 0; i < n; i++) {
@@ -218,7 +222,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[v[k]];
+    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[k];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
@@ -247,14 +251,13 @@ void squared_edt_1d_parabolic(
     const float anisotropy
   ) {
 
+  if (n == 0) {
+    return;
+  }
+
   int k = 0;
   int* v = new int[n]();
   float* ranges = new float[n + 1]();
-  float* vals = new float[n]();
-
-  for (int i = 0; i < n; i++) {
-    vals[i] = f[i * stride];
-  }
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -285,6 +288,11 @@ void squared_edt_1d_parabolic(
     ranges[k + 1] = +INFINITY;
   }
 
+  float* vals = new float[k+1]();
+  for (int i = 0; i <= k; i++) {
+    vals[i] = f[v[i] * stride];
+  }
+
   k = 0;
   float envelope;
   for (int i = 0; i < n; i++) {
@@ -292,7 +300,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[v[k]];
+    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[k];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));
