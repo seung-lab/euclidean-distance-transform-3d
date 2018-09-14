@@ -176,6 +176,11 @@ void squared_edt_1d_parabolic(
   int k = 0;
   int* v = new int[n]();
   float* ranges = new float[n + 1]();
+  float* vals = new float[n]();
+
+  for (int i = 0; i < n; i++) {
+    vals[i] = f[i * stride];
+  }
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -213,7 +218,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = sq(anisotropy * (i - v[k])) + f[v[k] * stride];
+    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
@@ -229,6 +234,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
+  delete [] vals;
   delete [] ranges;
 }
 
@@ -244,6 +250,11 @@ void squared_edt_1d_parabolic(
   int k = 0;
   int* v = new int[n]();
   float* ranges = new float[n + 1]();
+  float* vals = new float[n]();
+
+  for (int i = 0; i < n; i++) {
+    vals[i] = f[i * stride];
+  }
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -281,7 +292,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = sq(anisotropy * (i - v[k])) + f[v[k] * stride];
+    d[i * stride] = sq(anisotropy * (i - v[k])) + vals[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(sq(anisotropy * (i + 1)), sq(anisotropy * (n - i)));

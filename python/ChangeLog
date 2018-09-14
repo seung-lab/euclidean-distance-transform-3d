@@ -1,6 +1,29 @@
 CHANGES
 =======
 
+1.1.1
+-----
+
+* test: add binary EDT to scipy comparisons
+* perf: accelerate binary EDT on starting black pixels
+* perf: efficiently deal with runs of black on binary images
+
+1.1.0
+-----
+
+* docs: added black\_border to README
+* feat: black\_border parameter (#4)
+* perf: speed up processing of black regions
+* docs: minor help text updates
+* Update README.md
+* Add files via upload
+
+1.0.6
+-----
+
+* docs: include License in manifest
+* fix: handle C vs Fortran order arrays properly
+
 1.0.5
 -----
 

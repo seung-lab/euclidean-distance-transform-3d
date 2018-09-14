@@ -561,3 +561,54 @@ def test_3d_scipy_comparison():
 
       assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
+def test_non_mutation_2d():
+  """
+  This example helped debug the error 
+  caused by reading/writing to the same array.
+  """
+  x = np.array(
+  [
+   [  True, False,  True,  True,  ],
+   [ False,  True,  True,  True,  ],
+   [ False,  True,  True,  True,  ],
+   [  True,  True,  True,  True,  ],
+   [ False,  True,  True,  True,  ],], dtype=np.bool)
+ 
+  compare_scipy_edt(x)
+
+def test_dots(numdots=5, N=100, radius=20):
+  img = np.zeros((N, N), dtype=np.bool)
+  locations=np.random.randint(0, N-1, size=(numdots, 2), dtype=np.int)
+  xx,yy = np.meshgrid(range(N), range(N), indexing='xy')
+
+  for loc in locations:
+    dx = xx - loc[0]
+    dy = yy - loc[1]
+    d = np.sqrt(dx ** 2 + dy ** 2)
+    img[d <= radius] = True
+
+  img[ :, 0] = 0
+  img[ 0, :] = 0
+  img[-1, :] = 0
+  img[ :,-1] = 0
+
+  compare_scipy_edt(img)
+
+def compare_scipy_edt(labels):
+  print("INPUT", labels.shape)
+  print(labels)
+
+  print("MLAEDT")
+  mlaedt_result = edt.edt(labels, black_border=False)
+  print(mlaedt_result)
+
+  print("SCIPY")
+  scipy_result = ndimage.distance_transform_edt(labels)
+  print(scipy_result)
+
+  print("DIFF")
+  print(np.abs(scipy_result - mlaedt_result) < 0.000001)
+  print("MAX Diff")
+  print(np.max(np.abs(scipy_result - mlaedt_result)))
+
+  assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
