@@ -1,12 +1,12 @@
 CHANGES
 =======
 
-1.1.1
+1.1.2
 -----
 
-* test: add binary EDT to scipy comparisons
-* perf: accelerate binary EDT on starting black pixels
-* perf: efficiently deal with runs of black on binary images
+* perf: made previous fix cheaper
+* fix: unsafe reading during write phase
+* Improve performance of binary EDT on black pixels (#6)
 
 1.1.0
 -----

@@ -195,13 +195,13 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = i - v[k];
     factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (f[i * stride] - f[v[k] * stride] + sq(anisotropy) * factor1 * factor2) / (2.0 * factor1 * sq(anisotropy));
 
     while (s <= ranges[k]) {
       k--;
       factor1 = i - v[k];
       factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (f[i * stride] - f[v[k] * stride] + sq(anisotropy) * factor1 * factor2) / (2.0 * factor1 * sq(anisotropy));
     }
 
     k++;
@@ -273,13 +273,13 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = i - v[k];
     factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (f[i * stride] - f[v[k] * stride] + sq(anisotropy) * factor1 * factor2) / (2.0 * factor1 * sq(anisotropy));
 
     while (s <= ranges[k]) {
       k--;
       factor1 = i - v[k];
       factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (f[i * stride] - f[v[k] * stride] + sq(anisotropy) * factor1 * factor2) / (2.0 * factor1 * sq(anisotropy));
     }
 
     k++;

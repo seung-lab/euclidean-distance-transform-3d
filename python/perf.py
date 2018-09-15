@@ -5,7 +5,7 @@ from scipy import ndimage
 
 import edt
 
-labels = np.ones(shape=(4096, 4096), dtype=np.uint32)
+labels = np.ones(shape=(512, 512, 512), dtype=np.uint32)
 
 start = time.time()
 res = edt.edtsq(labels, anisotropy=(1,1,1))

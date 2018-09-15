@@ -612,3 +612,21 @@ def compare_scipy_edt(labels):
   print(np.max(np.abs(scipy_result - mlaedt_result)))
 
   assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+
+def test_2d_even_anisotropy():
+  labels = np.zeros( (15,15), dtype=np.bool, order='F')
+  labels[2:12, 2:12] = True
+  img = edt.edt(labels, anisotropy=(1,1))
+  for i in range(1, 150):
+    w = float(i)
+    aimg = edt.edt(labels, anisotropy=(w, w))
+    assert np.all(w * img == aimg)
+
+def test_3d_even_anisotropy():
+  labels = np.zeros( (15,15,15), dtype=np.bool, order='F')
+  labels[2:12, 2:12, 5:10] = True
+  img = edt.edt(labels, anisotropy=(1,1,1))
+  for i in range(1, 150):
+    w = float(i)
+    aimg = edt.edt(labels, anisotropy=(w, w, w))
+    assert np.all(w * img == aimg)
