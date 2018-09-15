@@ -678,7 +678,7 @@ float* _binary_edt2d(T* binaryimg,
 
   float *transform = _binary_edt2dsq(binaryimg, sx, sy, wx, wy, black_border);
 
-  for (int i = 0; i < sx * sy; i++) {
+  for (size_t i = 0; i < sx * sy; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
@@ -704,7 +704,7 @@ float* _edt2d(T* input,
 
   float* transform = _edt2dsq<T>(input, sx, sy, wx, wy, black_border);
 
-  for (int i = 0; i < sx * sy; i++) {
+  for (size_t i = 0; i < sx * sy; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
