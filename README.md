@@ -123,6 +123,36 @@ The backwards pass is unchanged:
         f(a_i) = f(a_i)^2
 
 
+
+### Anisotropy Support in FH Algorithm
+
+A small update to the parabolic intercept equation is necessary to properly support anisotropic dimensions. The original equation appears on page 419 of their paper (reproduced here):
+
+```
+s = ((f(r) + r^2) - (f(q) + q^2)) / 2(r - q)
+
+Where given parabola on an XY plane:
+s:    x-coord of the intercept between two parabolas
+r:    x-coord of the first parabola's vertex
+f(r): y-coord of the first parabola's vertex
+q:    x-coord of the second parabola's vertex
+f(q): y-coord of the second parabola's vertex
+```
+However, this equation doesn't work with non-unitary anisotropy. The derivation of the proper equation follows.
+
+```
+1. Let w = the anisotropic weight
+2. (ws - wq)^2 + f(q) = (ws - wr)^2 + f(r)
+3. w^2(s - q)^2 + f(q) = w^2(s - r)^2 # w^2 can be pulled out after expansion
+4. w^2( (s-q)^2 - (s-r)^2 ) = f(r) - f(q)
+5. w^2( s^2 - 2sq + q^2 - s^2 + 2sr - r^2 ) = f(r) - f(q)
+6. w^2( 2sr - 2sq + q^2 - r^2 ) = f(r) - f(q)
+7. 2sw^2(r-q) + w^2(q^2 - r^2) = f(r) - f(q)
+8. 2sw^2(r-q) = f(r) - f(q) - w^2(q^2 - r^2)
+
+=> s = (w^2(r^2 - q^2) + f(r) - f(q)) / 2w^2(r-q)
+```
+
 ### Multi-Label Felzenszwalb and Huttenlocher Variation
 
 The parabola method attempts to find the lower envelope of the parabolas described by vertices (i, f(i)).
