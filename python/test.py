@@ -263,13 +263,13 @@ def test_two_d():
       [ 1, 1, 1, 1, 1 ], 
     ], 
     [
-      [ 25, 100, 100, 100, 25 ], 
-      [ 25, 100, 225, 100, 25 ], 
-      [ 25, 100, 225, 100, 25 ], 
-      [ 25, 100, 225, 100, 25 ], 
-      [ 25, 100, 100, 100, 25 ], 
+      [  25,  25,  25,  25,  25 ], 
+      [  36, 100, 100, 100,  36 ], 
+      [  36, 144, 225, 144,  36 ], 
+      [  36, 100, 100, 100,  36 ], 
+      [  25,  25,  25,  25,  25 ], 
     ],
-    anisotropy=(5.0, 10.0)
+    anisotropy=(5.0, 6.0)
   )
 
   cmp(
@@ -630,3 +630,25 @@ def test_3d_even_anisotropy():
     w = float(i)
     aimg = edt.edt(labels, anisotropy=(w, w, w))
     assert np.all(w * img == aimg)
+
+def test_2d_lopsided():
+  def gen(x, y, order):
+    x = np.zeros((x, y), dtype=np.uint32, order=order)
+    x[0:25,5:50] = 3
+    x[25:50,5:50] = 1
+    x[60:110,5:50] = 2
+    return x
+
+  sizes = [
+    (150, 150),
+    (150,  75),
+    (75,  150),
+  ]
+
+  for size in sizes:
+    cres = edt.edt(gen(size[0], size[1], 'C'))
+    fres = edt.edt(gen(size[0], size[1], 'F'))
+
+    print(size)
+    assert np.all(cres[:] == fres[:])
+

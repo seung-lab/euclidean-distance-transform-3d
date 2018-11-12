@@ -1,6 +1,18 @@
 CHANGES
 =======
 
+1.1.4
+-----
+
+* perf: handle anisotropy more efficiently by reducing multiplications
+* docs: added derivation of anisotropic interception eqn
+* fix: int vs size\_t warnings
+
+1.1.3
+-----
+
+* fix: parabolic intercept not accounting for anisotropy
+
 1.1.2
 -----
 
