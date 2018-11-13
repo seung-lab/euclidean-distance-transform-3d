@@ -346,8 +346,8 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
   cdef int sy = data.shape[1]
   cdef int sz = data.shape[0]
   cdef float ax = anisotropy[2]
-  cdef float ay = anisotropy[0]
-  cdef float az = anisotropy[1]
+  cdef float ay = anisotropy[1]
+  cdef float az = anisotropy[0]
 
   if order == 'F':
     sx, sy, sz = sz, sy, sx
