@@ -17,7 +17,7 @@ License: GNU 3.0
 
 Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
-Date: July 2018
+Date: July-November 2018
 """
 from libc.stdlib cimport calloc, free
 from libc.stdint cimport (
@@ -31,7 +31,7 @@ from cpython cimport array
 cimport numpy as cnp
 import numpy as np
 
-__VERSION__ = '1.0.0'
+__VERSION__ = '1.1.4'
 
 cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
@@ -46,20 +46,20 @@ cdef extern from "edt.hpp" namespace "pyedt":
   cdef float* _edt2dsq[T](
     T* labels,
     int sx, int sy, 
-    int wx, int wy,
+    float wx, float wy,
     bool black_border
   )
 
   cdef float* _edt3dsq[T](
     T* labels,
     int sx, int sy, int sz,
-    int wx, int wy, int wz,
+    float wx, float wy, float wz,
     bool black_border
   )
 
-def edt(data, anisotropy=None, black_border=False):
+def edt(data, anisotropy=None, black_border=False, order='C'):
   """
-  edt(data, anisotropy=None, black_border=False)
+  edt(data, anisotropy=None, black_border=False, order='C')
 
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -67,7 +67,9 @@ def edt(data, anisotropy=None, black_border=False):
   The algorithm works both ways, however you'll want to reverse the order of the
   anisotropic arguments for Fortran order.
 
-  Supports uint8, uint16, uint32, and uint64 data types.
+  Supported Data Types:
+    (u)int8, (u)int16, (u)int32, (u)int64, 
+     float32, float64, and boolean
 
   Required:
     data: a 1d, 2d, or 3d numpy array with a supported data type.
@@ -78,6 +80,8 @@ def edt(data, anisotropy=None, black_border=False):
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
+    order: 'C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order.
 
   Returns: EDT of data
   """
@@ -91,16 +95,16 @@ def edt(data, anisotropy=None, black_border=False):
     return edt1d(data, anisotropy, black_border)
   elif dims == 2:
     anisotropy = anisotropy or (1.0, 1.0)
-    return edt2d(data, anisotropy, black_border)
+    return edt2d(data, anisotropy, black_border, order)
   elif dims == 3:
     anisotropy = anisotropy or (1.0, 1.0, 1.0)
-    return edt3d(data, anisotropy, black_border)
+    return edt3d(data, anisotropy, black_border, order)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
-def edtsq(data, anisotropy=None, bool black_border=False):
+def edtsq(data, anisotropy=None, bool black_border=False, order='C'):
   """
-  edtsq(data, anisotropy=None, black_border=False)
+  edtsq(data, anisotropy=None, black_border=False, order='C')
 
   Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -110,7 +114,9 @@ def edtsq(data, anisotropy=None, bool black_border=False):
   The algorithm works both ways, however you'll want to reverse the order of the
   anisotropic arguments for Fortran order.
 
-  Supports uint8, uint16, uint32, and uint64 data types.
+  Supported Data Types:
+    (u)int8, (u)int16, (u)int32, (u)int64, 
+     float32, float64, and boolean
 
   Required:
     data: a 1d, 2d, or 3d numpy array with a supported data type.
@@ -121,6 +127,8 @@ def edtsq(data, anisotropy=None, bool black_border=False):
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
+    order: 'C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order.
 
   Returns: Squared EDT of data
   """
@@ -134,10 +142,10 @@ def edtsq(data, anisotropy=None, bool black_border=False):
     return edt1dsq(data, anisotropy, black_border)
   elif dims == 2:
     anisotropy = anisotropy or (1.0, 1.0)
-    return edt2dsq(data, anisotropy, black_border)
+    return edt2dsq(data, anisotropy, black_border, order)
   elif dims == 3:
     anisotropy = anisotropy or (1.0, 1.0, 1.0)
-    return edt3dsq(data, anisotropy, black_border)
+    return edt3dsq(data, anisotropy, black_border, order)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
@@ -232,10 +240,10 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   free(xform)
   return np.frombuffer(buf, dtype=np.float32)
 
-def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False):
-  return np.sqrt(edt2dsq(data, anisotropy, black_border))
+def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
+  return np.sqrt(edt2dsq(data, anisotropy, black_border, order))
 
-def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False):
+def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
   cdef uint8_t[:,:] arr_memview8
   cdef uint16_t[:,:] arr_memview16
   cdef uint32_t[:,:] arr_memview32
@@ -248,10 +256,10 @@ def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False):
 
   cdef int sx = data.shape[1] # C: rows
   cdef int sy = data.shape[0] # C: cols
-  cdef int ax = anisotropy[1]
-  cdef int ay = anisotropy[0]
+  cdef float ax = anisotropy[1]
+  cdef float ay = anisotropy[0]
 
-  if data.flags['F_CONTIGUOUS']:
+  if order == 'F':
     sx = data.shape[0] # F: cols
     sy = data.shape[1] # F: rows
     ax = anisotropy[0]
@@ -319,13 +327,12 @@ def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False):
   # Python 3 can just do np.frombuffer(vec_view, ...)
   buf = bytearray(xform_view[:])
   free(xform)
-  order = 'F' if data.flags['F_CONTIGUOUS'] else 'C'
   return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
 
-def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False):
-  return np.sqrt(edt3dsq(data, anisotropy, black_border))
+def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'):
+  return np.sqrt(edt3dsq(data, anisotropy, black_border, order))
 
-def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False):
+def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'):
   cdef uint8_t[:,:,:] arr_memview8
   cdef uint16_t[:,:,:] arr_memview16
   cdef uint32_t[:,:,:] arr_memview32
@@ -335,64 +342,71 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False):
 
   cdef float* xform
 
-  cdef int depth = data.shape[0]
-  cdef int rows = data.shape[1]
-  cdef int cols = data.shape[2]
+  cdef int sx = data.shape[2]
+  cdef int sy = data.shape[1]
+  cdef int sz = data.shape[0]
+  cdef float ax = anisotropy[1]
+  cdef float ay = anisotropy[0]
+  cdef float az = anisotropy[2]
+
+  if order == 'F':
+    sx, sy, sz = sz, sy, sx
+    ax, ay, ax = az, ay, ax
 
   if data.dtype in (np.uint8, np.int8):
     arr_memview8 = data.astype(np.uint8)
     xform = _edt3dsq[uint8_t](
       <uint8_t*>&arr_memview8[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype in (np.uint16, np.int16):
     arr_memview16 = data.astype(np.uint16)
     xform = _edt3dsq[uint16_t](
       <uint16_t*>&arr_memview16[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype in (np.uint32, np.int32):
     arr_memview32 = data.astype(np.uint32)
     xform = _edt3dsq[uint32_t](
       <uint32_t*>&arr_memview32[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype in (np.uint64, np.int64):
     arr_memview64 = data.astype(np.uint64)
     xform = _edt3dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype == np.float32:
     arr_memviewfloat = data
     xform = _edt3dsq[float](
       <float*>&arr_memviewfloat[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype == np.float64:
     arr_memviewdouble = data
     xform = _edt3dsq[double](
       <double*>&arr_memviewdouble[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
   elif data.dtype == np.bool:
     arr_memview8 = data.astype(np.uint8)
     xform = _edt3dsq[bool](
       <bool*>&arr_memview8[0,0,0],
-      cols, rows, depth,
-      anisotropy[0], anisotropy[1], anisotropy[2],
+      sx, sy, sz,
+      ax, ay, ax,
       black_border
     )
 
@@ -401,7 +415,5 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False):
   # Python 3 can just do np.frombuffer(vec_view, ...)
   buf = bytearray(xform_view[:])
   free(xform)
-
-  order = 'F' if data.flags['F_CONTIGUOUS'] else 'C'
   return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
 
