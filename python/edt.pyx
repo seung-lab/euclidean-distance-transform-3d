@@ -345,13 +345,15 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
   cdef int sx = data.shape[2]
   cdef int sy = data.shape[1]
   cdef int sz = data.shape[0]
-  cdef float ax = anisotropy[1]
+  cdef float ax = anisotropy[2]
   cdef float ay = anisotropy[0]
-  cdef float az = anisotropy[2]
+  cdef float az = anisotropy[1]
 
   if order == 'F':
     sx, sy, sz = sz, sy, sx
-    ax, ay, ax = az, ay, ax
+    ax = anisotropy[0]
+    ay = anisotropy[1]
+    az = anisotropy[2]
 
   if data.dtype in (np.uint8, np.int8):
     arr_memview8 = data.astype(np.uint8)
