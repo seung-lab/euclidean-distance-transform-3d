@@ -647,8 +647,8 @@ def test_2d_lopsided():
   ]
 
   for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'))
-    fres = edt.edt(gen(size[0], size[1], 'F'))
+    cres = edt.edt(gen(size[0], size[1], 'C'), order='C')
+    fres = edt.edt(gen(size[0], size[1], 'F'), order='F')
 
     print(size)
     assert np.all(cres[:] == fres[:])
@@ -664,12 +664,12 @@ def test_2d_lopsided_anisotropic():
   sizes = [
     (150, 150),
     (150,  75),
-    (75,  150),
+    ( 75, 150),
   ]
 
   for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3))
-    fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3))
+    cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3), order='C')
+    fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
 
     print(size)
     assert np.all(cres[:] == fres[:])
