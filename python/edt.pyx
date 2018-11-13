@@ -358,7 +358,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[uint8_t](
       <uint8_t*>&arr_memview8[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype in (np.uint16, np.int16):
@@ -366,7 +366,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[uint16_t](
       <uint16_t*>&arr_memview16[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype in (np.uint32, np.int32):
@@ -374,7 +374,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[uint32_t](
       <uint32_t*>&arr_memview32[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype in (np.uint64, np.int64):
@@ -382,7 +382,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype == np.float32:
@@ -390,7 +390,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[float](
       <float*>&arr_memviewfloat[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype == np.float64:
@@ -398,7 +398,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[double](
       <double*>&arr_memviewdouble[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
   elif data.dtype == np.bool:
@@ -406,7 +406,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
     xform = _edt3dsq[bool](
       <bool*>&arr_memview8[0,0,0],
       sx, sy, sz,
-      ax, ay, ax,
+      ax, ay, az,
       black_border
     )
 
