@@ -11,9 +11,20 @@ Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image contai
 
 ### Python Installation
 
+#### pip Binary Installation
+
+```bash
+pip install edt
+```
+
+Binaries are available for some platforms. If your platform is not supported, pip will attempt to install from source, in which case follow the instructions below.
+
+#### pip Source Installation
+
 *Requires a C++ compiler.*
 
 ```bash
+sudo apt-get install g++ python3-dev
 pip install numpy
 pip install edt
 ```
