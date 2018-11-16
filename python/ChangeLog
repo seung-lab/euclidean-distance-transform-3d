@@ -4,6 +4,7 @@ CHANGES
 1.2.0
 -----
 
+* docs: updated ChangeLog
 * docs: new order parameter for C vs Fortran order
 * test: py37 now supported on Travis-CI (#9)
 * fix: C vs. Fortran Order Issues
