@@ -419,11 +419,13 @@ def test_2d_scipy_comparison():
 def test_three_d():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0, 1.0)):
     for dtype in types:
-      print(dtype)
+      print(dtype, anisotropy)
       labels = np.array(labels, dtype=dtype)
       ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
-      assert np.all(result == ans)  
+      print(labels)
+      print(ans)
+      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True, order='C')
+      assert np.all(result.T == ans) # written in human understandable order so needs transpose 
 
   cmp([[[]]], [[[]]])
   cmp([[[0]]], [[[0]]])
@@ -486,7 +488,7 @@ def test_three_d():
   [
     [
       [16, 16, 16], 
-      [16, 64, 16],
+      [16, 16, 16],
       [16, 16, 16]
     ],
     [
@@ -496,10 +498,10 @@ def test_three_d():
     ],
     [
       [16, 16, 16], 
-      [16, 64, 16],
+      [16, 16, 16],
       [16, 16, 16]
     ],
-  ], anisotropy=(4,4,40))
+  ], anisotropy=(4,4,4))
 
   cmp([
     [
@@ -520,46 +522,47 @@ def test_three_d():
   ], 
   [
     [
-      [16, 16, 16], 
-      [16, 16, 16],
-      [16, 16, 16]
+      [25, 25, 25], 
+      [25, 25, 25],
+      [25, 25, 25]
     ],
     [
-      [16, 64, 16], 
-      [16, 64, 16],
-      [16, 64, 16]
+      [36, 36, 36], 
+      [36,100, 36],
+      [36, 36, 36]
     ],
     [
-      [16, 16, 16], 
-      [16, 16, 16],
-      [16, 16, 16]
+      [25, 25, 25], 
+      [25, 25, 25],
+      [25, 25, 25]
     ],
-  ], anisotropy=(4,40,4))
+  ], anisotropy=(6,6,5))
 
 def test_3d_scipy_comparison():
   for _ in range(20):
     for dtype in (np.uint32, np.bool):
-      randos = np.random.randint(0, 2, size=(10, 10, 10), dtype=dtype)
-      labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype)
-      # Scipy requires zero borders
-      labels[1:-1,1:-1,1:-1] = randos
+      for order in ('C', 'F'):
+        randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
+        labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
+        # Scipy requires zero borders
+        labels[1:-1,1:-1,1:-1] = randos
 
-      print("INPUT")
-      print(labels)
+        print("INPUT")
+        print(labels)
 
-      print("MLAEDT")
-      mlaedt_result = edt.edt(labels, black_border=False)
-      print(mlaedt_result)
+        print("MLAEDT")
+        mlaedt_result = edt.edt(labels, black_border=False, order=order)
+        print(mlaedt_result)
 
-      print("SCIPY")
-      scipy_result = ndimage.distance_transform_edt(labels)
-      print(scipy_result)
+        print("SCIPY")
+        scipy_result = ndimage.distance_transform_edt(labels)
+        print(scipy_result)
 
-      print("DIFF")
-      print(np.abs(scipy_result == mlaedt_result))
-      print(np.max(np.abs(scipy_result - mlaedt_result)))
+        print("DIFF")
+        print(np.abs(scipy_result == mlaedt_result))
+        print(np.max(np.abs(scipy_result - mlaedt_result)))
 
-      assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+        assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_non_mutation_2d():
   """
@@ -616,7 +619,7 @@ def compare_scipy_edt(labels):
 def test_2d_even_anisotropy():
   labels = np.zeros( (15,15), dtype=np.bool, order='F')
   labels[2:12, 2:12] = True
-  img = edt.edt(labels, anisotropy=(1,1))
+  img = edt.edt(labels, anisotropy=(1,1), order='F')
   for i in range(1, 150):
     w = float(i)
     aimg = edt.edt(labels, anisotropy=(w, w))
@@ -646,8 +649,8 @@ def test_2d_lopsided():
   ]
 
   for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'))
-    fres = edt.edt(gen(size[0], size[1], 'F'))
+    cres = edt.edt(gen(size[0], size[1], 'C'), order='C')
+    fres = edt.edt(gen(size[0], size[1], 'F'), order='F')
 
     print(size)
     assert np.all(cres[:] == fres[:])
@@ -663,14 +666,34 @@ def test_2d_lopsided_anisotropic():
   sizes = [
     (150, 150),
     (150,  75),
-    (75,  150),
+    ( 75, 150),
   ]
 
   for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3))
-    fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3))
+    cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3), order='C')
+    fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
 
     print(size)
     assert np.all(cres[:] == fres[:])
 
+def test_3d_lopsided():
+  def gen(x, y, z, order):
+    x = np.zeros((x, y, z), dtype=np.uint32, order=order)
+    x[ 0:25,  5:50, 0:25] = 3
+    x[25:50,  5:50, 0:25] = 1
+    x[60:110, 5:50, 0:25] = 2
+    return x
+
+  sizes = [
+    (150, 150, 150),
+    (150,  75,  23),
+    (75,  150,  37),
+  ]
+
+  for size in sizes:
+    cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
+    fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
+
+    print(size)
+    assert np.all(cres == fres)
 
