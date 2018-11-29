@@ -71,7 +71,7 @@ inline void toinfinite(float *f, const size_t voxels) {
  */
 template <typename T>
 void squared_edt_1d_multi_seg(
-    T* segids, float *d, const int n, 
+    T* __restrict__ segids, float * __restrict__ d, const int n, 
     const int stride, const float anistropy,
     const bool black_border=false
   ) {
@@ -312,6 +312,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
+  delete [] vals;
   delete [] ranges;
 }
 

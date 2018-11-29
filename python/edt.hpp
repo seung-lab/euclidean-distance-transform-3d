@@ -312,6 +312,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
+  delete [] vals;
   delete [] ranges;
 }
 
