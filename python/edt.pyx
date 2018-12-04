@@ -57,6 +57,11 @@ cdef extern from "edt.hpp" namespace "pyedt":
     bool black_border
   )
 
+def nvl(val, default_val):
+  if val is None:
+    return default_val
+  return val
+
 def edt(data, anisotropy=None, black_border=False, order='C'):
   """
   edt(data, anisotropy=None, black_border=False, order='C')
@@ -91,13 +96,13 @@ def edt(data, anisotropy=None, black_border=False, order='C'):
     return np.zeros(shape=data.shape).astype(np.float32)
 
   if dims == 1:
-    anisotropy = anisotropy or 1.0
+    anisotropy = nvl(anisotropy, 1.0)
     return edt1d(data, anisotropy, black_border)
   elif dims == 2:
-    anisotropy = anisotropy or (1.0, 1.0)
+    anisotropy = nvl(anisotropy, (1.0, 1.0))
     return edt2d(data, anisotropy, black_border, order)
   elif dims == 3:
-    anisotropy = anisotropy or (1.0, 1.0, 1.0)
+    anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
     return edt3d(data, anisotropy, black_border, order)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
@@ -138,13 +143,13 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C'):
     return np.zeros(shape=data.shape).astype(np.float32)
 
   if dims == 1:
-    anisotropy = anisotropy or 1.0
+    anisotropy = nvl(anisotropy, 1.0)
     return edt1dsq(data, anisotropy, black_border)
   elif dims == 2:
-    anisotropy = anisotropy or (1.0, 1.0)
+    anisotropy = nvl(anisotropy, (1.0, 1.0))
     return edt2dsq(data, anisotropy, black_border, order)
   elif dims == 3:
-    anisotropy = anisotropy or (1.0, 1.0, 1.0)
+    anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
     return edt3dsq(data, anisotropy, black_border, order)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))

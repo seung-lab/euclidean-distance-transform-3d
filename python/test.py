@@ -697,3 +697,13 @@ def test_3d_lopsided():
     print(size)
     assert np.all(cres == fres)
 
+
+def test_numpy_anisotropy():
+  labels = np.zeros(shape=(128, 128, 128), dtype=np.uint32)
+  labels[1:-1,1:-1,1:-1] = 1
+
+  resolution = np.array([4,4,40])
+  res = edt.edtsq(labels, anisotropy=resolution)
+
+
+

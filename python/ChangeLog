@@ -1,9 +1,21 @@
 CHANGES
 =======
 
+1.2.1
+-----
+
+* docs: Authors file
+* docs: added some comparisons to scipy
+* fix: ensure scipy version downloaded for 2.7
+* fix: memory leak in squared\_edt\_1d\_parabolic
+* docs: Updated pip installation for binaries
+* docs: updated edt movie
+
 1.2.0
 -----
 
+* feat: add docker build for "manylinux" binaries
+* chore: bump version of Cython bindings to 1.2.0
 * docs: updated ChangeLog
 * docs: new order parameter for C vs Fortran order
 * test: py37 now supported on Travis-CI (#9)
