@@ -182,6 +182,8 @@ Each domain is processed within the envelope described below. This ensures that 
 
 ### Additional Parabolic Envelope  
 
+*Applies to parameter `black_border=True`.*
+
 The methods of RP, ST, and FH all appear to depend on the existence of a black border ringing the ROI. Without it, the Y pass can't propogate a min signal near the border. However, this approach seems wasteful as it requires about 6s<sup>2</sup> additional memory (for a cube) and potentially a copy into bordered memory. Instead, I opted to impose an envelope around all passes. For an image I with n voxels, I implicitly  place a vertex at (-1, 0) and at (n, 0). This envelope propogates the edge effect through the volume.  
 
 To modify the first X-axis pass, I simply mark `I[0] = 1` and `I[n-1] = 1`. The parabolic method is a little trickier to modify because it uses the vertex location to reference `I[i]`. -1 and n are both off the ends of the array and therefore would crash the program. Instead, I add the following lines right after the second pass write:  
@@ -199,6 +201,36 @@ d[i] = min(envelope, d[i]) // application of envelope
 ```
 
 These additional lines add about 3% to the running time compared to a program without them. I have not yet made a comparison to a bordered variant. 
+
+### Performance vs. SciPy
+
+
+<p style="font-style: italics;" align="center">
+<img src="https://github.com/seung-lab/euclidean-distance-transform-3d/raw/master/benchmarks/edt-1.2.1_vs_scipy_1.15.4_snemi3d_extracting_labels.png" alt="A Labeled 3D Image. Credit: Kisuk Lee" /><br>
+Fig. 2: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)
+</p>
+
+The above experiment was gathered using `memory_profiler` while running the below code once for each function.
+
+```python3
+import edt
+from tqdm import tqdm
+from scipy import ndimage
+
+labels = load_snemi3d_labels()
+uniques = np.unique(labels)[1:]
+
+def edt():
+  res = edt.edt(labels, order='F')
+  for segid in tqdm(uniques):
+    extracted = res[labels == segid]
+
+def ndimage():
+  for segid in tqdm(uniques):
+    extracted = (labels == segid)
+    res = ndimage.distance_transform_edt(extracted)
+```
+
 
 ### Side Notes on Further Performance Improvements
 
