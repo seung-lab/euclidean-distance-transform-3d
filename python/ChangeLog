@@ -1,6 +1,17 @@
 CHANGES
 =======
 
+1.2.3
+-----
+
+* fix: ensure contiguous memory is fed to C++ routines
+* docs: added SNEMI3D benchmark to README.md
+
+1.2.2
+-----
+
+* fix: numpy arrays should be acceptable as anisotropy values
+
 1.2.1
 -----
 
