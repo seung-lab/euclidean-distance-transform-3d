@@ -26,7 +26,7 @@ Binaries are available for some platforms. If your platform is not supported, pi
 ```bash
 sudo apt-get install g++ python3-dev
 pip install numpy
-pip install edt
+pip install edt --no-binary :all:
 ```
 
 ### Python Usage
@@ -49,6 +49,8 @@ import numpy as np
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
 dt = edt.edt(labels, anisotropy=(6, 6, 30), black_border=True, order='F') 
 ```
+
+*Note on Memory Usage: Make sure the input array to edt is contiguous memory or it will make a copy. You can determine if this is the case with `print(data.flags)`.*
 
 ### C++ Usage
 
