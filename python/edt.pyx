@@ -31,7 +31,7 @@ from cpython cimport array
 cimport numpy as cnp
 import numpy as np
 
-__VERSION__ = '1.2.0'
+__VERSION__ = '1.2.3'
 
 cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
@@ -95,6 +95,9 @@ def edt(data, anisotropy=None, black_border=False, order='C'):
   if data.size == 0:
     return np.zeros(shape=data.shape).astype(np.float32)
 
+  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
+    data = np.copy(data, order=order)
+
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
     return edt1d(data, anisotropy, black_border)
@@ -141,6 +144,9 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C'):
 
   if data.size == 0:
     return np.zeros(shape=data.shape).astype(np.float32)
+
+  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
+    data = np.copy(data, order=order)
 
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
