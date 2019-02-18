@@ -168,6 +168,16 @@ However, this equation doesn't work with non-unitary anisotropy. The derivation 
 => s = (w^2(r^2 - q^2) + f(r) - f(q)) / 2w^2(r-q)
 ```
 
+As the computation of *s* is one of the most expensive lines in the algorithm, two multiplications can be saved by factoring *w<sup>2</sup> (r<sup>2</sup> - q<sup>2</sup>)* into *w<sup>2</sup> (r - q) (r + q)*. Here we save one multiplication in computing `r*r + q*q` and replace it with a subtraction. In the denominator of *s*, we avoid having to multiply by *w<sup>2</sup>* or compute *r-q* again. This trick prevents anisotropy support from adding substantial costs.
+
+```
+Let w2 = w * w
+Let factor1 = (r - q) * w2
+Let factor2 = r + q
+
+Let s = (f(r) - f(q) + factor1 * factor2) / (2 * factor1);
+```
+
 ### Multi-Label Felzenszwalb and Huttenlocher Variation
 
 The parabola method attempts to find the lower envelope of the parabolas described by vertices (i, f(i)).
