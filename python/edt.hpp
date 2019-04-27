@@ -15,9 +15,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <stdio.h>
-
-#include <string.h>
 #include <algorithm>
 
 #ifndef EDT_H
