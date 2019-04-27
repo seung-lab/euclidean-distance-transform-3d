@@ -15,10 +15,8 @@
 
 #include <cmath>
 #include <cstdint>
-#include <stdio.h>
-
-#include <string.h>
 #include <algorithm>
+#include <limits>
 
 #ifndef EDT_H
 #define EDT_H
@@ -41,14 +39,14 @@ const int VERSION_BUGFIX = 0;
 inline void tofinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
     if (f[i] == INFINITY) {
-      f[i] = 1e10;
+      f[i] = std::numeric_limits<float>::max() - 1;
     }
   }
 }
 
 inline void toinfinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
-    if (f[i] >= 1e10) {
+    if (f[i] >= std::numeric_limits<float>::max() - 1) {
       f[i] = INFINITY;
     }
   }
