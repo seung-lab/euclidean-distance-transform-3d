@@ -697,6 +697,31 @@ def test_3d_lopsided():
     print(size)
     assert np.all(cres == fres)
 
+def test_3d_high_anisotropy():
+  shape = (256, 256, 256)
+  anisotropy = (1000000, 1200000, 40)
+
+  labels = np.ones( shape, dtype=np.uint8)
+  labels[0, 0, 0] = 0
+  labels[-1, -1, -1] = 0
+
+  resedt = edt.edt(labels, anisotropy=anisotropy, black_border=False)
+
+  mx = np.max(resedt)
+  assert np.isfinite(mx)
+  assert mx <= (1e6 * 256) ** 2 + (1e6 * 256) ** 2 + (666 * 256) ** 2
+
+  resscipy = ndimage.distance_transform_edt(labels, sampling=anisotropy)
+  resscipy[ resscipy == 0 ] = 1
+  resedt[ resedt == 0 ] = 1
+  ratio = np.abs(resscipy / resedt)
+  assert np.all(ratio < 1.000001) and np.all(ratio > 0.999999)
+
+def test_all_inf():
+  shape = (128, 128, 128)
+  labels = np.ones( shape, dtype=np.uint8)
+  res = edt.edt(labels, black_border=False, anisotropy=(1,1,1))
+  assert np.all(res == np.inf)
 
 def test_numpy_anisotropy():
   labels = np.zeros(shape=(128, 128, 128), dtype=np.uint32)
