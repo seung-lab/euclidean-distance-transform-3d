@@ -4,7 +4,7 @@ import setuptools
 import numpy as np
 
 # NOTE: If edt.cpp does not exist:
-# cython -3 --fast-fail -v --cplus ./ext/src/third_party/fpzip-1.2.0/src/fpzip.pyx
+# cython -3 --fast-fail -v --cplus edt.pyx
 
 setuptools.setup(
   setup_requires=['pbr'],
@@ -17,9 +17,9 @@ setuptools.setup(
       'edt',
       sources=[ 'edt.cpp' ],
       language='c++',
-      include_dirs=[ np.get_include() ],
+      include_dirs=[ np.get_include(), 'threadpool.h' ],
       extra_compile_args=[
-        '-std=c++11', '-O3', '-ffast-math'
+        '-std=c++11', '-O3', '-ffast-math', '-pthread'
       ]
     ),
   ],
