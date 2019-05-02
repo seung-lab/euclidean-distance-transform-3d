@@ -254,8 +254,8 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   free(xform)
   return np.frombuffer(buf, dtype=np.float32)
 
-def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
-  result = edt2dsq(data, anisotropy, black_border, order)
+def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C', parallel=1):
+  result = edt2dsq(data, anisotropy, black_border, order, parallel)
   return np.sqrt(result, result)
 
 def edt2dsq(
@@ -348,8 +348,8 @@ def edt2dsq(
   free(xform)
   return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
 
-def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'):
-  result = edt3dsq(data, anisotropy, black_border, order)
+def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C', parallel=1):
+  result = edt3dsq(data, anisotropy, black_border, order, parallel)
   return np.sqrt(result, result)
 
 def edt3dsq(
@@ -428,7 +428,7 @@ def edt3dsq(
       black_border, parallel
     )
   elif data.dtype == np.bool:
-    arr_memview8 = data.astype(np.uint8)
+    arr_memview8 = data.view(np.uint8)
     xform = _edt3dsq[bool](
       <bool*>&arr_memview8[0,0,0],
       sx, sy, sz,
