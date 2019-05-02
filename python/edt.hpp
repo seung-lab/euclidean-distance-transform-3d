@@ -13,15 +13,14 @@
  * Date: July 2018
  */
 
+#ifndef EDT_H
+#define EDT_H
+
 #include <cmath>
 #include <cstdint>
 #include <algorithm>
 #include <limits>
 #include "threadpool.h"
-
-#ifndef EDT_H
-#define EDT_H
-
 
 // The pyedt namespace contains the primary implementation,
 // but users will probably want to use the edt namespace (bottom)
