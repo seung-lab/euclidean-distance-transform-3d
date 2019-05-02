@@ -4,6 +4,19 @@
 
 Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image containing multiple labels in a single pass with support for anisotropic dimensions. Curious what the output looks like? Download [the movie](https://github.com/seung-lab/euclidean-distance-transform-3d/blob/master/edt.mp4?raw=true)!
 
+```python
+import edt
+import numpy as np
+
+# e.g. 6nm x 6nm x 30nm for the S1 dataset by Kasthuri et al., 2014
+labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
+dt = edt.edt(
+  labels, anisotropy=(6, 6, 30), 
+  black_border=True, order='F',
+  parallel=4 # number of threads, <= 0 sets to num cpu
+) 
+```
+
 ### Use Cases  
 
 1. Compute the distance transform of a volume containing multiple labels simultaneously and then query it using a fast masking operator.
