@@ -797,9 +797,9 @@ template <typename T>
 float* edt(T* labels, 
   const int sx, const int sy, 
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
-  return pyedt::_edt2d(labels, sx, sy, wx, wy, black_border);
+  return pyedt::_edt2d(labels, sx, sy, wx, wy, black_border, parallel);
 }
 
 
@@ -828,9 +828,9 @@ float* binary_edt(
   T* labels, 
   const int sx, const int sy, 
   const float wx, const float wy, 
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
-  return pyedt::_binary_edt2d(labels, sx, sy, wx, wy, black_border);
+  return pyedt::_binary_edt2d(labels, sx, sy, wx, wy, black_border, parallel);
 }
 
 template <typename T>
@@ -859,9 +859,9 @@ float* edtsq(
   T* labels, 
   const int sx, const int sy, 
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
-  return pyedt::_edt2dsq(labels, sx, sy, wx, wy, black_border);
+  return pyedt::_edt2dsq(labels, sx, sy, wx, wy, black_border, parallel);
 }
 
 template <typename T>
@@ -883,7 +883,7 @@ template <typename T>
 float* binary_edtsq(
   T* labels, 
   const int sx, const float wx, 
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   return edt::edtsq(labels, sx, wx, black_border);
 }
@@ -893,9 +893,9 @@ float* binary_edtsq(
   T* labels, 
   const int sx, const int sy, 
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
-  return pyedt::_binary_edt2dsq(labels, sx, sy, wx, wy, black_border);
+  return pyedt::_binary_edt2dsq(labels, sx, sy, wx, wy, black_border, parallel);
 }
 
 template <typename T>
