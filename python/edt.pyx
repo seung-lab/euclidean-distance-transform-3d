@@ -26,7 +26,8 @@ from libc.stdint cimport (
 )
 from libcpp cimport bool
 
-cimport numpy as numpy
+import multiprocessing
+
 from cpython cimport array 
 cimport numpy as cnp
 import numpy as np
@@ -99,6 +100,9 @@ def edt(data, anisotropy=None, black_border=False, order='C', int parallel=1):
   if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
     data = np.copy(data, order=order)
 
+  if parallel <= 0:
+    parallel = multiprocessing.cpu_count()
+
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
     return edt1d(data, anisotropy, black_border)
@@ -149,6 +153,9 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C', int paralle
 
   if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
     data = np.copy(data, order=order)
+
+  if parallel <= 0:
+    parallel = multiprocessing.cpu_count()
 
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
