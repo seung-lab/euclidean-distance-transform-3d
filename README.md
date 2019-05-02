@@ -47,7 +47,11 @@ import numpy as np
 
 # e.g. 6nm x 6nm x 30nm for the S1 dataset by Kasthuri et al., 2014
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
-dt = edt.edt(labels, anisotropy=(6, 6, 30), black_border=True, order='F') 
+dt = edt.edt(
+  labels, anisotropy=(6, 6, 30), 
+  black_border=True, order='F',
+  parallel=1 # number of threads, <= 0 sets to num cpu
+) 
 ```
 
 *Note on Memory Usage: Make sure the input array to edt is contiguous memory or it will make a copy. You can determine if this is the case with `print(data.flags)`.*

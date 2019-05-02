@@ -36,12 +36,14 @@ The three optional parameters are `anisotropy`, `black_border`, and `order`. Ani
 
 `order` allows the programmer to determine how the underlying array should be interpreted. `'C'` (C-order, XYZ, row-major) and `'F'` (Fortran-order, ZYX, column major) are supported. `'C'` order is the default.
 
+`parallel` controls the number of threads. Set it <= 0 to automatically determine your CPU count.
+
 ```python
 import edt
 import numpy as np
 
 # e.g. 6nm x 6nm x 30nm for the S1 dataset by Kasthuri et al., 2014
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
-dt = edt.edt(labels, anisotropy=(6, 6, 30), black_border=True, order='F') 
+dt = edt.edt(labels, anisotropy=(6, 6, 30), black_border=True, order='F', parallel=1) 
 ```
 

@@ -30,21 +30,21 @@ int* labels3d = new int[512*512*512]();
 float* dt = edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
 float* dt = edt<int>(labels2d, 
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
-  /*black_border=*/true); 
+  /*black_border=*/true, /*parallel=*/1); 
 float* dt = edt<int>(labels3d, 
   /*sx=*/512, /*sy=*/512, /*sz=*/512,
   /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
-  /*black_border=*/true); 
+  /*black_border=*/true, /*parallel=*/2); 
 
 // get the squared distance instead (avoids computing sqrt)
 float* dt = edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
 float* dt = edtsq<int>(labels2d, 
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
-  /*black_border=*/true); 
+  /*black_border=*/true, /*parallel=*/4); 
 float* dt = edtsq<int>(labels3d, 
   /*sx=*/512, /*sy=*/512, /*sz=*/512,
   /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
-  /*black_border=*/true); 
+  /*black_border=*/true, /*parallel=*/8); 
 ```
 
 ### High Performance Binary Images
