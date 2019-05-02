@@ -265,7 +265,7 @@ def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
   cdef double[:,:] arr_memviewdouble
   cdef bool[:,:] arr_memviewbool
 
-  cdef float* xform
+  cdef float* xform = NULL
 
   cdef int sx = data.shape[1] # C: rows
   cdef int sy = data.shape[0] # C: cols
@@ -354,7 +354,7 @@ def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'
   cdef float[:,:,:] arr_memviewfloat
   cdef float[:,:,:] arr_memviewdouble
 
-  cdef float* xform
+  cdef float* xform = NULL
 
   cdef int sx = data.shape[2]
   cdef int sy = data.shape[1]

@@ -6311,8 +6311,17 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   PyObject *__pyx_t_32 = NULL;
   __Pyx_RefNannySetupContext("edt2dsq", 0);
 
+  /* "edt.pyx":268
+ *   cdef bool[:,:] arr_memviewbool
+ * 
+ *   cdef float* xform = NULL             # <<<<<<<<<<<<<<
+ * 
+ *   cdef int sx = data.shape[1] # C: rows
+ */
+  __pyx_v_xform = NULL;
+
   /* "edt.pyx":270
- *   cdef float* xform
+ *   cdef float* xform = NULL
  * 
  *   cdef int sx = data.shape[1] # C: rows             # <<<<<<<<<<<<<<
  *   cdef int sy = data.shape[0] # C: cols
@@ -7738,8 +7747,17 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   PyObject *__pyx_t_40 = NULL;
   __Pyx_RefNannySetupContext("edt3dsq", 0);
 
+  /* "edt.pyx":357
+ *   cdef float[:,:,:] arr_memviewdouble
+ * 
+ *   cdef float* xform = NULL             # <<<<<<<<<<<<<<
+ * 
+ *   cdef int sx = data.shape[2]
+ */
+  __pyx_v_xform = NULL;
+
   /* "edt.pyx":359
- *   cdef float* xform
+ *   cdef float* xform = NULL
  * 
  *   cdef int sx = data.shape[2]             # <<<<<<<<<<<<<<
  *   cdef int sy = data.shape[1]
