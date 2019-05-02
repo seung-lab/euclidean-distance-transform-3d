@@ -13,14 +13,14 @@
  * Date: July 2018
  */
 
+#ifndef EDT_H
+#define EDT_H
+
 #include <cmath>
 #include <cstdint>
 #include <algorithm>
 #include <limits>
-
-#ifndef EDT_H
-#define EDT_H
-
+#include "threadpool.h"
 
 // The pyedt namespace contains the primary implementation,
 // but users will probably want to use the edt namespace (bottom)
@@ -420,50 +420,65 @@ template <typename T>
 float* _edt3dsq(T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t sxy = sx * sy;
   const size_t voxels = sz * sxy;
 
   float *workspace = new float[sx * sy * sz]();
+
+  ThreadPool pool(parallel);
+
   for (size_t z = 0; z < sz; z++) {
-    for (size_t y = 0; y < sy; y++) { 
-      // Might be possible to write this as a single pass, might be faster
-      // however, it's already only using about 3-5% of total CPU time.
-      // NOTE: Tried it, same speed overall.
-      squared_edt_1d_multi_seg<T>(
-        (labels + sx * y + sxy * z), 
-        (workspace + sx * y + sxy * z), 
-        sx, 1, wx, black_border
-      ); 
+    for (size_t y = 0; y < sy; y++) {
+      pool.enqueue([labels, y, z, sx, sxy, wx, workspace, black_border](){
+        squared_edt_1d_multi_seg<T>(
+          (labels + sx * y + sxy * z), 
+          (workspace + sx * y + sxy * z), 
+          sx, 1, wx, black_border
+        ); 
+      });
     }
   }
+
+  pool.join();
 
   if (!black_border) {
     tofinite(workspace, voxels);
   }
 
+  pool.start(parallel);
+
   for (size_t z = 0; z < sz; z++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic_multi_seg<T>(
-        (labels + x + sxy * z),
-        (workspace + x + sxy * z), 
-        (workspace + x + sxy * z), 
-        sy, sx, wy, black_border
-      );
+      pool.enqueue([labels, x, sxy, z, workspace, sx, sy, wy, black_border](){
+        squared_edt_1d_parabolic_multi_seg<T>(
+          (labels + x + sxy * z),
+          (workspace + x + sxy * z), 
+          (workspace + x + sxy * z), 
+          sy, sx, wy, black_border
+        );
+      });
     }
   }
 
+  pool.join();
+  pool.start(parallel);
+
   for (size_t y = 0; y < sy; y++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic_multi_seg<T>(
-        (labels + x + sx * y), 
-        (workspace + x + sx * y), 
-        (workspace + x + sx * y), 
-        sz, sxy, wz, black_border
-      );
+      pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
+        squared_edt_1d_parabolic_multi_seg<T>(
+          (labels + x + sx * y), 
+          (workspace + x + sx * y), 
+          (workspace + x + sx * y), 
+          sz, sxy, wz, black_border
+        );
+      });
     }
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -477,30 +492,35 @@ template <typename T>
 float* _binary_edt3dsq(T* binaryimg, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t sxy = sx * sy;
   const size_t voxels = sz * sxy;
 
   size_t x,y,z;
 
+  ThreadPool pool(parallel);
+
   float *workspace = new float[sx * sy * sz]();
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) { 
-      // Might be possible to write this as a single pass, might be faster
-      // however, it's already only using about 3-5% of total CPU time.
-      // NOTE: Tried it, same speed overall.
-      squared_edt_1d_multi_seg<T>(
-        (binaryimg + sx * y + sxy * z), 
-        (workspace + sx * y + sxy * z), 
-        sx, 1, wx, black_border
-      ); 
+      pool.enqueue([binaryimg, sx, y, sxy, z, workspace, wx, black_border](){
+        squared_edt_1d_multi_seg<T>(
+          (binaryimg + sx * y + sxy * z), 
+          (workspace + sx * y + sxy * z), 
+          sx, 1, wx, black_border
+        ); 
+      });
     }
   }
+
+  pool.join();
 
   if (!black_border) {
     tofinite(workspace, voxels);
   }
+
+  pool.start(parallel);
 
   size_t offset;
   for (z = 0; z < sz; z++) {
@@ -511,32 +531,42 @@ float* _binary_edt3dsq(T* binaryimg,
           break;
         }
       }
-      
-      _squared_edt_1d_parabolic(
-        (workspace + offset + sx * y), 
-        (workspace + offset + sx * y), 
-        sy - y, sx, wy, 
-        black_border || (y > 0), black_border
-      );
+
+      pool.enqueue([binaryimg, sx, sy, y, sxy, z, workspace, wy, black_border, offset](){
+        _squared_edt_1d_parabolic(
+          (workspace + offset + sx * y), 
+          (workspace + offset + sx * y), 
+          sy - y, sx, wy, 
+          black_border || (y > 0), black_border
+        );
+      });
     }
   }
+
+  pool.join();
+  pool.start(parallel);
 
   for (y = 0; y < sy; y++) {
     for (x = 0; x < sx; x++) {
       offset = x + sx * y;
-      for (z = 0; z < sz; z++) {
-        if (workspace[offset + sxy*z]) {
-          break;
+      pool.enqueue([binaryimg, sx, sz, y, sxy, workspace, wz, black_border, offset](){
+        size_t z = 0;
+        for (z = 0; z < sz; z++) {
+          if (workspace[offset + sxy*z]) {
+            break;
+          }
         }
-      }
-      _squared_edt_1d_parabolic(
-        (workspace + offset + sxy * z), 
-        (workspace + offset + sxy * z), 
-        sz - z, sxy, wz, 
-        black_border || (z > 0), black_border
-      );
+        _squared_edt_1d_parabolic(
+          (workspace + offset + sxy * z), 
+          (workspace + offset + sxy * z), 
+          sz - z, sxy, wz, 
+          black_border || (z > 0), black_border
+        );
+      });
     }
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -595,11 +625,12 @@ template <typename T>
 float* _edt2dsq(T* input, 
   const size_t sx, const size_t sy,
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t voxels = sx * sy;
 
   float *workspace = new float[voxels]();
+
   for (size_t y = 0; y < sy; y++) { 
     squared_edt_1d_multi_seg<T>(
       (input + sx * y), (workspace + sx * y), 
@@ -611,15 +642,21 @@ float* _edt2dsq(T* input,
     tofinite(workspace, voxels);
   }
 
+  ThreadPool pool(parallel);
+
   for (size_t x = 0; x < sx; x++) {
-    squared_edt_1d_parabolic_multi_seg<T>(
-      (input + x), 
-      (workspace + x), 
-      (workspace + x), 
-      sy, sx, wy,
-      black_border
-    );
+    pool.enqueue([input, x, workspace, sy, sx, wy, black_border](){
+      squared_edt_1d_parabolic_multi_seg<T>(
+        (input + x), 
+        (workspace + x), 
+        (workspace + x), 
+        sy, sx, wy,
+        black_border
+      );
+    });
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -633,7 +670,7 @@ template <typename T>
 float* _binary_edt2dsq(T* binaryimg, 
   const size_t sx, const size_t sy,
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t voxels = sx * sy;
   size_t x,y;
@@ -650,20 +687,27 @@ float* _binary_edt2dsq(T* binaryimg,
     tofinite(workspace, voxels);
   }
 
-  for (x = 0; x < sx; x++) {
-    for (y = 0; y < sy; y++) {
-      if (workspace[x + y * sx]) {
-        break;
-      }
-    }
+  ThreadPool pool(parallel);
 
-    _squared_edt_1d_parabolic(
-      (workspace + x + y * sx), 
-      (workspace + x + y * sx), 
-      sy - y, sx, wy,
-      black_border || (y > 0), black_border
-    );
+  for (x = 0; x < sx; x++) {
+    pool.enqueue([workspace, x, sx, sy, wy, black_border](){
+      size_t y = 0;
+      for (y = 0; y < sy; y++) {
+        if (workspace[x + y * sx]) {
+          break;
+        }
+      }
+
+      _squared_edt_1d_parabolic(
+        (workspace + x + y * sx), 
+        (workspace + x + y * sx), 
+        sy - y, sx, wy,
+        black_border || (y > 0), black_border
+      );
+    });
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
