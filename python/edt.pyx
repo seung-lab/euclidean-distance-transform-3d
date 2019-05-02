@@ -161,7 +161,8 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C'):
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
 def edt1d(data, anisotropy=1.0, bool black_border=False):
-  return np.sqrt(edt1dsq(data, anisotropy, black_border))
+  result = edt1dsq(data, anisotropy, black_border)
+  return np.sqrt(result, result)
 
 def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   cdef uint8_t[:] arr_memview8
@@ -252,7 +253,8 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   return np.frombuffer(buf, dtype=np.float32)
 
 def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
-  return np.sqrt(edt2dsq(data, anisotropy, black_border, order))
+  result = edt2dsq(data, anisotropy, black_border, order)
+  return np.sqrt(result, result)
 
 def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
   cdef uint8_t[:,:] arr_memview8
@@ -341,7 +343,8 @@ def edt2dsq(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C'):
   return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
 
 def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'):
-  return np.sqrt(edt3dsq(data, anisotropy, black_border, order))
+  result = edt3dsq(data, anisotropy, black_border, order)
+  return np.sqrt(result, result)
 
 def edt3dsq(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C'):
   cdef uint8_t[:,:,:] arr_memview8
