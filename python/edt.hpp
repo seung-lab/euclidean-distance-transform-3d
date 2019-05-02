@@ -498,8 +498,6 @@ float* _binary_edt3dsq(T* binaryimg,
 
   size_t x,y,z;
 
-  std::vector<std::thread> workers;
-
   float *workspace = new float[sx * sy * sz]();
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) { 
@@ -511,12 +509,6 @@ float* _binary_edt3dsq(T* binaryimg,
         (workspace + sx * y + sxy * z), 
         sx, 1, wx, black_border
       ); 
-    }
-  }
-
-  for (std::thread &t: workers) {
-    if (t.joinable()) {
-      t.join();
     }
   }
 
@@ -534,16 +526,12 @@ float* _binary_edt3dsq(T* binaryimg,
         }
       }
 
-      workers.push_back(
-        std::thread([workspace, black_border, offset, sx, sy, wy, y](){
-          _squared_edt_1d_parabolic(
-            (workspace + offset + sx * y), 
-            (workspace + offset + sx * y), 
-            sy - y, sx, wy, 
-            black_border || (y > 0), black_border
-          );
-        })
-      );      
+      _squared_edt_1d_parabolic(
+        (workspace + offset + sx * y), 
+        (workspace + offset + sx * y), 
+        sy - y, sx, wy, 
+        black_border || (y > 0), black_border
+      );
     }
   }
 
