@@ -417,7 +417,7 @@ void squared_edt_1d_parabolic_multi_seg(
  * Returns: writes squared distance transform of f to d
  */
 template <typename T>
-float* _edt3dsq(T* labels, 
+float* _edt3dsq(T* labels, float* workspace,
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz,
   const bool black_border=false, const int parallel=1) {
@@ -425,7 +425,9 @@ float* _edt3dsq(T* labels,
   const size_t sxy = sx * sy;
   const size_t voxels = sz * sxy;
 
-  float *workspace = new float[sx * sy * sz]();
+  if (workspace == NULL) {
+    workspace = new float[sx * sy * sz]();
+  }
 
   ThreadPool pool(parallel);
 
@@ -488,7 +490,7 @@ float* _edt3dsq(T* labels,
 
 // skipping multi-seg logic results in a large speedup
 template <typename T>
-float* _binary_edt3dsq(T* binaryimg, 
+float* _binary_edt3dsq(T* binaryimg, float* workspace,
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz,
   const bool black_border=false) {
@@ -498,7 +500,10 @@ float* _binary_edt3dsq(T* binaryimg,
 
   size_t x,y,z;
 
-  float *workspace = new float[sx * sy * sz]();
+  if (workspace == NULL) {
+    workspace = new float[sx * sy * sz]();
+  }  
+
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) { 
       // Might be possible to write this as a single pass, might be faster
@@ -562,12 +567,12 @@ float* _binary_edt3dsq(T* binaryimg,
 // about 20% faster on binary images by skipping
 // multisegment logic in parabolic
 template <typename T>
-float* _edt3dsq(bool* binaryimg, 
+float* _edt3dsq(bool* binaryimg, float* workspace,
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz, 
   const bool black_border=false) {
 
-  return _binary_edt3dsq(binaryimg, sx, sy, sz, wx, wy, wz, black_border);
+  return _binary_edt3dsq(binaryimg, workspace, sx, sy, sz, wx, wy, wz, black_border);
 }
 
 // Same as _edt3dsq, but applies square root to get
@@ -578,7 +583,7 @@ float* _edt3d(T* input,
   const float wx, const float wy, const float wz,
   const bool black_border=false) {
 
-  float* transform = _edt3dsq<T>(input, sx, sy, sz, wx, wy, wz, black_border);
+  float* transform = _edt3dsq<T>(input, NULL, sx, sy, sz, wx, wy, wz, black_border);
 
   for (size_t i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
@@ -830,7 +835,8 @@ float* edtsq(
   const float wx, const float wy, const float wz,
   const bool black_border=false) {
 
-  return pyedt::_edt3dsq(labels, sx, sy, sz, wx, wy, wz, black_border);
+  float* workspace = new float[sx*sy*sz]();
+  return pyedt::_edt3dsq(labels, workspace, sx, sy, sz, wx, wy, wz, black_border);
 }
 
 template <typename T>
