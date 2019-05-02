@@ -181,14 +181,16 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   cdef uint64_t[:] arr_memview64
   cdef float[:] arr_memviewfloat
   cdef double[:] arr_memviewdouble
-  
-  cdef float* xform = <float*>calloc(data.size, sizeof(float))
+
+  cdef size_t voxels = data.size
+  cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
+  cdef float[:] outputview = output
 
   if data.dtype in (np.uint8, np.int8):
     arr_memview8 = data.astype(np.uint8)
     squared_edt_1d_multi_seg[uint8_t](
       <uint8_t*>&arr_memview8[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -198,7 +200,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memview16 = data.astype(np.uint16)
     squared_edt_1d_multi_seg[uint16_t](
       <uint16_t*>&arr_memview16[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -208,7 +210,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memview32 = data.astype(np.uint32)
     squared_edt_1d_multi_seg[uint32_t](
       <uint32_t*>&arr_memview32[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -218,7 +220,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memview64 = data.astype(np.uint64)
     squared_edt_1d_multi_seg[uint64_t](
       <uint64_t*>&arr_memview64[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -228,7 +230,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memviewfloat = data
     squared_edt_1d_multi_seg[float](
       <float*>&arr_memviewfloat[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -238,7 +240,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memviewdouble = data
     squared_edt_1d_multi_seg[double](
       <double*>&arr_memviewdouble[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
@@ -248,19 +250,14 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
     arr_memview8 = data.astype(np.uint8)
     squared_edt_1d_multi_seg[bool](
       <bool*>&arr_memview8[0],
-      xform,
+      &outputview[0],
       data.size,
       1,
       anisotropy,
       black_border
     )
   
-  cdef float[:] xform_view = <float[:data.size]>xform
-  # This construct is required by python 2.
-  # Python 3 can just do np.frombuffer(vec_view, ...)
-  buf = bytearray(xform_view[:])
-  free(xform)
-  return np.frombuffer(buf, dtype=np.float32)
+  return output
 
 def edt2d(
     data, anisotropy=(1.0, 1.0), 
