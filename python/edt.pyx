@@ -47,7 +47,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
     T* labels,
     int sx, int sy, 
     float wx, float wy,
-    bool black_border
+    bool black_border, int parallel
   ) nogil
 
   cdef float* _edt3dsq[T](
@@ -254,7 +254,11 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
   free(xform)
   return np.frombuffer(buf, dtype=np.float32)
 
-def edt2d(data, anisotropy=(1.0, 1.0), bool black_border=False, order='C', parallel=1):
+def edt2d(
+    data, anisotropy=(1.0, 1.0), 
+    bool black_border=False, order='C', 
+    parallel=1
+  ):
   result = edt2dsq(data, anisotropy, black_border, order, parallel)
   return np.sqrt(result, result)
 
@@ -290,7 +294,7 @@ def edt2dsq(
       <uint8_t*>&arr_memview8[0,0],
       sx, sy,
       ax, ay,
-      black_border   
+      black_border, parallel   
     )
   elif data.dtype in (np.uint16, np.int16):
     arr_memview16 = data.astype(np.uint16)
@@ -298,7 +302,7 @@ def edt2dsq(
       <uint16_t*>&arr_memview16[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
   elif data.dtype in (np.uint32, np.int32):
     arr_memview32 = data.astype(np.uint32)
@@ -306,7 +310,7 @@ def edt2dsq(
       <uint32_t*>&arr_memview32[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
   elif data.dtype in (np.uint64, np.int64):
     arr_memview64 = data.astype(np.uint64)
@@ -314,7 +318,7 @@ def edt2dsq(
       <uint64_t*>&arr_memview64[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
   elif data.dtype == np.float32:
     arr_memviewfloat = data
@@ -322,7 +326,7 @@ def edt2dsq(
       <float*>&arr_memviewfloat[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
   elif data.dtype == np.float64:
     arr_memviewdouble = data
@@ -330,7 +334,7 @@ def edt2dsq(
       <double*>&arr_memviewdouble[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
   elif data.dtype == np.bool:
     arr_memview8 = data.astype(np.uint8)
@@ -338,7 +342,7 @@ def edt2dsq(
       <bool*>&arr_memview8[0,0],
       sx, sy,
       ax, ay,
-      black_border      
+      black_border, parallel      
     )
 
   cdef float[:] xform_view = <float[:data.size]>xform
@@ -348,7 +352,11 @@ def edt2dsq(
   free(xform)
   return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
 
-def edt3d(data, anisotropy=(1.0, 1.0, 1.0), bool black_border=False, order='C', parallel=1):
+def edt3d(
+    data, anisotropy=(1.0, 1.0, 1.0), 
+    bool black_border=False, order='C', 
+    parallel=1
+  ):
   result = edt3dsq(data, anisotropy, black_border, order, parallel)
   return np.sqrt(result, result)
 

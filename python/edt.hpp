@@ -625,11 +625,12 @@ template <typename T>
 float* _edt2dsq(T* input, 
   const size_t sx, const size_t sy,
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t voxels = sx * sy;
 
   float *workspace = new float[voxels]();
+
   for (size_t y = 0; y < sy; y++) { 
     squared_edt_1d_multi_seg<T>(
       (input + sx * y), (workspace + sx * y), 
@@ -641,15 +642,21 @@ float* _edt2dsq(T* input,
     tofinite(workspace, voxels);
   }
 
+  ThreadPool pool(parallel);
+
   for (size_t x = 0; x < sx; x++) {
-    squared_edt_1d_parabolic_multi_seg<T>(
-      (input + x), 
-      (workspace + x), 
-      (workspace + x), 
-      sy, sx, wy,
-      black_border
-    );
+    pool.enqueue([input, x, workspace, sy, sx, wy, black_border](){
+      squared_edt_1d_parabolic_multi_seg<T>(
+        (input + x), 
+        (workspace + x), 
+        (workspace + x), 
+        sy, sx, wy,
+        black_border
+      );
+    });
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -663,7 +670,7 @@ template <typename T>
 float* _binary_edt2dsq(T* binaryimg, 
   const size_t sx, const size_t sy,
   const float wx, const float wy,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t voxels = sx * sy;
   size_t x,y;
@@ -680,19 +687,24 @@ float* _binary_edt2dsq(T* binaryimg,
     tofinite(workspace, voxels);
   }
 
-  for (x = 0; x < sx; x++) {
-    for (y = 0; y < sy; y++) {
-      if (workspace[x + y * sx]) {
-        break;
-      }
-    }
+  ThreadPool pool(parallel);
 
-    _squared_edt_1d_parabolic(
-      (workspace + x + y * sx), 
-      (workspace + x + y * sx), 
-      sy - y, sx, wy,
-      black_border || (y > 0), black_border
-    );
+  for (x = 0; x < sx; x++) {
+    pool.enqueue([workspace, x, sx, sy, wy, black_border](){
+      size_t y = 0;
+      for (y = 0; y < sy; y++) {
+        if (workspace[x + y * sx]) {
+          break;
+        }
+      }
+
+      _squared_edt_1d_parabolic(
+        (workspace + x + y * sx), 
+        (workspace + x + y * sx), 
+        sy - y, sx, wy,
+        black_border || (y > 0), black_border
+      );
+    });
   }
 
   if (!black_border) {
