@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <limits>
+#include "threadpool.h"
 
 #ifndef EDT_H
 #define EDT_H
@@ -420,24 +421,29 @@ template <typename T>
 float* _edt3dsq(T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
   const float wx, const float wy, const float wz,
-  const bool black_border=false) {
+  const bool black_border=false, const int parallel=1) {
 
   const size_t sxy = sx * sy;
   const size_t voxels = sz * sxy;
 
   float *workspace = new float[sx * sy * sz]();
+
+  ThreadPool pool(parallel);
+
   for (size_t z = 0; z < sz; z++) {
-    for (size_t y = 0; y < sy; y++) { 
-      // Might be possible to write this as a single pass, might be faster
-      // however, it's already only using about 3-5% of total CPU time.
-      // NOTE: Tried it, same speed overall.
-      squared_edt_1d_multi_seg<T>(
-        (labels + sx * y + sxy * z), 
-        (workspace + sx * y + sxy * z), 
-        sx, 1, wx, black_border
-      ); 
+    for (size_t y = 0; y < sy; y++) {
+      pool.enqueue([labels, y, z, sx, sxy, wx, workspace, black_border](){
+        squared_edt_1d_multi_seg<T>(
+          (labels + sx * y + sxy * z), 
+          (workspace + sx * y + sxy * z), 
+          sx, 1, wx, black_border
+        ); 
+      });
     }
   }
+
+  pool.join();
+  pool.start(parallel);
 
   if (!black_border) {
     tofinite(workspace, voxels);
@@ -445,25 +451,34 @@ float* _edt3dsq(T* labels,
 
   for (size_t z = 0; z < sz; z++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic_multi_seg<T>(
-        (labels + x + sxy * z),
-        (workspace + x + sxy * z), 
-        (workspace + x + sxy * z), 
-        sy, sx, wy, black_border
-      );
+      pool.enqueue([labels, x, sxy, z, workspace, sx, sy, wy, black_border](){
+        squared_edt_1d_parabolic_multi_seg<T>(
+          (labels + x + sxy * z),
+          (workspace + x + sxy * z), 
+          (workspace + x + sxy * z), 
+          sy, sx, wy, black_border
+        );
+      });
     }
   }
 
+  pool.join();
+  pool.start(parallel);
+
   for (size_t y = 0; y < sy; y++) {
     for (size_t x = 0; x < sx; x++) {
-      squared_edt_1d_parabolic_multi_seg<T>(
-        (labels + x + sx * y), 
-        (workspace + x + sx * y), 
-        (workspace + x + sx * y), 
-        sz, sxy, wz, black_border
-      );
+      pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
+        squared_edt_1d_parabolic_multi_seg<T>(
+          (labels + x + sx * y), 
+          (workspace + x + sx * y), 
+          (workspace + x + sx * y), 
+          sz, sxy, wz, black_border
+        );
+      });
     }
   }
+
+  pool.join();
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -484,6 +499,8 @@ float* _binary_edt3dsq(T* binaryimg,
 
   size_t x,y,z;
 
+  std::vector<std::thread> workers;
+
   float *workspace = new float[sx * sy * sz]();
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) { 
@@ -495,6 +512,12 @@ float* _binary_edt3dsq(T* binaryimg,
         (workspace + sx * y + sxy * z), 
         sx, 1, wx, black_border
       ); 
+    }
+  }
+
+  for (std::thread &t: workers) {
+    if (t.joinable()) {
+      t.join();
     }
   }
 
@@ -511,13 +534,17 @@ float* _binary_edt3dsq(T* binaryimg,
           break;
         }
       }
-      
-      _squared_edt_1d_parabolic(
-        (workspace + offset + sx * y), 
-        (workspace + offset + sx * y), 
-        sy - y, sx, wy, 
-        black_border || (y > 0), black_border
-      );
+
+      workers.push_back(
+        std::thread([workspace, black_border, offset, sx, sy, wy, y](){
+          _squared_edt_1d_parabolic(
+            (workspace + offset + sx * y), 
+            (workspace + offset + sx * y), 
+            sy - y, sx, wy, 
+            black_border || (y > 0), black_border
+          );
+        })
+      );      
     }
   }
 
