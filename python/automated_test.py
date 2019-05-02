@@ -13,49 +13,50 @@ TYPES_NO_BOOL = INTEGER_TYPES + [ np.float32 ]
 TYPES = TYPES_NO_BOOL + [ np.bool ]
 
 def test_one_d_simple():
-  for dtype in TYPES:
-    print(dtype)
-    labels = np.array([ 0 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)
+  for parallel in (1,2):
+    for dtype in TYPES:
+      print(dtype)
+      labels = np.array([ 0 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == labels)
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == labels)
 
-    labels = np.array([ 1 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)
+      labels = np.array([ 1 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == np.array([ np.inf ]))
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == np.array([ np.inf ]))
 
-    labels = np.array([ 0, 1 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)
+      labels = np.array([ 0, 1 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == labels)
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == labels)
 
-    labels = np.array([ 1, 0 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)
+      labels = np.array([ 1, 0 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == labels)
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == labels)
 
-    labels = np.array([ 0, 1, 0 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)  
+      labels = np.array([ 0, 1, 0 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)  
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == labels)  
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == labels)  
 
-    labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
-    result = edt.edt(labels, black_border=True)
-    assert np.all(result == labels)  
+      labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
+      result = edt.edt(labels, black_border=True, parallel=parallel)
+      assert np.all(result == labels)  
 
-    result = edt.edt(labels, black_border=False)
-    assert np.all(result == labels)  
+      result = edt.edt(labels, black_border=False, parallel=parallel)
+      assert np.all(result == labels)  
 
 def test_one_d_black_border():
   def cmp(labels, ans, types=TYPES, anisotropy=1.0):
@@ -229,13 +230,17 @@ def test_two_d_ident_black_border():
 
 def test_two_d():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0)):
-    for dtype in types:
-      print(dtype)
-      labels = np.array(labels, dtype=dtype)
-      ans = np.array(ans, dtype=np.float32)
-      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True)
-      print(result)
-      assert np.all(result == ans)  
+    for parallel in (1,2):
+      for dtype in types:
+        print(dtype)
+        labels = np.array(labels, dtype=dtype)
+        ans = np.array(ans, dtype=np.float32)
+        result = edt.edtsq(
+          labels, anisotropy=anisotropy, 
+          black_border=True, parallel=parallel
+        )
+        print(result)
+        assert np.all(result == ans)  
 
   cmp(
     [
@@ -399,33 +404,39 @@ def test_2d_scipy_comparison_black_border():
 
 def test_2d_scipy_comparison():
   for _ in range(20):
-    for dtype in (np.uint32, np.bool):
-      randos = np.random.randint(0, 2, size=(5, 5), dtype=dtype)
-      labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
+    for parallel in (1,2):
+      for dtype in (np.uint32, np.bool):
+        randos = np.random.randint(0, 2, size=(5, 5), dtype=dtype)
+        labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
 
-      print("INPUT")
-      print(labels)
+        print("INPUT")
+        print(labels)
 
-      print("MLAEDT")
-      mlaedt_result = edt.edt(labels, black_border=False)
-      print(mlaedt_result)
+        print("MLAEDT")
+        mlaedt_result = edt.edt(labels, black_border=False, parallel=parallel)
+        print(mlaedt_result)
 
-      print("SCIPY")
-      scipy_result = ndimage.distance_transform_edt(labels)
-      print(scipy_result)
+        print("SCIPY")
+        scipy_result = ndimage.distance_transform_edt(labels)
+        print(scipy_result)
 
-      assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+        assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_three_d():  
   def cmp(labels, ans, types=TYPES, anisotropy=(1.0, 1.0, 1.0)):
-    for dtype in types:
-      print(dtype, anisotropy)
-      labels = np.array(labels, dtype=dtype)
-      ans = np.array(ans, dtype=np.float32)
-      print(labels)
-      print(ans)
-      result = edt.edtsq(labels, anisotropy=anisotropy, black_border=True, order='C')
-      assert np.all(result.T == ans) # written in human understandable order so needs transpose 
+    for parallel in (1,2):
+      for dtype in types:
+        print(dtype, anisotropy)
+        labels = np.array(labels, dtype=dtype)
+        ans = np.array(ans, dtype=np.float32)
+        print(labels)
+        print(ans)
+        result = edt.edtsq(
+          labels, anisotropy=anisotropy, 
+          black_border=True, order='C', 
+          parallel=parallel
+        )
+        assert np.all(result.T == ans) # written in human understandable order so needs transpose 
 
   cmp([[[]]], [[[]]])
   cmp([[[0]]], [[[0]]])
@@ -540,29 +551,30 @@ def test_three_d():
 
 def test_3d_scipy_comparison():
   for _ in range(20):
-    for dtype in (np.uint32, np.bool):
-      for order in ('C', 'F'):
-        randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
-        labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
-        # Scipy requires zero borders
-        labels[1:-1,1:-1,1:-1] = randos
+    for parallel in (1,2):
+      for dtype in (np.uint32, np.bool):
+        for order in ('C', 'F'):
+          randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
+          labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
+          # Scipy requires zero borders
+          labels[1:-1,1:-1,1:-1] = randos
 
-        print("INPUT")
-        print(labels)
+          print("INPUT")
+          print(labels)
 
-        print("MLAEDT")
-        mlaedt_result = edt.edt(labels, black_border=False, order=order)
-        print(mlaedt_result)
+          print("MLAEDT")
+          mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
+          print(mlaedt_result)
 
-        print("SCIPY")
-        scipy_result = ndimage.distance_transform_edt(labels)
-        print(scipy_result)
+          print("SCIPY")
+          scipy_result = ndimage.distance_transform_edt(labels)
+          print(scipy_result)
 
-        print("DIFF")
-        print(np.abs(scipy_result == mlaedt_result))
-        print(np.max(np.abs(scipy_result - mlaedt_result)))
+          print("DIFF")
+          print(np.abs(scipy_result == mlaedt_result))
+          print(np.max(np.abs(scipy_result - mlaedt_result)))
 
-        assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+          assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_non_mutation_2d():
   """
@@ -629,10 +641,11 @@ def test_3d_even_anisotropy():
   labels = np.zeros( (15,15,15), dtype=np.bool, order='F')
   labels[2:12, 2:12, 5:10] = True
   img = edt.edt(labels, anisotropy=(1,1,1))
-  for i in range(1, 150):
-    w = float(i)
-    aimg = edt.edt(labels, anisotropy=(w, w, w))
-    assert np.all(w * img == aimg)
+  for parallel in (1,2):
+    for i in range(1, 150):
+      w = float(i)
+      aimg = edt.edt(labels, anisotropy=(w, w, w), parallel=parallel)
+      assert np.all(w * img == aimg)
 
 def test_2d_lopsided():
   def gen(x, y, order):
