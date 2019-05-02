@@ -29,7 +29,7 @@ from libcpp cimport bool
 import multiprocessing
 
 from cpython cimport array 
-cimport numpy as cnp
+cimport numpy as np
 import numpy as np
 
 __VERSION__ = '1.2.4'
@@ -52,10 +52,11 @@ cdef extern from "edt.hpp" namespace "pyedt":
   ) nogil
 
   cdef float* _edt3dsq[T](
-    T* labels,
+    T* labels, 
     int sx, int sy, int sz,
     float wx, float wy, float wz,
-    bool black_border, int parallel
+    bool black_border, int parallel,
+    float* output
   ) nogil
 
 def nvl(val, default_val):
@@ -379,8 +380,6 @@ def edt3dsq(
   cdef float[:,:,:] arr_memviewfloat
   cdef float[:,:,:] arr_memviewdouble
 
-  cdef float* xform = NULL
-
   cdef int sx = data.shape[2]
   cdef int sy = data.shape[1]
   cdef int sz = data.shape[0]
@@ -394,67 +393,72 @@ def edt3dsq(
     ay = anisotropy[1]
     az = anisotropy[2]
 
+  cdef size_t voxels = sx * sy * sz
+  cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
+  cdef float[:] outputview = output
+
   if data.dtype in (np.uint8, np.int8):
     arr_memview8 = data.astype(np.uint8)
-    xform = _edt3dsq[uint8_t](
+    _edt3dsq[uint8_t](
       <uint8_t*>&arr_memview8[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype in (np.uint16, np.int16):
     arr_memview16 = data.astype(np.uint16)
-    xform = _edt3dsq[uint16_t](
+    _edt3dsq[uint16_t](
       <uint16_t*>&arr_memview16[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype in (np.uint32, np.int32):
     arr_memview32 = data.astype(np.uint32)
-    xform = _edt3dsq[uint32_t](
+    _edt3dsq[uint32_t](
       <uint32_t*>&arr_memview32[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype in (np.uint64, np.int64):
     arr_memview64 = data.astype(np.uint64)
-    xform = _edt3dsq[uint64_t](
+    _edt3dsq[uint64_t](
       <uint64_t*>&arr_memview64[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype == np.float32:
     arr_memviewfloat = data
-    xform = _edt3dsq[float](
+    _edt3dsq[float](
       <float*>&arr_memviewfloat[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype == np.float64:
     arr_memviewdouble = data
-    xform = _edt3dsq[double](
+    _edt3dsq[double](
       <double*>&arr_memviewdouble[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
   elif data.dtype == np.bool:
     arr_memview8 = data.view(np.uint8)
-    xform = _edt3dsq[bool](
+    _edt3dsq[bool](
       <bool*>&arr_memview8[0,0,0],
       sx, sy, sz,
       ax, ay, az,
-      black_border, parallel
+      black_border, parallel,
+      <float*>&outputview[0]
     )
 
-  cdef float[:] xform_view = <float[:data.size]>xform
-  # This construct is required by python 2.
-  # Python 3 can just do np.frombuffer(vec_view, ...)
-  buf = bytearray(xform_view[:])
-  free(xform)
-  return np.frombuffer(buf, dtype=np.float32).reshape( data.shape, order=order)
-
+  return output.reshape( data.shape, order=order)
