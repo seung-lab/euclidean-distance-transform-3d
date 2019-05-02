@@ -707,6 +707,8 @@ float* _binary_edt2dsq(T* binaryimg,
     });
   }
 
+  pool.join();
+
   if (!black_border) {
     toinfinite(workspace, voxels);
   }
