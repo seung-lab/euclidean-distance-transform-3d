@@ -1,2 +1,3 @@
 include edt.hpp
+include threadpool.h
 include LICENSE
