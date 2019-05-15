@@ -46,7 +46,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
 
   cdef float* _edt2dsq[T](
     T* labels,
-    int sx, int sy, 
+    size_t sx, size_t sy, 
     float wx, float wy,
     bool black_border, int parallel,
     float* output
@@ -54,7 +54,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
 
   cdef float* _edt3dsq[T](
     T* labels, 
-    int sx, int sy, int sz,
+    size_t sx, size_t sy, size_t sz,
     float wx, float wy, float wz,
     bool black_border, int parallel,
     float* output
@@ -281,8 +281,8 @@ def edt2dsq(
   cdef double[:,:] arr_memviewdouble
   cdef bool[:,:] arr_memviewbool
 
-  cdef int sx = data.shape[1] # C: rows
-  cdef int sy = data.shape[0] # C: cols
+  cdef size_t sx = data.shape[1] # C: rows
+  cdef size_t sy = data.shape[0] # C: cols
   cdef float ax = anisotropy[1]
   cdef float ay = anisotropy[0]
 
@@ -382,9 +382,9 @@ def edt3dsq(
   cdef float[:,:,:] arr_memviewfloat
   cdef float[:,:,:] arr_memviewdouble
 
-  cdef int sx = data.shape[2]
-  cdef int sy = data.shape[1]
-  cdef int sz = data.shape[0]
+  cdef size_t sx = data.shape[2]
+  cdef size_t sy = data.shape[1]
+  cdef size_t sz = data.shape[0]
   cdef float ax = anisotropy[2]
   cdef float ay = anisotropy[1]
   cdef float az = anisotropy[0]
