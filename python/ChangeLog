@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.3.1
+-----
+
+* release: 1.3.1 -- Last version didn't include threadpool.h for py27
+* chore: add threadpool.h to MANIFEST.in
+
 1.3.0
 -----
 
