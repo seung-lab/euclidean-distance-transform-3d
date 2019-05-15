@@ -1,4 +1,3 @@
-import os
 import setuptools
 
 import numpy as np
