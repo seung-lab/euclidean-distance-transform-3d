@@ -93,8 +93,6 @@ For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.
 
 ### Motivation
 
-The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy.
-
 <p style="font-style: italics;" align="center">
 <img height=256 width=256 src="https://raw.githubusercontent.com/seung-lab/euclidean-distance-transform-3d/master/labeled-cube-kisuk-lee.png" alt="A Labeled 3D Image. Credit: Kisuk Lee" /><br>
 Fig. 1: A labeled 3D connectomics volume. Credit: Kisuk Lee
