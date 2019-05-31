@@ -93,18 +93,16 @@ For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.
 
 ### Motivation
 
-The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy. It also lacked support for anisotropic images.
+The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy.
 
 <p style="font-style: italics;" align="center">
 <img height=256 width=256 src="https://raw.githubusercontent.com/seung-lab/euclidean-distance-transform-3d/master/labeled-cube-kisuk-lee.png" alt="A Labeled 3D Image. Credit: Kisuk Lee" /><br>
 Fig. 1: A labeled 3D connectomics volume. Credit: Kisuk Lee
 </p>
 
-The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy. It also lacked support for anisotropic images.
+The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy. 
 
 The scipy EDT took about 20 seconds to compute the transform of a 512x512x512 voxel binary image. Unfortunately, there are typically more than 300 distinct labels within a volume, requiring the serial application of the EDT. While cropping to the ROI does help, many ROIs are diagonally oriented and span the volume, requiring a full EDT. I found that in our numpy/scipy based implementation of TEASAR, EDT was taking approximately a quarter of the time on its own. The amount of time the algorithm spent per a block was estimated to be multiple hours per a core. 
-
-It's common for connectomics datasets to have anisotropic ratios of 10:1 (e.g. 4nm x 4nm x 40nm resolution image stacks), making this treatment important for our use of TEASAR. `scipy.ndimage.distance_transform_edt` did not support weighted dimensions, though in the discussion section Maurer et al is clear that their algorithm supports anisotropy.  
 
 I realized that it's possible to compute the EDT much more quickly by computing the distance transform in one pass by making it label boundary aware at slightly higher computational cost. Since the distance transform does not result in overlapping boundaries, it is trivial to then perform a fast masking operation to query the block for the appropriate distance transform. 
 
