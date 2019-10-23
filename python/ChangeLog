@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+1.3.2
+-----
+
+* chore: set content type to markdown for PyPI
+* release: 1.3.2
+* chore: update changelog
+* fix: voxel computation overflowing
+* fix: test.py -> automated\_test.py
+
 1.3.1
 -----
 
