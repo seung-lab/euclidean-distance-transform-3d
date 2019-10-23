@@ -6,7 +6,7 @@ Compute the Euclidean Distance Transform of a 1d, 2d, or 3d labeled image contai
 
 *Requires a C++ compiler*
 
-The installation process depends on `edt.cpp` for the Python bindings derived from `edt.pyx`. `edt.hpp` contains the algorithm implementation.
+The installation process depends on `edt.cpp` for the Python bindings derived from `edt.pyx`. `edt.hpp` contains the algorithm implementation.  
 
 ```bash
 pip install numpy
