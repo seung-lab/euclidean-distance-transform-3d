@@ -99,8 +99,8 @@ def edt(data, anisotropy=None, black_border=False, order='C', int parallel=1):
   if data.size == 0:
     return np.zeros(shape=data.shape).astype(np.float32)
 
-  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
-    data = np.copy(data, order=order)
+  # converts data to appropriate memory layout (if not already there)
+  data = np.asarray(data, order=order)
 
   if parallel <= 0:
     parallel = multiprocessing.cpu_count()
@@ -153,8 +153,8 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C', int paralle
   if data.size == 0:
     return np.zeros(shape=data.shape).astype(np.float32)
 
-  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
-    data = np.copy(data, order=order)
+  # converts data to appropriate memory layout (if not already there)
+  data = np.asarray(data, order=order)
 
   if parallel <= 0:
     parallel = multiprocessing.cpu_count()
