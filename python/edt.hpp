@@ -328,7 +328,7 @@ void _squared_edt_1d_parabolic(
     squared_edt_1d_parabolic(f, d, n, stride, anisotropy);
   }
   else {
-   squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
+    squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
   }
 }
 
@@ -543,7 +543,7 @@ float* _binary_edt3dsq(
         }
       }
 
-      pool.enqueue([binaryimg, sx, sy, y, sxy, z, workspace, wy, black_border, offset](){
+      pool.enqueue([sx, sy, y, workspace, wy, black_border, offset](){
         _squared_edt_1d_parabolic(
           (workspace + offset + sx * y), 
           (workspace + offset + sx * y), 
@@ -560,7 +560,7 @@ float* _binary_edt3dsq(
   for (y = 0; y < sy; y++) {
     for (x = 0; x < sx; x++) {
       offset = x + sx * y;
-      pool.enqueue([binaryimg, sx, sz, y, sxy, workspace, wz, black_border, offset](){
+      pool.enqueue([sz, sxy, workspace, wz, black_border, offset](){
         size_t z = 0;
         for (z = 0; z < sz; z++) {
           if (workspace[offset + sxy*z]) {
