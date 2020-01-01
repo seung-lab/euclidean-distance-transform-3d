@@ -179,6 +179,11 @@ void squared_edt_1d_parabolic(
 
   int k = 0;
   int* v = new int[n]();
+  float* ff = new float[n]();
+  for (int i = 0; i < n; i++) {
+    ff[i] = f[i * stride];
+  }
+  
   float* ranges = new float[n + 1]();
 
   ranges[0] = -INFINITY;
@@ -195,24 +200,19 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 =  i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 =  i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
     k++;
     v[k] = i;
     ranges[k] = s;
     ranges[k + 1] = +INFINITY;
-  }
-
-  float* vals = new float[k+1]();
-  for (int i = 0; i <= k; i++) {
-    vals[i] = f[v[i] * stride];
   }
 
   k = 0;
@@ -222,7 +222,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + vals[k];
+    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
@@ -238,7 +238,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
-  delete [] vals;
+  delete [] ff;
   delete [] ranges;
 }
 
@@ -259,6 +259,11 @@ void squared_edt_1d_parabolic(
 
   int k = 0;
   int* v = new int[n]();
+  float* ff = new float[n]();
+  for (int i = 0; i < n; i++) {
+    ff[i] = f[i * stride];
+  }
+
   float* ranges = new float[n + 1]();
 
   ranges[0] = -INFINITY;
@@ -275,24 +280,19 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
     k++;
     v[k] = i;
     ranges[k] = s;
     ranges[k + 1] = +INFINITY;
-  }
-
-  float* vals = new float[k+1]();
-  for (int i = 0; i <= k; i++) {
-    vals[i] = f[v[i] * stride];
   }
 
   k = 0;
@@ -302,7 +302,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + vals[k];
+    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
@@ -310,7 +310,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
-  delete [] vals;
+  delete [] ff;
   delete [] ranges;
 }
 

@@ -179,6 +179,11 @@ void squared_edt_1d_parabolic(
 
   int k = 0;
   int* v = new int[n]();
+  float* ff = new float[n]();
+  for (int i = 0; i < n; i++) {
+    ff[i] = f[i * stride];
+  }
+  
   float* ranges = new float[n + 1]();
 
   ranges[0] = -INFINITY;
@@ -195,24 +200,19 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 =  i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 =  i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
     k++;
     v[k] = i;
     ranges[k] = s;
     ranges[k + 1] = +INFINITY;
-  }
-
-  float* vals = new float[k+1]();
-  for (int i = 0; i <= k; i++) {
-    vals[i] = f[v[i] * stride];
   }
 
   k = 0;
@@ -222,7 +222,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + vals[k];
+    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
@@ -238,7 +238,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
-  delete [] vals;
+  delete [] ff;
   delete [] ranges;
 }
 
@@ -259,6 +259,11 @@ void squared_edt_1d_parabolic(
 
   int k = 0;
   int* v = new int[n]();
+  float* ff = new float[n]();
+  for (int i = 0; i < n; i++) {
+    ff[i] = f[i * stride];
+  }
+
   float* ranges = new float[n + 1]();
 
   ranges[0] = -INFINITY;
@@ -275,24 +280,19 @@ void squared_edt_1d_parabolic(
   for (int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 = i + v[k];
-    s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+    s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 = i + v[k];
-      s = (f[i * stride] - f[v[k] * stride] + factor1 * factor2) / (2.0 * factor1);
+      s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
     k++;
     v[k] = i;
     ranges[k] = s;
     ranges[k + 1] = +INFINITY;
-  }
-
-  float* vals = new float[k+1]();
-  for (int i = 0; i <= k; i++) {
-    vals[i] = f[v[i] * stride];
   }
 
   k = 0;
@@ -302,7 +302,7 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + vals[k];
+    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
@@ -310,7 +310,7 @@ void squared_edt_1d_parabolic(
   }
 
   delete [] v;
-  delete [] vals;
+  delete [] ff;
   delete [] ranges;
 }
 
@@ -328,7 +328,7 @@ void _squared_edt_1d_parabolic(
     squared_edt_1d_parabolic(f, d, n, stride, anisotropy);
   }
   else {
-   squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
+    squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
   }
 }
 
@@ -543,7 +543,7 @@ float* _binary_edt3dsq(
         }
       }
 
-      pool.enqueue([binaryimg, sx, sy, y, sxy, z, workspace, wy, black_border, offset](){
+      pool.enqueue([sx, sy, y, workspace, wy, black_border, offset](){
         _squared_edt_1d_parabolic(
           (workspace + offset + sx * y), 
           (workspace + offset + sx * y), 
@@ -560,7 +560,7 @@ float* _binary_edt3dsq(
   for (y = 0; y < sy; y++) {
     for (x = 0; x < sx; x++) {
       offset = x + sx * y;
-      pool.enqueue([binaryimg, sx, sz, y, sxy, workspace, wz, black_border, offset](){
+      pool.enqueue([sz, sxy, workspace, wz, black_border, offset](){
         size_t z = 0;
         for (z = 0; z < sz; z++) {
           if (workspace[offset + sxy*z]) {
