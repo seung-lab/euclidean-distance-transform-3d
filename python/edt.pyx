@@ -1,4 +1,5 @@
-"""
+"""Multi-Label Euclidean Distance Transform
+
 Cython binding for the C++ multi-label Euclidean Distance
 Transform library by William Silversmith based on the 
 algorithms of Meijister et al (2002) Felzenzwalb et al. (2012) 
@@ -17,7 +18,7 @@ License: GNU 3.0
 
 Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
-Date: July-November 2018
+Date: July 2018 - January 2020
 """
 from libc.stdlib cimport calloc, free
 from libc.stdint cimport (
@@ -32,7 +33,7 @@ from cpython cimport array
 cimport numpy as np
 import numpy as np
 
-__VERSION__ = '1.4.0'
+__VERSION__ = '2.0.0'
 
 cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
