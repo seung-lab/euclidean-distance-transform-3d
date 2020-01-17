@@ -65,9 +65,9 @@ def nvl(val, default_val):
     return default_val
   return val
 
-def edt(data, anisotropy=None, black_border=False, order='C', int parallel=1):
+def edt(data, anisotropy=None, black_border=False, order='K', int parallel=1):
   """
-  edt(data, anisotropy=None, black_border=False, order='C', parallel=1)
+  edt(data, anisotropy=None, black_border=False, order='K', parallel=1)
 
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -88,8 +88,12 @@ def edt(data, anisotropy=None, black_border=False, order='C', int parallel=1):
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
-    order: 'C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order.
+    order: 'K','C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order. 'K' means "Keep", and will
+      detect whether the array is arleady C or F order and use that.
+      If the array is discontiguous in 'K' mode, it will be copied into 
+      C order, otherwise if 'C' or 'F' is specified, it will copy it
+      into that layout.
     parallel: number of threads to use (only applies to 2D and 3D)
 
   Returns: EDT of data
@@ -97,10 +101,18 @@ def edt(data, anisotropy=None, black_border=False, order='C', int parallel=1):
   dims = len(data.shape)
 
   if data.size == 0:
-    return np.zeros(shape=data.shape).astype(np.float32)
+    return np.zeros(shape=data.shape, dtype=np.float32)
 
-  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
+  if not data.flags.c_contiguous and not data.flags.f_contiguous:
+    order = 'C' if order != 'F' else 'F'
     data = np.copy(data, order=order)
+  elif order == 'K' and data.flags.c_contiguous:
+    order = 'C'
+  elif order == 'K' and data.flags.f_contiguous:
+    order = 'F'
+
+  if order not in ('C', 'F'):
+    raise ValueError("order must be 'K', 'C' or 'F'. Got: " + str(order))
 
   if parallel <= 0:
     parallel = multiprocessing.cpu_count()
