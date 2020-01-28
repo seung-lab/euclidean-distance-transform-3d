@@ -231,7 +231,7 @@ These additional lines add about 3% to the running time compared to a program wi
 
 
 <p style="font-style: italics;" align="center">
-<img src="https://github.com/seung-lab/euclidean-distance-transform-3d/raw/master/benchmarks/edt-1.2.1_vs_scipy_1.15.4_snemi3d_extracting_labels.png" alt="A Labeled 3D Image. Credit: Kisuk Lee" /><br>
+<img src="https://github.com/seung-lab/euclidean-distance-transform-3d/raw/master/benchmarks/edt-2.0.0_vs_scipy_1.2.1_snemi3d_extracting_labels.png" alt="Fig. 2: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)" /><br>
 Fig. 2: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)
 </p>
 
@@ -242,18 +242,21 @@ import edt
 from tqdm import tqdm
 from scipy import ndimage
 
-labels = load_snemi3d_labels()
+import numpy as np
+
+labels = load_snemi3d_image()
 uniques = np.unique(labels)[1:]
 
-def edt():
+def edt_test():
   res = edt.edt(labels, order='F')
   for segid in tqdm(uniques):
-    extracted = res[labels == segid]
+    extracted = res * (labels == segid)
 
-def ndimage():
+def ndimage_test():
   for segid in tqdm(uniques):
     extracted = (labels == segid)
-    res = ndimage.distance_transform_edt(extracted)
+    extracted = ndimage.distance_transform_edt(extracted)
+
 ```
 
 
