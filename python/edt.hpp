@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <limits>
+#include "ipt.hpp"
 #include "threadpool.h"
 
 // The pyedt namespace contains the primary implementation,
@@ -470,20 +471,24 @@ float* _edt3dsq(
   pool.join();
   pool.start(parallel);
 
+  ipt::ipt<T>(labels, sx, sy, sz);
+
   for (size_t y = 0; y < sy; y++) {
     for (size_t x = 0; x < sx; x++) {
       pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
         squared_edt_1d_parabolic_multi_seg<T>(
-          (labels + x + sx * y), 
-          (workspace + x + sx * y), 
-          (workspace + x + sx * y), 
-          sz, sxy, wz, black_border
+          (labels + sz * y + sxy * x), 
+          (workspace + sz * y + sxy * x), 
+          (workspace + sz * y + sxy * x), 
+          sz, 1, wz, black_border
         );
       });
     }
   }
 
   pool.join();
+
+  ipt::ipt<T>(labels, sx, sy, sz);
 
   if (!black_border) {
     toinfinite(workspace, voxels);
