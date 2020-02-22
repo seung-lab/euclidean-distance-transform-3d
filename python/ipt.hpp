@@ -35,17 +35,17 @@
 namespace ipt {
 
 template <typename T>
-void square_ipt(T* arr, const int sx, const int sy) {
+void square_ipt(T* arr, const size_t sx, const size_t sy) {
   T tmp = 0;
 
-  int k = 0;
-  int next_k = 0;
+  size_t k = 0;
+  size_t next_k = 0;
 
-  int base_k = 0; // just for going faster
+  size_t base_k = 0; // just for going faster
 
-  for (int y = 0; y < sy; y++) {
+  for (size_t y = 0; y < sy; y++) {
     base_k = sx * y;
-    for (int x = y; x < sx; x++) {
+    for (size_t x = y; x < sx; x++) {
       k = x + base_k;
       next_k = y + sy * x;
 
@@ -111,8 +111,8 @@ void square_ipt(T* arr, const int sx, const int sy) {
   * sans-bit vector algorithms are O(nm log nm).
   */
 template <typename T>
-void rect_ipt(T* arr, const int sx, const int sy) {
-  const int sxy = sx * sy;
+void rect_ipt(T* arr, const size_t sx, const size_t sy) {
+  const size_t sxy = sx * sy;
 
   std::vector<bool> visited;
   visited.resize(sxy);
@@ -120,12 +120,12 @@ void rect_ipt(T* arr, const int sx, const int sy) {
   visited[0] = true;
   visited[sxy - 1] = true;
 
-  const int q = sxy - 1;
+  const size_t q = sxy - 1;
 
-  int k, next_k;
+  size_t k, next_k;
   T tmp1, tmp2;
   
-  for (int i = 1; i < q; i++) {
+  for (size_t i = 1; i < q; i++) {
     if (visited[i]) {
       continue;
     }
@@ -150,21 +150,21 @@ void rect_ipt(T* arr, const int sx, const int sy) {
 template <typename T>
 void square_ipt(
     T* arr, 
-    const int sx, const int sy, const int sz
+    const size_t sx, const size_t sy, const size_t sz
   ) {
 
   T tmp = 0;
 
-  const int sxy = sx * sy;
-  const int syz = sy * sz;
+  const size_t sxy = sx * sy;
+  const size_t syz = sy * sz;
 
-  int k = 0;
-  int next_k = 0;
-  int base_k = 0;
-  for (int z = 0; z < sz; z++) {
-    for (int y = 0; y < sy; y++) {
+  size_t k = 0;
+  size_t next_k = 0;
+  size_t base_k = 0;
+  for (size_t z = 0; z < sz; z++) {
+    for (size_t y = 0; y < sy; y++) {
       base_k = sx * y + sxy * z;
-      for (int x = z; x < sx; x++) {
+      for (size_t x = z; x < sx; x++) {
         k = x + base_k;
         next_k = z + sz * y + syz * x;
 
@@ -176,27 +176,27 @@ void square_ipt(
   }
 }
 
-inline int P_3d(
-    const int k, 
-    const int sx, const int sy, const int sz
+inline size_t P_3d(
+    const size_t k, 
+    const size_t sx, const size_t sy, const size_t sz
   ) {
-  const int sxy = sx * sy;
+  const size_t sxy = sx * sy;
 
   // k = x + sx y + sx sy z 
 
-  int z = k / sxy;
-  int y = (k - (z * sxy)) / sx;
-  int x = k - sx * (y + z * sy);
+  size_t z = k / sxy;
+  size_t y = (k - (z * sxy)) / sx;
+  size_t x = k - sx * (y + z * sy);
   return z + sz * (y + sy * x);
 }
 
 template <typename T>
 void rect_ipt(
     T* arr, 
-    const int sx, const int sy, const int sz
+    const size_t sx, const size_t sy, const size_t sz
   ) {
-  const int sxy = sx * sy;
-  const int N = sxy * sz;
+  const size_t sxy = sx * sy;
+  const size_t N = sxy * sz;
 
   std::vector<bool> visited;
   visited.resize(N);
@@ -204,10 +204,10 @@ void rect_ipt(
   visited[0] = true;
   visited[N - 1] = true;
 
-  int k, next_k;
+  size_t k, next_k;
   T tmp1 = 0, tmp2 = 0;
 
-  for (int i = 1; i < (N - 1); i++) {
+  for (size_t i = 1; i < (N - 1); i++) {
     if (visited[i]) {
       continue;
     }
@@ -226,19 +226,19 @@ void rect_ipt(
   }
 }
 
-inline int P_4d(
-    const int k, 
-    const int sx, const int sy, const int sz, const int sw
+inline size_t P_4d(
+    const size_t k, 
+    const size_t sx, const size_t sy, const size_t sz, const size_t sw
   ) {
-  const int sxy = sx * sy;
-  const int sxyz = sxy * sz;
+  const size_t sxy = sx * sy;
+  const size_t sxyz = sxy * sz;
 
   // k = x + sx y + sx sy z + sx sy sz w
 
-  int w = k / sxyz;
-  int z = (k - w * sxyz) / sxy;
-  int y = (k - (w * sxyz) - (z * sxy)) / sx;
-  int x = k - (w * sxyz) - (z * sxy) - y * sx;
+  size_t w = k / sxyz;
+  size_t z = (k - w * sxyz) / sxy;
+  size_t y = (k - (w * sxyz) - (z * sxy)) / sx;
+  size_t x = k - (w * sxyz) - (z * sxy) - y * sx;
 
   return w + sw * (z + sz * (y + sy * x));
 }
@@ -246,10 +246,10 @@ inline int P_4d(
 template <typename T>
 void rect_ipt(
     T* arr, 
-    const int sx, const int sy, const int sz, const int sw
+    const size_t sx, const size_t sy, const size_t sz, const size_t sw
   ) {
 
-  const int N = sx * sy * sz * sw;
+  const size_t N = sx * sy * sz * sw;
 
   std::vector<bool> visited;
   visited.resize(N);
@@ -257,10 +257,10 @@ void rect_ipt(
   visited[0] = true;
   visited[N - 1] = true;
 
-  int k, next_k;
+  size_t k, next_k;
   T tmp1 = 0, tmp2 = 0;
 
-  for (int i = 1; i < (N - 1); i++) {
+  for (size_t i = 1; i < (N - 1); i++) {
     if (visited[i]) {
       continue;
     }
@@ -280,12 +280,12 @@ void rect_ipt(
 }
 
 template <typename T>
-void ipt(T* arr, const int sx) {
+void ipt(T* arr, const size_t sx) {
   return;
 }
 
 template <typename T>
-void ipt(T* arr, const int sx, const int sy) {
+void ipt(T* arr, const size_t sx, const size_t sy) {
   if (sx * sy <= 1) {
     return;
   }
@@ -299,7 +299,7 @@ void ipt(T* arr, const int sx, const int sy) {
 }
 
 template <typename T>
-void ipt(T* arr, const int sx, const int sy, const int sz) {
+void ipt(T* arr, const size_t sx, const size_t sy, const size_t sz) {
   if (sx * sy * sz <= 1) {
     return;
   }
@@ -315,8 +315,8 @@ void ipt(T* arr, const int sx, const int sy, const int sz) {
 template <typename T>
 void ipt(
   T* arr, 
-  const int sx, const int sy, 
-  const int sz, const int sw
+  const size_t sx, const size_t sy, 
+  const size_t sz, const size_t sw
 ) {
   if (sx * sy * sz * sw <= 1) {
     return;
@@ -330,20 +330,20 @@ void ipt(
 namespace pyipt {
 
 template <typename T>
-void _ipt2d(T* arr, const int sx, const int sy) {
+void _ipt2d(T* arr, const size_t sx, const size_t sy) {
   ipt::ipt(arr, sx, sy);
 }
 
 template <typename T>
-void _ipt3d(T* arr, const int sx, const int sy, const int sz) {
+void _ipt3d(T* arr, const size_t sx, const size_t sy, const size_t sz) {
   ipt::ipt(arr, sx, sy, sz);
 }
 
 template <typename T>
 void _ipt4d(
     T* arr, 
-    const int sx, const int sy, 
-    const int sz, const int sw
+    const size_t sx, const size_t sy, 
+    const size_t sz, const size_t sw
   ) {
 
   ipt::ipt(arr, sx, sy, sz, sw);
