@@ -70,11 +70,11 @@ inline void toinfinite(float *f, const size_t voxels) {
 template <typename T>
 void squared_edt_1d_multi_seg(
     T* segids, float *d, const int n, 
-    const int stride, const float anistropy,
+    const long int stride, const float anistropy,
     const bool black_border=false
   ) {
 
-  int i;
+  long int i;
 
   T working_segid = segids[0];
 
@@ -99,7 +99,7 @@ void squared_edt_1d_multi_seg(
     }
   }
 
-  int min_bound = 0;
+  long int min_bound = 0;
   if (black_border) {
     d[n - stride] = static_cast<float>(segids[n - stride] != 0) * anistropy;
     min_bound = stride;
@@ -165,7 +165,7 @@ void squared_edt_1d_parabolic(
     float* f, 
     float *d, 
     const int n, 
-    const int stride, 
+    const long int stride, 
     const float anisotropy, 
     const bool black_border_left,
     const bool black_border_right
@@ -180,7 +180,7 @@ void squared_edt_1d_parabolic(
   int k = 0;
   int* v = new int[n]();
   float* ff = new float[n]();
-  for (int i = 0; i < n; i++) {
+  for (long int i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
   
@@ -197,7 +197,7 @@ void squared_edt_1d_parabolic(
    */
   float s;
   float factor1, factor2;
-  for (int i = 1; i < n; i++) {
+  for (long int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 =  i + v[k];
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
@@ -217,7 +217,7 @@ void squared_edt_1d_parabolic(
 
   k = 0;
   float envelope;
-  for (int i = 0; i < n; i++) {
+  for (long int i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
     }
@@ -247,7 +247,7 @@ void squared_edt_1d_parabolic(
     float* f, 
     float *d, 
     const int n, 
-    const int stride, 
+    const long int stride, 
     const float anisotropy
   ) {
 
@@ -260,7 +260,7 @@ void squared_edt_1d_parabolic(
   int k = 0;
   int* v = new int[n]();
   float* ff = new float[n]();
-  for (int i = 0; i < n; i++) {
+  for (long int i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
 
@@ -277,7 +277,7 @@ void squared_edt_1d_parabolic(
    */
   float s;
   float factor1, factor2;
-  for (int i = 1; i < n; i++) {
+  for (long int i = 1; i < n; i++) {
     factor1 = (i - v[k]) * w2;
     factor2 = i + v[k];
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
@@ -297,7 +297,7 @@ void squared_edt_1d_parabolic(
 
   k = 0;
   float envelope;
-  for (int i = 0; i < n; i++) {
+  for (long int i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
     }
@@ -318,7 +318,7 @@ void _squared_edt_1d_parabolic(
     float* f, 
     float *d, 
     const int n, 
-    const int stride, 
+    const long int stride, 
     const float anisotropy, 
     const bool black_border_left,
     const bool black_border_right
@@ -348,12 +348,12 @@ void _squared_edt_1d_parabolic(
 template <typename T>
 void squared_edt_1d_parabolic_multi_seg(
     T* segids, float* f, float *d, 
-    const int n, const int stride, const float anisotropy,
+    const int n, const long int stride, const float anisotropy,
     const bool black_border=false) {
 
   T working_segid = segids[0];
   T segid;
-  int last = 0;
+  long int last = 0;
 
   for (int i = 1; i < n; i++) {
     segid = segids[i * stride];
