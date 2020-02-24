@@ -32,10 +32,6 @@ namespace pyedt {
 
 #define sq(x) ((x) * (x))
 
-const int VERSION_MAJOR = 1;
-const int VERSION_MINOR = 0;
-const int VERSION_BUGFIX = 0;
-
 inline void tofinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
     if (f[i] == INFINITY) {
