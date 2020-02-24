@@ -483,8 +483,6 @@ float* _edt3dsq(
         );
       }
     }
-    ipt::ipt<float>(workspace, sx, sy, sz);
-    ipt::ipt<T>(labels, sx, sy, sz);
   }
   else {
     pool.start(parallel);
@@ -597,7 +595,6 @@ float* _binary_edt3dsq(
         );
       }
     }
-    ipt::ipt<float>(workspace, sx, sy, sz);
   }
   else {
     pool.start(parallel);
