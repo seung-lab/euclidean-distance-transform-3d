@@ -79,7 +79,7 @@ void squared_edt_1d_multi_seg(
   T working_segid = segids[0];
 
   if (black_border) {
-    d[0] = (float)(working_segid != 0) * anistropy; // 0 or 1
+    d[0] = static_cast<float>(working_segid != 0) * anistropy; // 0 or 1
   }
   else {
     d[0] = working_segid == 0 ? 0 : INFINITY;
@@ -94,14 +94,14 @@ void squared_edt_1d_multi_seg(
     }
     else {
       d[i] = anistropy;
-      d[i - stride] = (float)(segids[i - stride] != 0) * anistropy;
+      d[i - stride] = static_cast<float>(segids[i - stride] != 0) * anistropy;
       working_segid = segids[i];
     }
   }
 
   int min_bound = 0;
   if (black_border) {
-    d[n - stride] = (float)(segids[n - stride] != 0) * anistropy;
+    d[n - stride] = static_cast<float>(segids[n - stride] != 0) * anistropy;
     min_bound = stride;
   }
 
