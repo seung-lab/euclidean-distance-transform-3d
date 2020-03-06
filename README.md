@@ -95,14 +95,19 @@ For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.
 
 <p style="font-style: italics;" align="center">
 <img height=256 width=256 src="https://raw.githubusercontent.com/seung-lab/euclidean-distance-transform-3d/master/labeled-cube-kisuk-lee.png" alt="A Labeled 3D Image. Credit: Kisuk Lee" /><br>
-Fig. 1: A labeled 3D connectomics volume. Credit: Kisuk Lee
+<b>Fig. 1.</b> A labeled 3D connectomics volume. Credit: Kisuk Lee
 </p>
 
 The connectomics field commonly generates very large densely labeled volumes of neural tissue. Some algorithms, such as the TEASAR skeletonization algorithm [1] and its descendant [2] require the computation of a 3D Euclidean Distance Transform (EDT). We found that the [scipy](https://github.com/scipy/scipy/blob/f3dd9cba8af8d3614c88561712c967a9c67c2b50/scipy/ndimage/src/ni_morphology.c) implementation of the distance transform (based on the Voronoi method of Maurer et al. [3]) was too slow for our needs despite being relatively speedy. 
 
 The scipy EDT took about 20 seconds to compute the transform of a 512x512x512 voxel binary image. Unfortunately, there are typically more than 300 distinct labels within a volume, requiring the serial application of the EDT. While cropping to the ROI does help, many ROIs are diagonally oriented and span the volume, requiring a full EDT. I found that in our numpy/scipy based implementation of TEASAR, EDT was taking approximately a quarter of the time on its own. The amount of time the algorithm spent per a block was estimated to be multiple hours per a core. 
 
-I realized that it's possible to compute the EDT much more quickly by computing the distance transform in one pass by making it label boundary aware at slightly higher computational cost. Since the distance transform does not result in overlapping boundaries, it is trivial to then perform a fast masking operation to query the block for the appropriate distance transform. 
+It's possible to compute the EDT much more quickly by computing the distance transform for all labels in one pass by making it boundary aware. Since the distance transform does not result in overlapping boundaries, it is trivial to then extract individual ROIs by to querying the block with the shapes of individual labels. 
+
+<p align="center">
+<img height=384 src="https://raw.githubusercontent.com/seung-lab/euclidean-distance-transform-3d/master/two-routes.png" alt="Fig. 2. Extracting the distance transform of a single label from dense segmentation. (a) a 2d slice of dense segmentation (b) extraction of a single label into a binary image (c) simultaneous distance transform of all labels in (a) (d) distance transform of (b) which can be achieved by direct distance transform of (b) or by the multiplication of (b) with (c)." /><br>
+<b>Fig. 2.</b> Extracting the distance transform of a single label from dense segmentation. <b>(a)</b> a 2d slice of dense segmentation <b>(b)</b> extraction of a single label into a binary image <b>(c)</b> simultaneous distance transform of all labels in (a) <b>(d)</b> distance transform of (b) which can be achieved by direct distance transform of (b) or by the multiplication of (b) with (c).
+</p>
 
 The implementation presented here uses concepts from the 1994 paper by T. Saito and J. Toriwaki [4] and uses a linear sweeping method inspired by the 1966 method of Rosenfeld and Pfaltz [4] and of Mejister et al [7] with that of Mejister et al's and Felzenszwald and Huttenlocher's 2012 [6] two pass linear time parabolic minmal envelope method. I later learned that this method was discovered as early as 1992 by Rein van den Boomgaard in his thesis. [10] I incorporate a few minor modifications to the algorithms to remove the necessity of a black border. My own contribution here is the modification of both the linear sweep and linear parabolic methods to account for multiple label boundaries. 
 
@@ -231,8 +236,8 @@ These additional lines add about 3% to the running time compared to a program wi
 
 
 <p style="font-style: italics;" align="center">
-<img src="https://github.com/seung-lab/euclidean-distance-transform-3d/raw/master/benchmarks/edt-2.0.0_vs_scipy_1.2.1_snemi3d_extracting_labels.png" alt="Fig. 2: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)" /><br>
-Fig. 2: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)
+<img src="https://github.com/seung-lab/euclidean-distance-transform-3d/raw/master/benchmarks/edt-2.0.0_vs_scipy_1.2.1_snemi3d_extracting_labels.png" alt="Fig. 3: Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)" /><br>
+<b>Fig. 3.</b> Extraction of Individual EDT from 334 Labeled Segments in SNEMI3D MIP 1 (512x512x100 voxels)
 </p>
 
 The above experiment was gathered using `memory_profiler` while running the below code once for each function.
