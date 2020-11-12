@@ -1,6 +1,20 @@
 CHANGES
 =======
 
+* install: get py35 to compile on MacOS
+
+2.0.1
+-----
+
+* release(2.0.1): support huge arrays
+* chore: copy new version of cpp to cpp folder
+* refactor: change C-style casts to C++ style casts
+* fix: try using long int instead of int in key locations (#24)
+* docs: updated benchmark with 2.0.0 version
+* redesign(BREAKING): auto-detect C or F order unless specified (#22)
+* chore: update changelog
+* fix: Markdown compatibilities with PyPI changes
+
 1.4.0
 -----
 
