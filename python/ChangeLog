@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+2.0.2
+-----
+
+* release(2.0.2): python3.9 support
 * install: get py35 to compile on MacOS
 
 2.0.1

@@ -1,8 +1,8 @@
 FROM quay.io/pypa/manylinux2010_x86_64 
 MAINTAINER William Silversmith
 
-ADD . /build
-WORKDIR "/build"
+ADD . /edt
+WORKDIR "/edt/python"
 
 ENV CXX "g++"
 
