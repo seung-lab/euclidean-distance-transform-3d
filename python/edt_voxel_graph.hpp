@@ -94,8 +94,14 @@ void squared_edt_1d_multi_seg_voxel_graph(
       d[0] /= 2;
     }
   }
+  else if (working_segid == 0) {
+    d[0] = 0;
+  }
+  else if ((graph[0] & fwd_mask) == false) {
+    d[0] = anistropy / 2;
+  }
   else {
-    d[0] = working_segid == 0 ? 0 : INFINITY;
+    d[0] = INFINITY;
   }
 
   for (i = stride; i < n * stride; i += stride) {
@@ -278,7 +284,8 @@ float* _edt3dsq_voxel_graph(
         (labels + sx * y + sxy * z), 
         (graph + sx * y + sxy * z), fwd_xmask, bwd_xmask,
         (workspace + sx * y + sxy * z), 
-        sx, 1, wx, black_border
+        /*n=*/sx, /*stride=*/1, /*anisotropy=*/wx, 
+        black_border
       );
     }
   }
@@ -297,7 +304,8 @@ float* _edt3dsq_voxel_graph(
         (workspace + x + sxy * z), 
         (workspace + x + sxy * z), 
         (graph + x + sxy * z), fwd_ymask, bwd_ymask,
-        sy, sx, wy, black_border
+        /*n=*/sy, /*stride=*/sx, /*anisotropy=*/wy, 
+        black_border
       );
     }
   }
@@ -312,7 +320,8 @@ float* _edt3dsq_voxel_graph(
         (workspace + x + sx * y), 
         (workspace + x + sx * y), 
         (graph + x + sx * y), fwd_zmask, bwd_zmask,
-        sz, sxy, wz, black_border
+        /*n=*/sz, /*stride=*/sxy, /*anisotropy=*/wz, 
+        black_border
       );
     }
   }
