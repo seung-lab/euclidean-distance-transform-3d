@@ -536,7 +536,7 @@ def __edt3dsq(
   cdef uint32_t[:,:,:] arr_memview32
   cdef uint64_t[:,:,:] arr_memview64
   cdef float[:,:,:] arr_memviewfloat
-  cdef float[:,:,:] arr_memviewdouble
+  cdef double[:,:,:] arr_memviewdouble
 
   cdef size_t sx = data.shape[2]
   cdef size_t sy = data.shape[1]
@@ -631,7 +631,7 @@ def __edt3dsq_voxel_graph(
   cdef uint32_t[:,:,:] arr_memview32
   cdef uint64_t[:,:,:] arr_memview64
   cdef float[:,:,:] arr_memviewfloat
-  cdef float[:,:,:] arr_memviewdouble
+  cdef double[:,:,:] arr_memviewdouble
 
   cdef uint8_t[:,:,:] graph_memview8
   if voxel_graph.dtype in (np.uint8, np.int8):
