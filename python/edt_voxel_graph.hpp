@@ -102,7 +102,7 @@ void squared_edt_1d_multi_seg_voxel_graph(
     if (segids[i] == 0) {
       d[i] = 0.0;
     }
-    else if (segids[i] == working_segid && (graph[i - stride] & full_mask) == full_mask) {
+    else if (segids[i] == working_segid && (graph[i] & full_mask) == full_mask) {
       d[i] = d[i - stride] + anistropy;
     }
     else if (segids[i] == working_segid) {
