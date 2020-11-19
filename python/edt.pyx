@@ -401,7 +401,7 @@ def edt3dsq(
     bool black_border=False, order='C',
     int parallel=1, voxel_graph=None
   ):
-  if voxel_graph:
+  if voxel_graph is not None:
     return __edt3dsq_voxel_graph(data, voxel_graph, anisotropy, black_border, order)
   return __edt3dsq(data, anisotropy, black_border, order, parallel)
 
