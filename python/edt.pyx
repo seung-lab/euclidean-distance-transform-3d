@@ -295,9 +295,9 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
 def edt2d(
     data, anisotropy=(1.0, 1.0), 
     bool black_border=False, order='C', 
-    parallel=1
+    parallel=1, voxel_graph=None
   ):
-  result = edt2dsq(data, anisotropy, black_border, order, parallel)
+  result = edt2dsq(data, anisotropy, black_border, order, parallel, voxel_graph)
   return np.sqrt(result, result)
 
 def edt2dsq(
