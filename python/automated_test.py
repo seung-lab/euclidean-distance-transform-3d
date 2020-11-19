@@ -12,51 +12,50 @@ TYPES_NO_BOOL = INTEGER_TYPES + [ np.float32 ]
 
 TYPES = TYPES_NO_BOOL + [ np.bool ]
 
-def test_one_d_simple():
-  for parallel in (1,2):
-    for dtype in TYPES:
-      print(dtype)
-      labels = np.array([ 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+@pytest.mark.parametrize("dtype", TYPES)
+@pytest.mark.parametrize("parallel", (1,2))
+def test_one_d_simple(dtype, parallel):
+  labels = np.array([ 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 1 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 1 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == np.array([ np.inf ]))
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == np.array([ np.inf ]))
 
-      labels = np.array([ 0, 1 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 0, 1 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 0, 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)  
+  labels = np.array([ 0, 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)  
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)  
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)  
 
-      labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)  
+  labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)  
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)  
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)  
 
 def test_one_d_black_border():
   def cmp(labels, ans, types=TYPES, anisotropy=1.0):
