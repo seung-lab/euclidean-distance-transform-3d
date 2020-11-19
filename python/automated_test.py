@@ -548,6 +548,7 @@ def test_three_d():
     ],
   ], anisotropy=(6,6,5))
 
+
 def test_3d_scipy_comparison():
   for _ in range(20):
     for parallel in (1,2):
@@ -742,5 +743,55 @@ def test_numpy_anisotropy():
   resolution = np.array([4,4,40])
   res = edt.edtsq(labels, anisotropy=resolution)
 
+def test_voxel_connectivity_graph_2d():
+  labels = np.array([
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+  ])
+
+  omni = 0b111111
+  noxf = 0b111110
+  noxb = 0b111101
+
+  graph = np.array([
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+  ], dtype=np.uint8)
+
+  dt = edt.edt(labels, voxel_graph=graph)
+  assert np.all(dt == np.inf)
+
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+  assert np.all(dt == np.array([
+    [1, 1, 1, 1, 1, 1],
+    [1, 2, 2, 2, 2, 1],
+    [1, 2, 3, 3, 2, 1],
+    [1, 2, 2, 2, 2, 1],
+    [1, 1, 1, 1, 1, 1]
+  ]))
+
+  graph = np.array([
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, noxf, noxb, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+  ], dtype=np.uint8)
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+
+  ans = np.array([
+    [1,        1,        1,        1,        1,        1],
+    [1,        1.8027756,1.118034, 1.118034, 1.8027756,1],
+    [1,        1.5,      0.5,      0.5,      1.5,      1],
+    [1,        1.8027756,1.118034, 1.118034, 1.8027756,1],
+    [1,        1,        1,        1,        1,        1]
+  ])
+  assert np.all(np.abs(dt - ans)) < 0.000002
 
 
