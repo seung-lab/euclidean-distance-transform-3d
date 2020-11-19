@@ -204,6 +204,57 @@ void squared_edt_1d_parabolic_multi_seg_voxel_graph(
 }
 
 template <typename T, typename GRAPH_TYPE = uint8_t>
+float* _edt2dsq_voxel_graph(
+    T* labels, GRAPH_TYPE* graph,
+    const size_t sx, const size_t sy,
+    const float wx, const float wy, 
+    const bool black_border=false,  float* workspace=NULL
+  ) {
+
+  const size_t sxy = sx * sy;
+  const size_t voxels = sxy;
+
+  if (workspace == NULL) {
+    workspace = new float[sx * sy]();
+  }
+
+  const GRAPH_TYPE fwd_xmask = 0b00000001;
+  const GRAPH_TYPE bwd_xmask = 0b00000010;
+
+  for (size_t y = 0; y < sy; y++) {
+    squared_edt_1d_multi_seg_voxel_graph<T, GRAPH_TYPE>(
+      (labels + sx * y), 
+      (graph + sx * y), fwd_xmask, bwd_xmask,
+      (workspace + sx * y), 
+      sx, 1, wx, black_border
+    );
+  }
+
+  if (!black_border) {
+    tofinite(workspace, voxels);
+  }
+
+  const GRAPH_TYPE fwd_ymask = 0b00000100;
+  const GRAPH_TYPE bwd_ymask = 0b00001000;
+
+  for (size_t x = 0; x < sx; x++) {
+    squared_edt_1d_parabolic_multi_seg_voxel_graph<T, GRAPH_TYPE>(
+      (labels + x),
+      (workspace + x), 
+      (workspace + x), 
+      (graph + x), fwd_ymask, bwd_ymask,
+      sy, sx, wy, black_border
+    );
+  }
+
+  if (!black_border) {
+    toinfinite(workspace, voxels);
+  }
+
+  return workspace; 
+}
+
+template <typename T, typename GRAPH_TYPE = uint8_t>
 float* _edt3dsq_voxel_graph(
     T* labels, GRAPH_TYPE* graph,
     const size_t sx, const size_t sy, const size_t sz, 

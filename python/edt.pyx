@@ -61,6 +61,12 @@ cdef extern from "edt.hpp" namespace "pyedt":
   ) nogil
 
 cdef extern from "edt_voxel_graph.hpp" namespace "pyedt":
+  cdef float* _edt2dsq_voxel_graph[T,GRAPH_TYPE](
+    T* labels, GRAPH_TYPE* graph,
+    size_t sx, size_t sy,
+    float wx, float wy,
+    bool black_border, float* workspace
+  ) nogil 
   cdef float* _edt3dsq_voxel_graph[T,GRAPH_TYPE](
     T* labels, GRAPH_TYPE* graph,
     size_t sx, size_t sy, size_t sz, 
@@ -136,7 +142,7 @@ def edt(
     return edt1d(data, anisotropy, black_border)
   elif dims == 2:
     anisotropy = nvl(anisotropy, (1.0, 1.0))
-    return edt2d(data, anisotropy, black_border, order, parallel=parallel)
+    return edt2d(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
   elif dims == 3:
     anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
     return edt3d(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
@@ -297,6 +303,15 @@ def edt2d(
 def edt2dsq(
     data, anisotropy=(1.0, 1.0), 
     bool black_border=False, order='C',
+    parallel=1, voxel_graph=None
+  ):
+  if voxel_graph is not None:
+    return __edt2dsq_voxel_graph(data, voxel_graph, anisotropy, black_border, order)
+  return __edt2dsq(data, anisotropy, black_border, order, parallel)
+
+def __edt2dsq(
+    data, anisotropy=(1.0, 1.0), 
+    bool black_border=False, order='C',
     parallel=1
   ):
   cdef uint8_t[:,:] arr_memview8
@@ -377,12 +392,118 @@ def edt2dsq(
       &outputview[0]      
     )
   elif data.dtype == np.bool:
-    arr_memview8 = data.astype(np.uint8)
+    arr_memview8 = data.view(np.uint8)
     _edt2dsq[bool](
       <bool*>&arr_memview8[0,0],
       sx, sy,
       ax, ay,
       black_border, parallel,
+      &outputview[0]      
+    )
+
+  return output.reshape(data.shape, order=order)
+
+def __edt2dsq_voxel_graph(
+    data, voxel_graph, anisotropy=(1.0, 1.0), 
+    bool black_border=False, order='C'
+  ):
+  cdef uint8_t[:,:] arr_memview8
+  cdef uint16_t[:,:] arr_memview16
+  cdef uint32_t[:,:] arr_memview32
+  cdef uint64_t[:,:] arr_memview64
+  cdef float[:,:] arr_memviewfloat
+  cdef double[:,:] arr_memviewdouble
+  cdef bool[:,:] arr_memviewbool
+
+  cdef uint8_t[:,:] graph_memview8
+  if voxel_graph.dtype in (np.uint8, np.int8):
+    graph_memview8 = voxel_graph.view(np.uint8)
+  else:
+    graph_memview8 = voxel_graph.astype(np.uint8) # we only need first 6 bits
+
+  cdef size_t sx = data.shape[1] # C: rows
+  cdef size_t sy = data.shape[0] # C: cols
+  cdef float ax = anisotropy[1]
+  cdef float ay = anisotropy[0]
+
+  if order == 'F':
+    sx = data.shape[0] # F: cols
+    sy = data.shape[1] # F: rows
+    ax = anisotropy[0]
+    ay = anisotropy[1]
+
+  cdef size_t voxels = sx * sy
+  cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
+  cdef float[:] outputview = output
+
+  if data.dtype in (np.uint8, np.int8):
+    arr_memview8 = data.astype(np.uint8)
+    _edt2dsq_voxel_graph[uint8_t,uint8_t](
+      <uint8_t*>&arr_memview8[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]
+    )
+  elif data.dtype in (np.uint16, np.int16):
+    arr_memview16 = data.astype(np.uint16)
+    _edt2dsq_voxel_graph[uint16_t,uint8_t](
+      <uint16_t*>&arr_memview16[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]      
+    )
+  elif data.dtype in (np.uint32, np.int32):
+    arr_memview32 = data.astype(np.uint32)
+    _edt2dsq_voxel_graph[uint32_t,uint8_t](
+      <uint32_t*>&arr_memview32[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]      
+    )
+  elif data.dtype in (np.uint64, np.int64):
+    arr_memview64 = data.astype(np.uint64)
+    _edt2dsq_voxel_graph[uint64_t,uint8_t](
+      <uint64_t*>&arr_memview64[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]      
+    )
+  elif data.dtype == np.float32:
+    arr_memviewfloat = data
+    _edt2dsq_voxel_graph[float,uint8_t](
+      <float*>&arr_memviewfloat[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]      
+    )
+  elif data.dtype == np.float64:
+    arr_memviewdouble = data
+    _edt2dsq_voxel_graph[double,uint8_t](
+      <double*>&arr_memviewdouble[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
+      &outputview[0]      
+    )
+  elif data.dtype == np.bool:
+    arr_memview8 = data.view(np.uint8)
+    _edt2dsq_voxel_graph[bool,uint8_t](
+      <bool*>&arr_memview8[0,0],
+      <uint8_t*>&graph_memview8[0,0],
+      sx, sy,
+      ax, ay,
+      black_border,
       &outputview[0]      
     )
 
