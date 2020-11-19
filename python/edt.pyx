@@ -134,8 +134,8 @@ def edt(
   if parallel <= 0:
     parallel = multiprocessing.cpu_count()
 
-  if voxel_graph is not None and dims != 3:
-    raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))
+  if voxel_graph is not None and dims not in (2,3):
+    raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
 
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)

@@ -2617,7 +2617,7 @@ static const char __pyx_k_Invalid_mode_expected_c_or_fortr[] = "Invalid mode, ex
 static const char __pyx_k_Multi_Label_EDT_library_only_sup[] = "Multi-Label EDT library only supports up to 3 dimensions got {}.";
 static const char __pyx_k_Out_of_bounds_on_buffer_access_a[] = "Out of bounds on buffer access (axis %d)";
 static const char __pyx_k_Unable_to_convert_item_to_object[] = "Unable to convert item to object";
-static const char __pyx_k_Voxel_connectivity_graph_is_only[] = "Voxel connectivity graph is only supported for 3D. Got {}.";
+static const char __pyx_k_Voxel_connectivity_graph_is_only[] = "Voxel connectivity graph is only supported for 2D and 3D. Got {}.";
 static const char __pyx_k_got_differing_extents_in_dimensi[] = "got differing extents in dimension %d (got %d and %d)";
 static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __reduce__ due to non-trivial __cinit__";
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
@@ -3539,7 +3539,7 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
  *   if parallel <= 0:
  *     parallel = multiprocessing.cpu_count()             # <<<<<<<<<<<<<<
  * 
- *   if voxel_graph is not None and dims != 3:
+ *   if voxel_graph is not None and dims not in (2,3):
  */
     __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_multiprocessing); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 135, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
@@ -3577,8 +3577,8 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
   /* "edt.pyx":137
  *     parallel = multiprocessing.cpu_count()
  * 
- *   if voxel_graph is not None and dims != 3:             # <<<<<<<<<<<<<<
- *     raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))
+ *   if voxel_graph is not None and dims not in (2,3):             # <<<<<<<<<<<<<<
+ *     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
  * 
  */
   __pyx_t_4 = (__pyx_v_voxel_graph != Py_None);
@@ -3588,15 +3588,24 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
     __pyx_t_7 = __pyx_t_8;
     goto __pyx_L16_bool_binop_done;
   }
-  __pyx_t_8 = ((__pyx_v_dims != 3) != 0);
-  __pyx_t_7 = __pyx_t_8;
+  switch (__pyx_v_dims) {
+    case 2:
+    case 3:
+    __pyx_t_8 = 0;
+    break;
+    default:
+    __pyx_t_8 = 1;
+    break;
+  }
+  __pyx_t_4 = (__pyx_t_8 != 0);
+  __pyx_t_7 = __pyx_t_4;
   __pyx_L16_bool_binop_done:;
   if (unlikely(__pyx_t_7)) {
 
     /* "edt.pyx":138
  * 
- *   if voxel_graph is not None and dims != 3:
- *     raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))             # <<<<<<<<<<<<<<
+ *   if voxel_graph is not None and dims not in (2,3):
+ *     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))             # <<<<<<<<<<<<<<
  * 
  *   if dims == 1:
  */
@@ -3630,14 +3639,14 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
     /* "edt.pyx":137
  *     parallel = multiprocessing.cpu_count()
  * 
- *   if voxel_graph is not None and dims != 3:             # <<<<<<<<<<<<<<
- *     raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))
+ *   if voxel_graph is not None and dims not in (2,3):             # <<<<<<<<<<<<<<
+ *     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
  * 
  */
   }
 
   /* "edt.pyx":140
- *     raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))
+ *     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
  * 
  *   if dims == 1:             # <<<<<<<<<<<<<<
  *     anisotropy = nvl(anisotropy, 1.0)
@@ -3766,7 +3775,7 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
     goto __pyx_L0;
 
     /* "edt.pyx":140
- *     raise TypeError("Voxel connectivity graph is only supported for 3D. Got {}.".format(dims))
+ *     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
  * 
  *   if dims == 1:             # <<<<<<<<<<<<<<
  *     anisotropy = nvl(anisotropy, 1.0)
