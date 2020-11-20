@@ -137,6 +137,12 @@ def edt(
   if voxel_graph is not None and dims not in (2,3):
     raise TypeError("Voxel connectivity graph is only supported for 2D and 3D. Got {}.".format(dims))
 
+  if voxel_graph is not None:
+    if order == 'C':
+      voxel_graph = np.ascontiguousarray(voxel_graph)
+    else:
+      voxel_graph = np.asfortranarray(voxel_graph)
+
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
     return edt1d(data, anisotropy, black_border)
