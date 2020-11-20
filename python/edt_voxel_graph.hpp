@@ -181,8 +181,8 @@ void squared_edt_1d_parabolic_multi_seg_voxel_graph(
     }
 
     bitfield = graph[i * stride];
-    if (segid == working_segid && !(bitfield & full_mask)) {
-      f[i * stride] = anisotropy / 2.0;
+    if (segid == working_segid && (bitfield & full_mask) != full_mask) {
+      f[i * stride] = sq(anisotropy / 2.0);
     }
 
     if (segid != working_segid || !(bitfield & bwd_mask)) {
@@ -232,7 +232,8 @@ float* _edt2dsq_voxel_graph(
       (labels + sx * y), 
       (graph + sx * y), fwd_xmask, bwd_xmask,
       (workspace + sx * y), 
-      sx, 1, wx, black_border
+      /*n=*/sx, /*stride=*/1, /*anisotropy=*/wx, 
+      black_border
     );
   }
 
@@ -249,7 +250,8 @@ float* _edt2dsq_voxel_graph(
       (workspace + x), 
       (workspace + x), 
       (graph + x), fwd_ymask, bwd_ymask,
-      sy, sx, wy, black_border
+      /*n=*/sy, /*stride=*/sx, /*anisotropy=*/wy, 
+      black_border
     );
   }
 
