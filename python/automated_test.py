@@ -782,7 +782,7 @@ def test_voxel_connectivity_graph_2d():
     [omni, omni, noxf, noxb, omni, omni],
     [omni, omni, omni, omni, omni, omni],
     [omni, omni, omni, omni, omni, omni],
-  ], dtype=np.uint8)
+  ], dtype=np.uint8, order="C")
   dt = edt.edt(labels, voxel_graph=graph, black_border=True)
 
   ans = np.array([
@@ -793,5 +793,10 @@ def test_voxel_connectivity_graph_2d():
     [1,        1,        1,        1,        1,        1]
   ])
   assert np.all(np.abs(dt - ans)) < 0.000002
+
+  graph = np.asfortranarray(graph)
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+  assert np.all(np.abs(dt - ans)) < 0.000002
+
 
 
