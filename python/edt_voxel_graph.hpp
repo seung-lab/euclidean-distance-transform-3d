@@ -169,14 +169,6 @@ void squared_edt_1d_parabolic_voxel_graph(
     ff[2*i + 1] = f[i * stride];
   }
   ff[2*n + 1] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 + f[(n-1) * stride] + 1);
-  
-
-  if (black_border_left) {
-    ff[0] = 0;
-  }
-  if (black_border_right) {
-    ff[2*n] = 0;
-  }
 
   printf("\nff:\n");
   for (int i = 0; i < 2*n+1; i++) {
@@ -233,7 +225,18 @@ void squared_edt_1d_parabolic_voxel_graph(
     while (ranges[k + 1] < i) { 
       k++;
     }
+
     f[i * stride] = w2 * sq(i - (static_cast<float>(v[k] + 1) / 2.0)) + ff[v[k]];
+    if (black_border_left && black_border_right) {
+      envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
+      f[i * stride] = std::fminf(envelope, f[i * stride]);
+    }
+    else if (black_border_left) {
+      f[i * stride] = std::fminf(w2 * sq(i + 1), f[i * stride]);
+    }
+    else if (black_border_right) {
+      f[i * stride] = std::fminf(w2 * sq(n - i), f[i * stride]);      
+    }
   }
 
   delete [] v;
@@ -273,7 +276,6 @@ void squared_edt_1d_parabolic_multi_seg_voxel_graph(
 
   T working_segid = segids[0];
   T segid;
-  const GRAPH_TYPE full_mask = fwd_mask | bwd_mask;
   long int last = 0;
 
   for (int i = 1; i < n; i++) {
