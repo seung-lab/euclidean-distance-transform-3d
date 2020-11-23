@@ -77,7 +77,9 @@ namespace pyedt {
 template <typename T, typename GRAPH_TYPE>
 void squared_edt_1d_multi_seg_voxel_graph(
     T* segids, 
-    GRAPH_TYPE* graph, GRAPH_TYPE fwd_mask, GRAPH_TYPE bwd_mask,
+    GRAPH_TYPE* graph, 
+    const GRAPH_TYPE fwd_mask, 
+    const GRAPH_TYPE bwd_mask,
     float *d, const int n, 
     const long int stride, const float anistropy,
     const bool black_border=false
@@ -139,6 +141,107 @@ void squared_edt_1d_multi_seg_voxel_graph(
   }
 }
 
+template <typename GRAPH_TYPE = uint8_t>
+void squared_edt_1d_parabolic_voxel_graph(
+    float* f, 
+    const GRAPH_TYPE* graph, 
+    const GRAPH_TYPE fwd_mask, 
+    const GRAPH_TYPE bwd_mask,
+    const int n, 
+    const long int stride, 
+    const float anisotropy, 
+    const bool black_border_left,
+    const bool black_border_right
+  ) {
+
+  if (n == 0) {
+    return;
+  }
+
+  const float w2 = anisotropy * anisotropy;
+  const GRAPH_TYPE full_mask = fwd_mask | bwd_mask;
+
+  int* v = new int[2*n + 1](); // 2*n+1 = voxels and edges
+  float* ff = new float[2*n + 1]();
+
+  for (long int i = 0; i < n; i++) {
+    ff[2*i] = ((graph[i * stride] & bwd_mask) == bwd_mask) * (sq(n - i) + f[i * stride] + 1); // 0 or too big to ever be useful
+    ff[2*i + 1] = f[i * stride];
+  }
+  ff[2*n + 1] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 + f[(n-1) * stride] + 1);
+  
+
+  if (black_border_left) {
+    ff[0] = 0;
+  }
+  if (black_border_right) {
+    ff[2*n] = 0;
+  }
+
+  printf("\nff:\n");
+  for (int i = 0; i < 2*n+1; i++) {
+    printf("%.2f, ", ff[i]);
+  }
+
+  int k = 0;
+  float* ranges = new float[2*n + 1 + 1]();
+
+  ranges[0] = -INFINITY;
+  ranges[1] = +INFINITY;
+  printf("\n");
+  /* Unclear if this adds much but I certainly find it easier to get the parens right.
+   *
+   * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
+   * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
+   * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
+   */
+  float s;
+  float factor1, factor2;
+  for (long int i = 1; i < 2*n + 1; i++) {
+    factor1 = static_cast<float>(i - v[k]) * w2 / 2.0;
+    factor2 = static_cast<float>(i + v[k]) / 2.0 - 1;
+    s = (factor1 * factor2 + ff[i] - ff[v[k]]) / (2.0 * factor1);
+    printf("i=%d, s=%.2f, ff[i]=%.2f, ff[v[k]]=%.2f, k=%d, v[k]=%d, ranges[k]=%.2f, f1=%.2f, f2=%.2f\n", i, s, ff[i],ff[v[k]], k,v[k], ranges[k], factor1, factor2);
+
+    while (s <= ranges[k]) {
+      k--;
+      factor1 = static_cast<float>(i - v[k]) * w2 / 2.0;
+      factor2 = static_cast<float>(i + v[k]) / 2.0 - 1;
+      s = (factor1 * factor2 + ff[i] - ff[v[k]]) / (2.0 * factor1);
+      printf("s=%.2f\n", s);
+    }
+
+    k++;
+    v[k] = i;
+    ranges[k] = s;
+    ranges[k + 1] = +INFINITY;
+  }
+
+  printf("\n");
+  for (int i = 0; i < 2*n+1; i++) {
+    printf("%d, ", v[i]);
+  }
+  printf("\n");
+  for (int i = 0; i < 2*n+2; i++) {
+    printf("%.2f, ", ranges[i]);
+  }
+  printf("\n");
+
+  k = 0;
+  float envelope;
+  for (long int i = 0; i < n; i++) {
+    while (ranges[k + 1] < i) { 
+      k++;
+    }
+    f[i * stride] = w2 * sq(i - (static_cast<float>(v[k] + 1) / 2.0)) + ff[v[k]];
+  }
+
+  delete [] v;
+  delete [] ff;
+  delete [] ranges;
+}
+
+
 /* Same as squared_edt_1d_parabolic except that it handles
  * a simultaneous transform of multiple labels (like squared_edt_1d_multi_seg)
  * and accounts for the allowed directions specified by the voxel
@@ -164,14 +267,13 @@ void squared_edt_1d_multi_seg_voxel_graph(
 template <typename T, typename GRAPH_TYPE>
 void squared_edt_1d_parabolic_multi_seg_voxel_graph(
     T* segids, float* f, float* d, 
-    GRAPH_TYPE* graph, GRAPH_TYPE fwd_mask, GRAPH_TYPE bwd_mask,
+    GRAPH_TYPE* graph, const GRAPH_TYPE fwd_mask, const GRAPH_TYPE bwd_mask,
     const int n, const long int stride, const float anisotropy,
     const bool black_border=false) {
 
   T working_segid = segids[0];
   T segid;
-  GRAPH_TYPE bitfield;
-  GRAPH_TYPE full_mask = fwd_mask | bwd_mask;
+  const GRAPH_TYPE full_mask = fwd_mask | bwd_mask;
   long int last = 0;
 
   for (int i = 1; i < n; i++) {
@@ -180,16 +282,11 @@ void squared_edt_1d_parabolic_multi_seg_voxel_graph(
       continue;
     }
 
-    bitfield = graph[i * stride];
-    if (segid == working_segid && (bitfield & full_mask) != full_mask) {
-      f[i * stride] = sq(anisotropy / 2.0);
-    }
-
-    if (segid != working_segid || !(bitfield & bwd_mask)) {
+    if (segid != working_segid || !(graph[i * stride] & bwd_mask)) {
       if (working_segid != 0) {
-        _squared_edt_1d_parabolic(
-          f + last * stride, 
-          d + last * stride, 
+        squared_edt_1d_parabolic_voxel_graph<GRAPH_TYPE>(
+          (f + last * stride), 
+          (graph + last * stride), fwd_mask, bwd_mask,
           i - last, stride, anisotropy,
           (black_border || last > 0), (i < n - 1) 
         );
@@ -200,9 +297,9 @@ void squared_edt_1d_parabolic_multi_seg_voxel_graph(
   }
 
   if (working_segid != 0 && last < n) {
-    _squared_edt_1d_parabolic(
-      f + last * stride, 
-      d + last * stride, 
+    squared_edt_1d_parabolic_voxel_graph<GRAPH_TYPE>(
+      (f + last * stride), 
+      (graph + last * stride), fwd_mask, bwd_mask,
       n - last, stride, anisotropy,
       (black_border || last > 0), black_border
     );
