@@ -92,14 +92,14 @@ void squared_edt_1d_multi_seg_voxel_graph(
 
   if (black_border) {
     d[0] = static_cast<float>(working_segid != 0) * anistropy; // 0 or 1
-    if ((graph[0] & fwd_mask) == false) {
+    if ((graph[0] & fwd_mask) != fwd_mask) {
       d[0] /= 2;
     }
   }
   else if (working_segid == 0) {
     d[0] = 0;
   }
-  else if ((graph[0] & fwd_mask) == false) {
+  else if ((graph[0] & fwd_mask) != fwd_mask) {
     d[0] = anistropy / 2;
   }
   else {
@@ -126,7 +126,7 @@ void squared_edt_1d_multi_seg_voxel_graph(
   long int min_bound = 0;
   if (black_border) {
     d[(n - 1) * stride] = static_cast<float>(segids[(n - 1) * stride] != 0) * anistropy;
-    if ((graph[(n - 1) * stride] & bwd_mask) == false) {
+    if ((graph[(n - 1) * stride] & bwd_mask) != bwd_mask) {
       d[n - stride] /= 2;
     }
     min_bound = stride;
@@ -306,8 +306,8 @@ float* _edt2dsq_voxel_graph(
     workspace = new float[sx * sy]();
   }
 
-  const GRAPH_TYPE fwd_xmask = 0b00000001;
-  const GRAPH_TYPE bwd_xmask = 0b00000010;
+  const GRAPH_TYPE fwd_xmask = 0b00000101;
+  const GRAPH_TYPE bwd_xmask = 0b00001010;
 
   for (size_t y = 0; y < sy; y++) {
     squared_edt_1d_multi_seg_voxel_graph<T, GRAPH_TYPE>(
@@ -358,8 +358,8 @@ float* _edt3dsq_voxel_graph(
     workspace = new float[sx * sy * sz]();
   }
 
-  const GRAPH_TYPE fwd_xmask = 0b00000001;
-  const GRAPH_TYPE bwd_xmask = 0b00000010;
+  const GRAPH_TYPE fwd_xmask = 0b00010101;
+  const GRAPH_TYPE bwd_xmask = 0b00101010;
 
   for (size_t z = 0; z < sz; z++) {
     for (size_t y = 0; y < sy; y++) {
