@@ -192,7 +192,6 @@ void squared_edt_1d_parabolic_voxel_graph(
     else {
       ff[2*i + 1] = f[i * stride];  
     }
-    printf("%.2f, %.2f, ", ff[2*i], ff[2*i+1]);
   }
   ff[2*n] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 * sq(n + 0.5) * f[(n-1) * stride] + 1);
 
