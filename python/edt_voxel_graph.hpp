@@ -165,22 +165,17 @@ void squared_edt_1d_parabolic_voxel_graph(
   float* ff = new float[2*n + 1]();
 
   for (long int i = 0; i < n; i++) {
-    ff[2*i] = ((graph[i * stride] & bwd_mask) == bwd_mask) * (sq(n - i) + f[i * stride] + 1); // 0 or too big to ever be useful
+    ff[2*i] = ((graph[i * stride] & bwd_mask) == bwd_mask) * (w2 * sq(std::max(i, n - i) + 0.5) + f[i * stride] + 1); // 0 or too big to ever be useful
     ff[2*i + 1] = f[i * stride];
   }
-  ff[2*n + 1] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 + f[(n-1) * stride] + 1);
-
-  printf("\nff:\n");
-  for (int i = 0; i < 2*n+1; i++) {
-    printf("%.2f, ", ff[i]);
-  }
+  ff[2*n] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 * sq(n + 0.5) * f[(n-1) * stride] + 1);
 
   int k = 0;
   float* ranges = new float[2*n + 1 + 1]();
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
-  printf("\n");
+
   /* Unclear if this adds much but I certainly find it easier to get the parens right.
    *
    * Eqn: s = ( f(r) + r^2 ) - ( f(p) + p^2 ) / ( 2r - 2p )
@@ -193,14 +188,12 @@ void squared_edt_1d_parabolic_voxel_graph(
     factor1 = static_cast<float>(i - v[k]) * w2 / 2.0;
     factor2 = static_cast<float>(i + v[k]) / 2.0 - 1;
     s = (factor1 * factor2 + ff[i] - ff[v[k]]) / (2.0 * factor1);
-    printf("i=%d, s=%.2f, ff[i]=%.2f, ff[v[k]]=%.2f, k=%d, v[k]=%d, ranges[k]=%.2f, f1=%.2f, f2=%.2f\n", i, s, ff[i],ff[v[k]], k,v[k], ranges[k], factor1, factor2);
 
     while (s <= ranges[k]) {
       k--;
       factor1 = static_cast<float>(i - v[k]) * w2 / 2.0;
       factor2 = static_cast<float>(i + v[k]) / 2.0 - 1;
       s = (factor1 * factor2 + ff[i] - ff[v[k]]) / (2.0 * factor1);
-      printf("s=%.2f\n", s);
     }
 
     k++;
@@ -209,16 +202,6 @@ void squared_edt_1d_parabolic_voxel_graph(
     ranges[k + 1] = +INFINITY;
   }
 
-  printf("\n");
-  for (int i = 0; i < 2*n+1; i++) {
-    printf("%d, ", v[i]);
-  }
-  printf("\n");
-  for (int i = 0; i < 2*n+2; i++) {
-    printf("%.2f, ", ranges[i]);
-  }
-  printf("\n");
-
   k = 0;
   float envelope;
   for (long int i = 0; i < n; i++) {
@@ -226,7 +209,7 @@ void squared_edt_1d_parabolic_voxel_graph(
       k++;
     }
 
-    f[i * stride] = w2 * sq(i - (static_cast<float>(v[k] + 1) / 2.0)) + ff[v[k]];
+    f[i * stride] = w2 * sq(i - (static_cast<float>(v[k] - 1) / 2.0)) + ff[v[k]];
     if (black_border_left && black_border_right) {
       envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
       f[i * stride] = std::fminf(envelope, f[i * stride]);
@@ -269,7 +252,7 @@ void squared_edt_1d_parabolic_voxel_graph(
  */
 template <typename T, typename GRAPH_TYPE>
 void squared_edt_1d_parabolic_multi_seg_voxel_graph(
-    T* segids, float* f, float* d, 
+    T* segids, float* f, 
     GRAPH_TYPE* graph, const GRAPH_TYPE fwd_mask, const GRAPH_TYPE bwd_mask,
     const int n, const long int stride, const float anisotropy,
     const bool black_border=false) {
@@ -347,7 +330,6 @@ float* _edt2dsq_voxel_graph(
     squared_edt_1d_parabolic_multi_seg_voxel_graph<T, GRAPH_TYPE>(
       (labels + x),
       (workspace + x), 
-      (workspace + x), 
       (graph + x), fwd_ymask, bwd_ymask,
       /*n=*/sy, /*stride=*/sx, /*anisotropy=*/wy, 
       black_border
@@ -403,7 +385,6 @@ float* _edt3dsq_voxel_graph(
       squared_edt_1d_parabolic_multi_seg_voxel_graph<T,GRAPH_TYPE>(
         (labels + x + sxy * z),
         (workspace + x + sxy * z), 
-        (workspace + x + sxy * z), 
         (graph + x + sxy * z), fwd_ymask, bwd_ymask,
         /*n=*/sy, /*stride=*/sx, /*anisotropy=*/wy, 
         black_border
@@ -418,7 +399,6 @@ float* _edt3dsq_voxel_graph(
     for (size_t x = 0; x < sx; x++) {
       squared_edt_1d_parabolic_multi_seg_voxel_graph<T,GRAPH_TYPE>(
         (labels + x + sx * y), 
-        (workspace + x + sx * y), 
         (workspace + x + sx * y), 
         (graph + x + sx * y), fwd_zmask, bwd_zmask,
         /*n=*/sz, /*stride=*/sxy, /*anisotropy=*/wz, 
