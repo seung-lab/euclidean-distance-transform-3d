@@ -84,7 +84,7 @@ def edt(
     order='K', int parallel=1, voxel_graph=None
   ):
   """
-  edt(data, anisotropy=None, black_border=False, order='K', parallel=1)
+  edt(data, anisotropy=None, black_border=False, order='K', parallel=1, voxel_graph=None)
 
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -115,6 +115,47 @@ def edt(
 
   Returns: EDT of data
   """
+  dt = edtsq(data, anisotropy, black_border, order, parallel, voxel_graph)
+  return np.sqrt(dt,dt)
+
+
+def edtsq(
+    data, anisotropy=None, bool black_border=False, 
+    order='C', int parallel=1, voxel_graph=None
+  ):
+  """
+  edtsq(data, anisotropy=None, black_border=False, order='K', parallel=1, voxel_graph=None)
+
+  Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
+
+  Squaring allows for omitting an sqrt operation, so may be faster if your use case allows for it.
+
+  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
+  The algorithm works both ways, however you'll want to reverse the order of the
+  anisotropic arguments for Fortran order.
+
+  Supported Data Types:
+    (u)int8, (u)int16, (u)int32, (u)int64, 
+     float32, float64, and boolean
+
+  Required:
+    data: a 1d, 2d, or 3d numpy array with a supported data type.
+  Optional:
+    anisotropy:
+      1D: scalar (default: 1.0)
+      2D: (x, y) (default: (1.0, 1.0) )
+      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
+    black_border: (boolean) if true, consider the edge of the
+      image to be surrounded by zeros.
+    order: 'C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order.
+    parallel: number of threads to use (only applies to 2D and 3D)
+
+  Returns: Squared EDT of data
+  """
+  if isinstance(data, list):
+    data = np.array(data)
+
   dims = len(data.shape)
 
   if data.size == 0:
@@ -145,67 +186,13 @@ def edt(
 
   if dims == 1:
     anisotropy = nvl(anisotropy, 1.0)
-    return edt1d(data, anisotropy, black_border)
-  elif dims == 2:
-    anisotropy = nvl(anisotropy, (1.0, 1.0))
-    return edt2d(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
-  elif dims == 3:
-    anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
-    return edt3d(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
-  else:
-    raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
-
-def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):
-  """
-  edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
-
-  Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
-
-  Squaring allows for omitting an sqrt operation, so may be faster if your use case allows for it.
-
-  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
-  The algorithm works both ways, however you'll want to reverse the order of the
-  anisotropic arguments for Fortran order.
-
-  Supported Data Types:
-    (u)int8, (u)int16, (u)int32, (u)int64, 
-     float32, float64, and boolean
-
-  Required:
-    data: a 1d, 2d, or 3d numpy array with a supported data type.
-  Optional:
-    anisotropy:
-      1D: scalar (default: 1.0)
-      2D: (x, y) (default: (1.0, 1.0) )
-      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
-    black_border: (boolean) if true, consider the edge of the
-      image to be surrounded by zeros.
-    order: 'C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order.
-    parallel: number of threads to use (only applies to 2D and 3D)
-
-  Returns: Squared EDT of data
-  """
-  dims = len(data.shape)
-
-  if data.size == 0:
-    return np.zeros(shape=data.shape).astype(np.float32)
-
-  if not data.flags['C_CONTIGUOUS'] and not data.flags['F_CONTIGUOUS']:
-    data = np.copy(data, order=order)
-
-  if parallel <= 0:
-    parallel = multiprocessing.cpu_count()
-
-  if dims == 1:
-    anisotropy = nvl(anisotropy, 1.0)
     return edt1dsq(data, anisotropy, black_border)
   elif dims == 2:
     anisotropy = nvl(anisotropy, (1.0, 1.0))
-    return edt2dsq(data, anisotropy, black_border, order, parallel=parallel)
+    return edt2dsq(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
   elif dims == 3:
     anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
-    return edt3dsq(data, anisotropy, black_border, order, parallel=parallel)
+    return edt3dsq(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
