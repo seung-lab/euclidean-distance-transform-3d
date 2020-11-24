@@ -73,13 +73,17 @@ namespace pyedt {
  * anisotropy: physical distance of each voxel
  *
  * Writes output to *d
+ *
+ * Returns whether the other passes should include an offset starting from 
+ * this row. 
  */
 template <typename T, typename GRAPH_TYPE>
-void squared_edt_1d_multi_seg_voxel_graph(
+bool squared_edt_1d_multi_seg_voxel_graph(
     T* segids, 
     GRAPH_TYPE* graph, 
     const GRAPH_TYPE fwd_mask, 
     const GRAPH_TYPE bwd_mask,
+    const GRAPH_TYPE other_mask,
     float *d, const int n, 
     const long int stride, const float anistropy,
     const bool black_border=false
@@ -89,6 +93,8 @@ void squared_edt_1d_multi_seg_voxel_graph(
 
   T working_segid = segids[0];
   GRAPH_TYPE full_mask = fwd_mask | bwd_mask;
+
+  bool offset = false;
 
   if (black_border) {
     d[0] = static_cast<float>(working_segid != 0) * anistropy; // 0 or 1
@@ -102,6 +108,10 @@ void squared_edt_1d_multi_seg_voxel_graph(
   else if ((graph[0] & fwd_mask) != fwd_mask) {
     d[0] = anistropy / 2;
   }
+  else if ((graph[0] & other_mask) != other_mask) {
+    d[0] = 0;
+    offset = true;
+  }
   else {
     d[0] = INFINITY;
   }
@@ -109,6 +119,10 @@ void squared_edt_1d_multi_seg_voxel_graph(
   for (i = stride; i < n * stride; i += stride) {
     if (segids[i] == 0) {
       d[i] = 0.0;
+    }
+    else if (segids[i] == working_segid && (graph[i] & other_mask) != other_mask) {
+      d[i] = 0.0;
+      offset = true;
     }
     else if (segids[i] == working_segid && (graph[i] & full_mask) == full_mask) {
       d[i] = d[i - stride] + anistropy;
@@ -126,7 +140,11 @@ void squared_edt_1d_multi_seg_voxel_graph(
   long int min_bound = 0;
   if (black_border) {
     d[(n - 1) * stride] = static_cast<float>(segids[(n - 1) * stride] != 0) * anistropy;
-    if ((graph[(n - 1) * stride] & bwd_mask) != bwd_mask) {
+    if ((graph[(n - 1) * stride] & other_mask) != other_mask) {
+      d[n - stride] = 0.0;
+      offset = true;
+    }
+    else if ((graph[(n - 1) * stride] & bwd_mask) != bwd_mask) {
       d[n - stride] /= 2;
     }
     min_bound = stride;
@@ -139,6 +157,8 @@ void squared_edt_1d_multi_seg_voxel_graph(
   for (i = 0; i < n * stride; i += stride) {
     d[i] *= d[i];
   }
+
+  return offset;
 }
 
 template <typename GRAPH_TYPE = uint8_t>
@@ -166,7 +186,13 @@ void squared_edt_1d_parabolic_voxel_graph(
 
   for (long int i = 0; i < n; i++) {
     ff[2*i] = ((graph[i * stride] & bwd_mask) == bwd_mask) * (w2 * sq(std::max(i, n - i) + 0.5) + f[i * stride] + 1); // 0 or too big to ever be useful
-    ff[2*i + 1] = f[i * stride];
+    if (ff[2*i] == 0 || ((graph[i * stride] & fwd_mask) != fwd_mask)) {
+      ff[2*i + 1] = w2 * sq(n) + 1; // too big to ever be useful  
+    }
+    else {
+      ff[2*i + 1] = f[i * stride];  
+    }
+    printf("%.2f, %.2f, ", ff[2*i], ff[2*i+1]);
   }
   ff[2*n] = ((graph[(n-1) * stride] & fwd_mask) == fwd_mask) * (w2 * sq(n + 0.5) * f[(n-1) * stride] + 1);
 
@@ -253,7 +279,9 @@ void squared_edt_1d_parabolic_voxel_graph(
 template <typename T, typename GRAPH_TYPE>
 void squared_edt_1d_parabolic_multi_seg_voxel_graph(
     T* segids, float* f, 
-    GRAPH_TYPE* graph, const GRAPH_TYPE fwd_mask, const GRAPH_TYPE bwd_mask,
+    GRAPH_TYPE* graph, 
+    const GRAPH_TYPE fwd_mask, 
+    const GRAPH_TYPE bwd_mask, 
     const int n, const long int stride, const float anisotropy,
     const bool black_border=false) {
 
@@ -303,16 +331,17 @@ float* _edt2dsq_voxel_graph(
   const size_t voxels = sxy;
 
   if (workspace == NULL) {
-    workspace = new float[sx * sy]();
+    workspace = new float[voxels]();
   }
 
-  const GRAPH_TYPE fwd_xmask = 0b00000101;
-  const GRAPH_TYPE bwd_xmask = 0b00001010;
+  const GRAPH_TYPE fwd_xmask = 0b00000001;
+  const GRAPH_TYPE bwd_xmask = 0b00000010;
+  const GRAPH_TYPE other_mask = 0b00001100;
 
   for (size_t y = 0; y < sy; y++) {
     squared_edt_1d_multi_seg_voxel_graph<T, GRAPH_TYPE>(
       (labels + sx * y), 
-      (graph + sx * y), fwd_xmask, bwd_xmask,
+      (graph + sx * y), fwd_xmask, bwd_xmask, other_mask,
       (workspace + sx * y), 
       /*n=*/sx, /*stride=*/1, /*anisotropy=*/wx, 
       black_border
@@ -360,12 +389,13 @@ float* _edt3dsq_voxel_graph(
 
   const GRAPH_TYPE fwd_xmask = 0b00010101;
   const GRAPH_TYPE bwd_xmask = 0b00101010;
+  const GRAPH_TYPE other_mask = 0b00111100;
 
   for (size_t z = 0; z < sz; z++) {
     for (size_t y = 0; y < sy; y++) {
       squared_edt_1d_multi_seg_voxel_graph<T, GRAPH_TYPE>(
         (labels + sx * y + sxy * z), 
-        (graph + sx * y + sxy * z), fwd_xmask, bwd_xmask,
+        (graph + sx * y + sxy * z), fwd_xmask, bwd_xmask, other_mask,
         (workspace + sx * y + sxy * z), 
         /*n=*/sx, /*stride=*/1, /*anisotropy=*/wx, 
         black_border
