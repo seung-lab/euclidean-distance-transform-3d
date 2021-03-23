@@ -10,7 +10,7 @@ INTEGER_TYPES = [
 
 TYPES_NO_BOOL = INTEGER_TYPES + [ np.float32 ]
 
-TYPES = TYPES_NO_BOOL + [ np.bool ]
+TYPES = TYPES_NO_BOOL + [ bool ]
 
 @pytest.mark.parametrize("dtype", TYPES)
 @pytest.mark.parametrize("parallel", (1,2))
@@ -404,7 +404,7 @@ def test_2d_scipy_comparison_black_border():
 def test_2d_scipy_comparison():
   for _ in range(20):
     for parallel in (1,2):
-      for dtype in (np.uint32, np.bool):
+      for dtype in (np.uint32, bool):
         randos = np.random.randint(0, 2, size=(5, 5), dtype=dtype)
         labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2), dtype=dtype)
 
@@ -552,7 +552,7 @@ def test_three_d():
 def test_3d_scipy_comparison():
   for _ in range(20):
     for parallel in (1,2):
-      for dtype in (np.uint32, np.bool):
+      for dtype in (np.uint32, bool):
         for order in ('C', 'F'):
           randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
           labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
@@ -587,12 +587,12 @@ def test_non_mutation_2d():
    [ False,  True,  True,  True,  ],
    [ False,  True,  True,  True,  ],
    [  True,  True,  True,  True,  ],
-   [ False,  True,  True,  True,  ],], dtype=np.bool)
+   [ False,  True,  True,  True,  ],], dtype=bool)
  
   compare_scipy_edt(x)
 
 def test_dots(numdots=5, N=100, radius=20):
-  img = np.zeros((N, N), dtype=np.bool)
+  img = np.zeros((N, N), dtype=bool)
   locations=np.random.randint(0, N-1, size=(numdots, 2), dtype=np.int)
   xx,yy = np.meshgrid(range(N), range(N), indexing='xy')
 
@@ -629,7 +629,7 @@ def compare_scipy_edt(labels):
   assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_2d_even_anisotropy():
-  labels = np.zeros( (15,15), dtype=np.bool, order='F')
+  labels = np.zeros( (15,15), dtype=bool, order='F')
   labels[2:12, 2:12] = True
   img = edt.edt(labels, anisotropy=(1,1), order='F')
   for i in range(1, 150):
@@ -638,7 +638,7 @@ def test_2d_even_anisotropy():
     assert np.all(w * img == aimg)
 
 def test_3d_even_anisotropy():
-  labels = np.zeros( (15,15,15), dtype=np.bool, order='F')
+  labels = np.zeros( (15,15,15), dtype=bool, order='F')
   labels[2:12, 2:12, 5:10] = True
   img = edt.edt(labels, anisotropy=(1,1,1))
   for parallel in (1,2):

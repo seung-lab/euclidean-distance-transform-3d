@@ -24,7 +24,7 @@ from libc.stdint cimport (
   uint8_t, uint16_t, uint32_t, uint64_t,
    int8_t,  int16_t,  int32_t,  int64_t
 )
-from libcpp cimport bool
+from libcpp cimport bool as native_bool
 
 import multiprocessing
 
@@ -41,14 +41,14 @@ cdef extern from "edt.hpp" namespace "pyedt":
     int n,
     int stride,
     float anisotropy,
-    bool black_border
+    native_bool black_border
   ) nogil
 
   cdef float* _edt2dsq[T](
     T* labels,
     size_t sx, size_t sy, 
     float wx, float wy,
-    bool black_border, int parallel,
+    native_bool black_border, int parallel,
     float* output
   ) nogil
 
@@ -56,7 +56,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
     T* labels, 
     size_t sx, size_t sy, size_t sz,
     float wx, float wy, float wz,
-    bool black_border, int parallel,
+    native_bool black_border, int parallel,
     float* output
   ) nogil
 
@@ -65,13 +65,13 @@ cdef extern from "edt_voxel_graph.hpp" namespace "pyedt":
     T* labels, GRAPH_TYPE* graph,
     size_t sx, size_t sy,
     float wx, float wy,
-    bool black_border, float* workspace
+    native_bool black_border, float* workspace
   ) nogil 
   cdef float* _edt3dsq_voxel_graph[T,GRAPH_TYPE](
     T* labels, GRAPH_TYPE* graph,
     size_t sx, size_t sy, size_t sz, 
     float wx, float wy, float wz,
-    bool black_border, float* workspace
+    native_bool black_border, float* workspace
   ) nogil  
 
 def nvl(val, default_val):
@@ -120,7 +120,7 @@ def edt(
 
 
 def edtsq(
-    data, anisotropy=None, bool black_border=False, 
+    data, anisotropy=None, native_bool black_border=False, 
     order='C', int parallel=1, voxel_graph=None
   ):
   """
@@ -196,11 +196,11 @@ def edtsq(
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
-def edt1d(data, anisotropy=1.0, bool black_border=False):
+def edt1d(data, anisotropy=1.0, native_bool black_border=False):
   result = edt1dsq(data, anisotropy, black_border)
   return np.sqrt(result, result)
 
-def edt1dsq(data, anisotropy=1.0, bool black_border=False):
+def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
   cdef uint8_t[:] arr_memview8
   cdef uint16_t[:] arr_memview16
   cdef uint32_t[:] arr_memview32
@@ -272,10 +272,10 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
       anisotropy,
       black_border
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.astype(np.uint8)
-    squared_edt_1d_multi_seg[bool](
-      <bool*>&arr_memview8[0],
+    squared_edt_1d_multi_seg[native_bool](
+      <native_bool*>&arr_memview8[0],
       &outputview[0],
       data.size,
       1,
@@ -287,7 +287,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
 
 def edt2d(
     data, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C', 
+    native_bool black_border=False, order='C', 
     parallel=1, voxel_graph=None
   ):
   result = edt2dsq(data, anisotropy, black_border, order, parallel, voxel_graph)
@@ -295,7 +295,7 @@ def edt2d(
 
 def edt2dsq(
     data, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     parallel=1, voxel_graph=None
   ):
   if voxel_graph is not None:
@@ -304,7 +304,7 @@ def edt2dsq(
 
 def __edt2dsq(
     data, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     parallel=1
   ):
   cdef uint8_t[:,:] arr_memview8
@@ -313,7 +313,7 @@ def __edt2dsq(
   cdef uint64_t[:,:] arr_memview64
   cdef float[:,:] arr_memviewfloat
   cdef double[:,:] arr_memviewdouble
-  cdef bool[:,:] arr_memviewbool
+  cdef native_bool[:,:] arr_memviewbool
 
   cdef size_t sx = data.shape[1] # C: rows
   cdef size_t sy = data.shape[0] # C: cols
@@ -384,10 +384,10 @@ def __edt2dsq(
       black_border, parallel,
       &outputview[0]      
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.view(np.uint8)
-    _edt2dsq[bool](
-      <bool*>&arr_memview8[0,0],
+    _edt2dsq[native_bool](
+      <native_bool*>&arr_memview8[0,0],
       sx, sy,
       ax, ay,
       black_border, parallel,
@@ -398,7 +398,7 @@ def __edt2dsq(
 
 def __edt2dsq_voxel_graph(
     data, voxel_graph, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C'
+    native_bool black_border=False, order='C'
   ):
   cdef uint8_t[:,:] arr_memview8
   cdef uint16_t[:,:] arr_memview16
@@ -406,7 +406,7 @@ def __edt2dsq_voxel_graph(
   cdef uint64_t[:,:] arr_memview64
   cdef float[:,:] arr_memviewfloat
   cdef double[:,:] arr_memviewdouble
-  cdef bool[:,:] arr_memviewbool
+  cdef native_bool[:,:] arr_memviewbool
 
   cdef uint8_t[:,:] graph_memview8
   if voxel_graph.dtype in (np.uint8, np.int8):
@@ -489,10 +489,10 @@ def __edt2dsq_voxel_graph(
       black_border,
       &outputview[0]      
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.view(np.uint8)
-    _edt2dsq_voxel_graph[bool,uint8_t](
-      <bool*>&arr_memview8[0,0],
+    _edt2dsq_voxel_graph[native_bool,uint8_t](
+      <native_bool*>&arr_memview8[0,0],
       <uint8_t*>&graph_memview8[0,0],
       sx, sy,
       ax, ay,
@@ -504,7 +504,7 @@ def __edt2dsq_voxel_graph(
 
 def edt3d(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C', 
+    native_bool black_border=False, order='C', 
     parallel=1, voxel_graph=None
   ):
   result = edt3dsq(data, anisotropy, black_border, order, parallel, voxel_graph)
@@ -512,7 +512,7 @@ def edt3d(
 
 def edt3dsq(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     int parallel=1, voxel_graph=None
   ):
   if voxel_graph is not None:
@@ -521,7 +521,7 @@ def edt3dsq(
 
 def __edt3dsq(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     int parallel=1
   ):
   cdef uint8_t[:,:,:] arr_memview8
@@ -602,10 +602,10 @@ def __edt3dsq(
       black_border, parallel,
       <float*>&outputview[0]
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.view(np.uint8)
-    _edt3dsq[bool](
-      <bool*>&arr_memview8[0,0,0],
+    _edt3dsq[native_bool](
+      <native_bool*>&arr_memview8[0,0,0],
       sx, sy, sz,
       ax, ay, az,
       black_border, parallel,
@@ -617,7 +617,7 @@ def __edt3dsq(
 def __edt3dsq_voxel_graph(
     data, voxel_graph, 
     anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
   ):
   cdef uint8_t[:,:,:] arr_memview8
   cdef uint16_t[:,:,:] arr_memview16
@@ -709,10 +709,10 @@ def __edt3dsq_voxel_graph(
       black_border,
       <float*>&outputview[0]
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.view(np.uint8)
-    _edt3dsq_voxel_graph[bool,uint8_t](
-      <bool*>&arr_memview8[0,0,0],
+    _edt3dsq_voxel_graph[native_bool,uint8_t](
+      <native_bool*>&arr_memview8[0,0,0],
       <uint8_t*>&graph_memview8[0,0,0],
       sx, sy, sz,
       ax, ay, az,
