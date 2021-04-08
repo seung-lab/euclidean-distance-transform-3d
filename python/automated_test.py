@@ -593,7 +593,7 @@ def test_non_mutation_2d():
 
 def test_dots(numdots=5, N=100, radius=20):
   img = np.zeros((N, N), dtype=bool)
-  locations=np.random.randint(0, N-1, size=(numdots, 2), dtype=np.int)
+  locations=np.random.randint(0, N-1, size=(numdots, 2), dtype=int)
   xx,yy = np.meshgrid(range(N), range(N), indexing='xy')
 
   for loc in locations:
