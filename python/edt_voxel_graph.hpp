@@ -134,26 +134,59 @@ float* _edt3dsq_voxel_graph(
   size_t loc = 0;
   size_t loc2 = 0;
 
-  // need to fix for odd sizes
-  for (size_t z = 0; z < sz; z++) {
-    for (size_t y = 0; y < sy; y++) {
-      for (size_t x = 0; x < sx; x++) {
+  size_t x, y, z;
+  
+  for (z = 0; z < sz; z++) {
+    for (y = 0; y < sy; y++) {
+      for (x = 0; x < sx; x++) {
         loc = x + sx * y + sxy * z;
         loc2 = 2 * x + 4 * sx * y + 8 * sxy * z;
 
         uint8_t foreground = labels[loc] > 0;
 
-        double_labels[2*loc] = foreground;
-        double_labels[2*loc + 1] = foreground && (graph[loc] & 0b00000001);
-        double_labels[2*loc + sx2] = foreground && (graph[loc] & 0b00000010);
-        double_labels[2*loc + sxy2] = foreground && (graph[loc] & 0b00000100);
-        double_labels[2*loc + sx2 + 1] = foreground;
-        double_labels[2*loc + sxy2 + 1] = foreground;
-        double_labels[2*loc + sx2 + sxy2] = foreground;
-        double_labels[2*loc + sx2 + sxy2 + 1] = foreground;
+        double_labels[loc2] = foreground;
+        double_labels[loc2 + 1] = foreground && (graph[loc] & 0b00000001);
+        double_labels[loc2 + sx2] = foreground && (graph[loc] & 0b00000010);
+        double_labels[loc2 + sxy2] = foreground && (graph[loc] & 0b00000100);
+        double_labels[loc2 + sx2 + 1] = foreground;
+        double_labels[loc2 + sxy2 + 1] = foreground;
+        double_labels[loc2 + sx2 + sxy2] = foreground;
+        double_labels[loc2 + sx2 + sxy2 + 1] = foreground;
+      }
+      if (black_border) {
+        double_labels[loc2 + 1] = 0;
+        double_labels[loc2 + sx2 + 1] = 0;
+        double_labels[loc2 + 1 + sxy2] = 0;
+        double_labels[loc2 + sx2 + 1 + sxy2] = 0;
+      }
+    }
+    if (black_border) {
+      y = sy - 1;
+      for (x = 0; x < sx; x++) {
+        loc2 = 2 * x + 4 * sx * y + 8 * sxy * z;
+
+        double_labels[loc2 + sx2] = 0;
+        double_labels[loc2 + sx2 + 1] = 0;
+        double_labels[loc2 + sx2 + sxy2] = 0;
+        double_labels[loc2 + sx2 + sxy2 + 1] = 0;
       }
     }
   }
+  if (black_border) {
+    z = sz - 1;
+    for (y = 0; y < sy; y++) {
+      for (x = 0; x < sx; x++) {
+        loc2 = 2 * x + 4 * sx * y + 8 * sxy * z;
+
+        double_labels[loc2 + sxy2] = 0;
+        double_labels[loc2 + sxy2 + 1] = 0;
+        double_labels[loc2 + sx2 + sxy2] = 0;
+        double_labels[loc2 + sx2 + sxy2 + 1] = 0;
+      }    
+    }
+  }
+
+  printf("wow\n");
 
   float* transform2 = _edt3dsq<uint8_t>(
     double_labels, sx*2, sy*2, sz*2,
@@ -164,14 +197,25 @@ float* _edt3dsq_voxel_graph(
 
   delete[] double_labels;
 
-  float* transform = new float[voxels]();
+  if (workspace == NULL) {
+    workspace = new float[voxels]();
+  }
 
-  for (size_t i = 0; i < voxels; i++) {
-    transform[i] = transform2[2*i];
+  printf("double wow\n");
+
+  for (z = 0; z < sz; z++) {
+    for (y = 0; y < sy; y++) {
+      for (x = 0; x < sx; x++) {
+        loc = x + sx * y + sxy * z;
+        loc2 = 2 * x + 4 * sx * y + 8 * sxy * z;
+
+        workspace[loc] = transform2[loc2];
+      }
+    }
   }
   delete[] transform2;
 
-  return transform;
+  return workspace;
 }
 
 template <typename T, typename GRAPH_TYPE = uint8_t>
