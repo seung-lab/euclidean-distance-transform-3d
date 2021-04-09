@@ -135,7 +135,7 @@ float* _edt3dsq_voxel_graph(
   size_t loc2 = 0;
 
   size_t x, y, z;
-  
+
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) {
       for (x = 0; x < sx; x++) {
@@ -186,13 +186,10 @@ float* _edt3dsq_voxel_graph(
     }
   }
 
-  printf("wow\n");
-
   float* transform2 = _edt3dsq<uint8_t>(
     double_labels, sx*2, sy*2, sz*2,
     wx / 2, wy / 2, wz / 2,
-    black_border, /*parallel=*/1, 
-    workspace
+    black_border, /*parallel=*/1
   );
 
   delete[] double_labels;
@@ -200,8 +197,6 @@ float* _edt3dsq_voxel_graph(
   if (workspace == NULL) {
     workspace = new float[voxels]();
   }
-
-  printf("double wow\n");
 
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) {
