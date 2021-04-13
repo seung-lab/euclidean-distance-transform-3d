@@ -32,6 +32,22 @@ namespace pyedt {
 
 #define sq(x) ((x) * (x))
 
+inline void tofinite(float *f, const size_t voxels) {
+  for (size_t i = 0; i < voxels; i++) {
+    if (f[i] == INFINITY) {
+      f[i] = std::numeric_limits<float>::max() - 1;
+    }
+  }
+}
+
+inline void toinfinite(float *f, const size_t voxels) {
+  for (size_t i = 0; i < voxels; i++) {
+    if (f[i] >= std::numeric_limits<float>::max() - 1) {
+      f[i] = INFINITY;
+    }
+  }
+}
+
 /* 1D Euclidean Distance Transform for Multiple Segids
  *
  * Map a row of segids to a euclidean distance transform.
@@ -409,7 +425,7 @@ float* _edt3dsq(
   const size_t voxels = sz * sxy;
 
   if (workspace == NULL) {
-    workspace = new float[voxels]();
+    workspace = new float[sx * sy * sz]();
   }
 
   ThreadPool pool(parallel);
@@ -427,6 +443,11 @@ float* _edt3dsq(
   }
 
   pool.join();
+
+  if (!black_border) {
+    tofinite(workspace, voxels);
+  }
+
   pool.start(parallel);
 
   for (size_t z = 0; z < sz; z++) {
@@ -460,6 +481,10 @@ float* _edt3dsq(
 
   pool.join();
 
+  if (!black_border) {
+    toinfinite(workspace, voxels);
+  }
+
   return workspace; 
 }
 
@@ -479,7 +504,7 @@ float* _binary_edt3dsq(
   size_t x,y,z;
 
   if (workspace == NULL) {
-    workspace = new float[voxels]();
+    workspace = new float[sx * sy * sz]();
   }  
 
   ThreadPool pool(parallel);
@@ -497,6 +522,11 @@ float* _binary_edt3dsq(
   }
 
   pool.join();
+
+  if (!black_border) {
+    tofinite(workspace, voxels);
+  }
+
   pool.start(parallel);
 
   size_t offset;
@@ -544,6 +574,10 @@ float* _binary_edt3dsq(
   }
 
   pool.join();
+
+  if (!black_border) {
+    toinfinite(workspace, voxels);
+  }
 
   return workspace; 
 }
@@ -624,6 +658,10 @@ float* _edt2dsq(
     ); 
   }
 
+  if (!black_border) {
+    tofinite(workspace, voxels);
+  }
+
   ThreadPool pool(parallel);
 
   for (size_t x = 0; x < sx; x++) {
@@ -640,6 +678,10 @@ float* _edt2dsq(
 
   pool.join();
 
+  if (!black_border) {
+    toinfinite(workspace, voxels);
+  }
+
   return workspace;
 }
 
@@ -655,7 +697,7 @@ float* _binary_edt2dsq(T* binaryimg,
   size_t x,y;
 
   if (workspace == NULL) {
-    workspace = new float[voxels]();
+    workspace = new float[sx * sy]();
   }
 
   for (y = 0; y < sy; y++) { 
@@ -663,6 +705,10 @@ float* _binary_edt2dsq(T* binaryimg,
       (binaryimg + sx * y), (workspace + sx * y), 
       sx, 1, wx, black_border
     ); 
+  }
+
+  if (!black_border) {
+    tofinite(workspace, voxels);
   }
 
   ThreadPool pool(parallel);
@@ -686,6 +732,10 @@ float* _binary_edt2dsq(T* binaryimg,
   }
 
   pool.join();
+
+  if (!black_border) {
+    toinfinite(workspace, voxels);
+  }
 
   return workspace;
 }
