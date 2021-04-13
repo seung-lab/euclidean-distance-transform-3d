@@ -1,5 +1,7 @@
 import pytest
 
+import math
+
 import edt
 import numpy as np
 from scipy import ndimage
@@ -740,5 +742,23 @@ def test_small_anisotropy():
 
   assert np.all(np.isclose(res, [[np.sqrt(2) / 2, 0.5],[0.5, 0.0]]))
 
+@pytest.mark.parametrize("weight", [
+  0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 
+  1., 10., 100., 1000., 10000., 100000., 1000000., 10000000., 100000000.
+])
+def test_anisotropy_range(weight):
+  img = np.ones((100,97,99), dtype=np.uint8)
+  img[0,0,0] = 0
+
+  res = edt.edt(img, anisotropy=(weight, weight, weight), black_border=False)
+
+  sx = weight * (img.shape[0] - 1)
+  sy = weight * (img.shape[1] - 1)
+  sz = weight * (img.shape[2] - 1)
+
+  max_val = res[99, 96, 98]
+  expected = math.sqrt(sx*sx + sy*sy + sz*sz)
+
+  assert math.isclose(expected, max_val, rel_tol=0.000001)
 
 
