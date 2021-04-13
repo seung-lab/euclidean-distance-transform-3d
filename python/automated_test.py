@@ -681,7 +681,12 @@ def test_2d_lopsided_anisotropic(size):
   fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
   assert np.all(np.isclose(cres, fres))
 
-def test_3d_lopsided():
+@pytest.mark.parametrize("size", [     
+    (150, 150, 150),
+    (150,  75,  23),
+    (75,  150,  37),
+])
+def test_3d_lopsided(size):
   def gen(x, y, z, order):
     x = np.zeros((x, y, z), dtype=np.uint32, order=order)
     x[ 0:25,  5:50, 0:25] = 3
@@ -689,18 +694,9 @@ def test_3d_lopsided():
     x[60:110, 5:50, 0:25] = 2
     return x
 
-  sizes = [
-    (150, 150, 150),
-    (150,  75,  23),
-    (75,  150,  37),
-  ]
-
-  for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
-    fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
-
-    print(size)
-    assert np.all(cres == fres)
+  cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
+  fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
+  assert np.all(np.isclose(cres, fres))
 
 def test_3d_high_anisotropy():
   shape = (256, 256, 256)
