@@ -549,32 +549,32 @@ def test_three_d():
     ],
   ], anisotropy=(6,6,5))
 
-def test_3d_scipy_comparison():
-  for _ in range(20):
-    for parallel in (1,2):
-      for dtype in (np.uint32, np.bool):
-        for order in ('C', 'F'):
-          randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
-          labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
-          # Scipy requires zero borders
-          labels[1:-1,1:-1,1:-1] = randos
+@pytest.mark.parametrize("order", ("C", "F"))
+@pytest.mark.parametrize("parallel", (1,2))
+@pytest.mark.parametrize("dtype", (np.uint32, bool))
+def test_3d_scipy_comparison(dtype, parallel, order):
+  for _ in range(5):
+    randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
+    labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
+    # Scipy requires zero borders
+    labels[1:-1,1:-1,1:-1] = randos
 
-          print("INPUT")
-          print(labels)
+    print("INPUT")
+    print(labels)
 
-          print("MLAEDT")
-          mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
-          print(mlaedt_result)
+    print("MLAEDT")
+    mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
+    print(mlaedt_result)
 
-          print("SCIPY")
-          scipy_result = ndimage.distance_transform_edt(labels)
-          print(scipy_result)
+    print("SCIPY")
+    scipy_result = ndimage.distance_transform_edt(labels)
+    print(scipy_result)
 
-          print("DIFF")
-          print(np.abs(scipy_result == mlaedt_result))
-          print(np.max(np.abs(scipy_result - mlaedt_result)))
+    print("DIFF")
+    print(np.abs(scipy_result == mlaedt_result))
+    print(np.max(np.abs(scipy_result - mlaedt_result)))
 
-          assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+    assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_non_mutation_2d():
   """
@@ -742,6 +742,15 @@ def test_numpy_anisotropy():
 
   resolution = np.array([4,4,40])
   res = edt.edtsq(labels, anisotropy=resolution)
+
+def test_small_anisotropy():
+  d = np.array([
+    [True, True ], 
+    [True, False],
+  ])
+  res = edt.edt(d, anisotropy=[0.5, 0.5], black_border=False)
+
+  assert np.all(np.isclose(res, [[np.sqrt(2) / 2, 0.5],[0.5, 0.0]]))
 
 
 
