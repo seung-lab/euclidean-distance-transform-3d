@@ -230,7 +230,7 @@ envelope = min(square(w * (i+1)), square(w * (n - i))) // envelope computation
 d[i] = min(envelope, d[i]) // application of envelope
 ```
 
-These additional lines add about 3% to the running time compared to a program without them. I have not yet made a comparison to a bordered variant. 
+These additional lines add about 3% to the running time compared to a program without them. I have not yet made a comparison to a bordered variant.  
 
 ### Performance vs. SciPy
 

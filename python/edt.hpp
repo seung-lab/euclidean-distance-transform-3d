@@ -198,7 +198,7 @@ void squared_edt_1d_parabolic(
     factor2 =  i + v[k];
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
-    while (s <= ranges[k]) {
+    while (k > 0 && s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 =  i + v[k];
@@ -278,7 +278,7 @@ void squared_edt_1d_parabolic(
     factor2 = i + v[k];
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
-    while (s <= ranges[k]) {
+    while (k > 0 && s <= ranges[k]) {
       k--;
       factor1 = (i - v[k]) * w2;
       factor2 = i + v[k];

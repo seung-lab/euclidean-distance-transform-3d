@@ -14,10 +14,7 @@ if sys.platform == 'darwin':
 
 setuptools.setup(
   setup_requires=['pbr'],
-  extras_require={
-    ':python_version == "2.7"': ['futures'],
-    ':python_version == "2.6"': ['futures'],
-  },
+  python_requires="~=3.6", # >= 3.6 < 4.0
   ext_modules=[
     setuptools.Extension(
       'edt',
@@ -28,4 +25,5 @@ setuptools.setup(
     ),
   ],
   long_description_content_type='text/markdown',
-  pbr=True)
+  pbr=True
+)

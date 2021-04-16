@@ -1,5 +1,7 @@
 import pytest
 
+import math
+
 import edt
 import numpy as np
 from scipy import ndimage
@@ -548,33 +550,32 @@ def test_three_d():
     ],
   ], anisotropy=(6,6,5))
 
+@pytest.mark.parametrize("order", ("C", "F"))
+@pytest.mark.parametrize("parallel", (1,2))
+@pytest.mark.parametrize("dtype", (np.uint32, bool))
+def test_3d_scipy_comparison(dtype, parallel, order):
+  for _ in range(5):
+    randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
+    labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
+    # Scipy requires zero borders
+    labels[1:-1,1:-1,1:-1] = randos
 
-def test_3d_scipy_comparison():
-  for _ in range(20):
-    for parallel in (1,2):
-      for dtype in (np.uint32, bool):
-        for order in ('C', 'F'):
-          randos = np.random.randint(0, 2, size=(100, 100, 100), dtype=dtype)
-          labels = np.zeros( (randos.shape[0] + 2, randos.shape[1] + 2, randos.shape[2] + 2), dtype=dtype, order=order)
-          # Scipy requires zero borders
-          labels[1:-1,1:-1,1:-1] = randos
+    print("INPUT")
+    print(labels)
 
-          print("INPUT")
-          print(labels)
+    print("MLAEDT")
+    mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
+    print(mlaedt_result)
 
-          print("MLAEDT")
-          mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
-          print(mlaedt_result)
+    print("SCIPY")
+    scipy_result = ndimage.distance_transform_edt(labels)
+    print(scipy_result)
 
-          print("SCIPY")
-          scipy_result = ndimage.distance_transform_edt(labels)
-          print(scipy_result)
+    print("DIFF")
+    print(np.abs(scipy_result == mlaedt_result))
+    print(np.max(np.abs(scipy_result - mlaedt_result)))
 
-          print("DIFF")
-          print(np.abs(scipy_result == mlaedt_result))
-          print(np.max(np.abs(scipy_result - mlaedt_result)))
-
-          assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
+    assert np.all( np.abs(scipy_result - mlaedt_result) < 0.000001 )
 
 def test_non_mutation_2d():
   """
@@ -668,7 +669,8 @@ def test_2d_lopsided():
     print(size)
     assert np.all(cres[:] == fres[:])
 
-def test_2d_lopsided_anisotropic():
+@pytest.mark.parametrize("size", [ (150, 150), (150, 75), (75, 150)])
+def test_2d_lopsided_anisotropic(size):
   def gen(x, y, order):
     x = np.zeros((x, y), dtype=np.uint32, order=order)
     x[0:25,5:50] = 3
@@ -676,20 +678,16 @@ def test_2d_lopsided_anisotropic():
     x[60:110,5:50] = 2
     return x
 
-  sizes = [
-    (150, 150),
-    (150,  75),
-    ( 75, 150),
-  ]
+  cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3), order='C')
+  fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
+  assert np.all(np.isclose(cres, fres))
 
-  for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3), order='C')
-    fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
-
-    print(size)
-    assert np.all(cres[:] == fres[:])
-
-def test_3d_lopsided():
+@pytest.mark.parametrize("size", [     
+    (150, 150, 150),
+    (150,  75,  23),
+    (75,  150,  37),
+])
+def test_3d_lopsided(size):
   def gen(x, y, z, order):
     x = np.zeros((x, y, z), dtype=np.uint32, order=order)
     x[ 0:25,  5:50, 0:25] = 3
@@ -697,18 +695,9 @@ def test_3d_lopsided():
     x[60:110, 5:50, 0:25] = 2
     return x
 
-  sizes = [
-    (150, 150, 150),
-    (150,  75,  23),
-    (75,  150,  37),
-  ]
-
-  for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
-    fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
-
-    print(size)
-    assert np.all(cres == fres)
+  cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
+  fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
+  assert np.all(np.isclose(cres, fres))
 
 def test_3d_high_anisotropy():
   shape = (256, 256, 256)
@@ -797,6 +786,34 @@ def test_voxel_connectivity_graph_2d():
   graph = np.asfortranarray(graph)
   dt = edt.edt(labels, voxel_graph=graph, black_border=True)
   assert np.all(np.abs(dt - ans)) < 0.000002
+
+def test_small_anisotropy():
+  d = np.array([
+    [True, True ], 
+    [True, False],
+  ])
+  res = edt.edt(d, anisotropy=[0.5, 0.5], black_border=False)
+
+  assert np.all(np.isclose(res, [[np.sqrt(2) / 2, 0.5],[0.5, 0.0]]))
+
+@pytest.mark.parametrize("weight", [
+  0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 
+  1., 10., 100., 1000., 10000., 100000., 1000000., 10000000., 100000000.
+])
+def test_anisotropy_range(weight):
+  img = np.ones((100,97,99), dtype=np.uint8)
+  img[0,0,0] = 0
+
+  res = edt.edt(img, anisotropy=(weight, weight, weight), black_border=False)
+
+  sx = weight * (img.shape[0] - 1)
+  sy = weight * (img.shape[1] - 1)
+  sz = weight * (img.shape[2] - 1)
+
+  max_val = res[99, 96, 98]
+  expected = math.sqrt(sx*sx + sy*sy + sz*sz)
+
+  assert math.isclose(expected, max_val, rel_tol=0.000001)
 
 
 

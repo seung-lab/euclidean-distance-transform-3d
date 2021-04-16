@@ -1,10 +1,22 @@
 CHANGES
 =======
 
+2.0.3
+-----
+
+* release(2.0.3): fixes segfault caused by small anisotropies
+* fix: resolves logic around infinities (#30)
+* docs: whitespace change to get appveyor to run
+
 2.0.2
 -----
 
+* chore: update artifacts path
+* chore: don't change directory twice
+* chore: try changing directory in appveyor
+* chore: build system modernization
 * release(2.0.2): python3.9 support
+* docs: new figure useful for understanding multi-label strategy
 * install: get py35 to compile on MacOS
 
 2.0.1
