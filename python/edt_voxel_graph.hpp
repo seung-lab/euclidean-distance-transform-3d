@@ -76,7 +76,7 @@ float* _edt2dsq_voxel_graph(
 
       double_labels[loc2] = foreground;
       double_labels[loc2 + 1] = foreground && (graph[loc] & 0b00000001);
-      double_labels[loc2 + sx2] = foreground && (graph[loc] & 0b00000010);
+      double_labels[loc2 + sx2] = foreground && (graph[loc] & 0b00000100);
       double_labels[loc2 + sx2 + 1] = foreground;
     }
     if (black_border) {
@@ -146,8 +146,8 @@ float* _edt3dsq_voxel_graph(
 
         double_labels[loc2] = foreground;
         double_labels[loc2 + 1] = foreground && (graph[loc] & 0b00000001);
-        double_labels[loc2 + sx2] = foreground && (graph[loc] & 0b00000010);
-        double_labels[loc2 + sxy2] = foreground && (graph[loc] & 0b00000100);
+        double_labels[loc2 + sx2] = foreground && (graph[loc] & 0b00000100);
+        double_labels[loc2 + sxy2] = foreground && (graph[loc] & 0b00010000);
         double_labels[loc2 + sx2 + 1] = foreground;
         double_labels[loc2 + sxy2 + 1] = foreground;
         double_labels[loc2 + sx2 + sxy2] = foreground;
