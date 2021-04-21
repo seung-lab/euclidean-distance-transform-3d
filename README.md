@@ -65,13 +65,31 @@ dt = edt.edt(
   black_border=True, order='F',
   parallel=1 # number of threads, <= 0 sets to num cpu
 ) 
+
+# There is also a voxel_graph argument that can be used for dealing
+# with shapes that loop around to touch themselves. This works by
+# using a voxel connectivity graph represented as a image of bitfields
+# that describe the permissible directions of travel at each voxel.
+# Voxels with an impermissible direction are treated as eroded
+# by 0.5 in that direction instead of being 1 unit from black.
+# WARNING: This is an experimental feature and uses 8x+ memory.
+graph = np.zeros(labels.shape, dtype=np.uint8)
+graph |= 0b00111111 # all 6 directions permissible (-z +z -y +y -x +x)
+graph[122,334,312] &= 0b11111110 # +x isn't allowed at this location
+graph[123,334,312] &= 0b11111101 # -x isn't allowed at this location
+dt = edt.edt(
+  labels, anisotropy=(6, 6, 30), 
+  black_border=True, order='F',
+  parallel=1, # number of threads, <= 0 sets to num cpu
+  voxel_graph=graph,
+) 
 ```
 
 *Note on Memory Usage: Make sure the input array to edt is contiguous memory or it will make a copy. You can determine if this is the case with `print(data.flags)`.*
 
 ### C++ Usage
 
-Include the edt.hpp header which includes the implementation in namespace `edt`. 
+Include the edt.hpp header which includes the implementation in namespace `edt`. You'll need to also include `threadpool.h` and add the `-pthread` compiler flag. The code is written to the C++11 standard.
 
 ```cpp
 #include "edt.hpp"
@@ -87,9 +105,7 @@ int main () {
 
     return 0;
 }
-```
-
-For compilation, I recommend the compiler flags `-O3` and `-ffast-math`.  
+``` 
 
 ### Motivation
 
