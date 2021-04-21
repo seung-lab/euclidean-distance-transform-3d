@@ -14,51 +14,50 @@ TYPES_NO_BOOL = INTEGER_TYPES + [ np.float32 ]
 
 TYPES = TYPES_NO_BOOL + [ bool ]
 
-def test_one_d_simple():
-  for parallel in (1,2):
-    for dtype in TYPES:
-      print(dtype)
-      labels = np.array([ 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+@pytest.mark.parametrize("dtype", TYPES)
+@pytest.mark.parametrize("parallel", (1,2))
+def test_one_d_simple(dtype, parallel):
+  labels = np.array([ 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 1 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 1 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == np.array([ np.inf ]))
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == np.array([ np.inf ]))
 
-      labels = np.array([ 0, 1 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 0, 1 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)
+  labels = np.array([ 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)
 
-      labels = np.array([ 0, 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)  
+  labels = np.array([ 0, 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)  
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)  
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)  
 
-      labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
-      result = edt.edt(labels, black_border=True, parallel=parallel)
-      assert np.all(result == labels)  
+  labels = np.array([ 0, 1, 1, 0 ], dtype=dtype)
+  result = edt.edt(labels, black_border=True, parallel=parallel)
+  assert np.all(result == labels)  
 
-      result = edt.edt(labels, black_border=False, parallel=parallel)
-      assert np.all(result == labels)  
+  result = edt.edt(labels, black_border=False, parallel=parallel)
+  assert np.all(result == labels)  
 
 def test_one_d_black_border():
   def cmp(labels, ans, types=TYPES, anisotropy=1.0):
@@ -733,6 +732,61 @@ def test_numpy_anisotropy():
   resolution = np.array([4,4,40])
   res = edt.edtsq(labels, anisotropy=resolution)
 
+def test_voxel_connectivity_graph_2d():
+  labels = np.array([
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+  ])
+
+  omni = 0b111111
+  noxf = 0b111110
+  noxb = 0b111101
+
+  graph = np.array([
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+  ], dtype=np.uint8)
+
+  dt = edt.edt(labels, voxel_graph=graph)
+  assert np.all(dt == np.inf)
+
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+  assert np.all(dt == np.array([
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    [0.5, 1.5, 1.5, 1.5, 1.5, 0.5],
+    [0.5, 1.5, 2.5, 2.5, 1.5, 0.5],
+    [0.5, 1.5, 1.5, 1.5, 1.5, 0.5],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+  ]))
+
+  graph = np.array([
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, noxf, noxb, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+    [omni, omni, omni, omni, omni, omni],
+  ], dtype=np.uint8, order="C")
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+
+  ans = np.array([
+    [1,        1,        1,        1,        1,        1],
+    [1,        1.8027756,1.118034, 1.118034, 1.8027756,1],
+    [1,        1.5,      0.5,      0.5,      1.5,      1],
+    [1,        1.8027756,1.118034, 1.118034, 1.8027756,1],
+    [1,        1,        1,        1,        1,        1]
+  ])
+  assert np.all(np.abs(dt - ans)) < 0.000002
+
+  graph = np.asfortranarray(graph)
+  dt = edt.edt(labels, voxel_graph=graph, black_border=True)
+  assert np.all(np.abs(dt - ans)) < 0.000002
+
 def test_small_anisotropy():
   d = np.array([
     [True, True ], 
@@ -760,5 +814,6 @@ def test_anisotropy_range(weight):
   expected = math.sqrt(sx*sx + sy*sy + sz*sz)
 
   assert math.isclose(expected, max_val, rel_tol=0.000001)
+
 
 
