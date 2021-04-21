@@ -24,7 +24,7 @@ from libc.stdint cimport (
   uint8_t, uint16_t, uint32_t, uint64_t,
    int8_t,  int16_t,  int32_t,  int64_t
 )
-from libcpp cimport bool
+from libcpp cimport bool as native_bool
 
 import multiprocessing
 
@@ -41,14 +41,14 @@ cdef extern from "edt.hpp" namespace "pyedt":
     int n,
     int stride,
     float anisotropy,
-    bool black_border
+    native_bool black_border
   ) nogil
 
   cdef float* _edt2dsq[T](
     T* labels,
     size_t sx, size_t sy, 
     float wx, float wy,
-    bool black_border, int parallel,
+    native_bool black_border, int parallel,
     float* output
   ) nogil
 
@@ -56,7 +56,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
     T* labels, 
     size_t sx, size_t sy, size_t sz,
     float wx, float wy, float wz,
-    bool black_border, int parallel,
+    native_bool black_border, int parallel,
     float* output
   ) nogil
 
@@ -129,7 +129,7 @@ def edt(data, anisotropy=None, black_border=False, order='K', int parallel=1):
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
-def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):
+def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):
   """
   edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
 
@@ -183,11 +183,11 @@ def edtsq(data, anisotropy=None, bool black_border=False, order='C', int paralle
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
-def edt1d(data, anisotropy=1.0, bool black_border=False):
+def edt1d(data, anisotropy=1.0, native_bool black_border=False):
   result = edt1dsq(data, anisotropy, black_border)
   return np.sqrt(result, result)
 
-def edt1dsq(data, anisotropy=1.0, bool black_border=False):
+def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
   cdef uint8_t[:] arr_memview8
   cdef uint16_t[:] arr_memview16
   cdef uint32_t[:] arr_memview32
@@ -259,10 +259,10 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
       anisotropy,
       black_border
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.astype(np.uint8)
-    squared_edt_1d_multi_seg[bool](
-      <bool*>&arr_memview8[0],
+    squared_edt_1d_multi_seg[native_bool](
+      <native_bool*>&arr_memview8[0],
       &outputview[0],
       data.size,
       1,
@@ -274,7 +274,7 @@ def edt1dsq(data, anisotropy=1.0, bool black_border=False):
 
 def edt2d(
     data, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C', 
+    native_bool black_border=False, order='C', 
     parallel=1
   ):
   result = edt2dsq(data, anisotropy, black_border, order, parallel)
@@ -282,7 +282,7 @@ def edt2d(
 
 def edt2dsq(
     data, anisotropy=(1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     parallel=1
   ):
   cdef uint8_t[:,:] arr_memview8
@@ -291,7 +291,7 @@ def edt2dsq(
   cdef uint64_t[:,:] arr_memview64
   cdef float[:,:] arr_memviewfloat
   cdef double[:,:] arr_memviewdouble
-  cdef bool[:,:] arr_memviewbool
+  cdef native_bool[:,:] arr_memviewbool
 
   cdef size_t sx = data.shape[1] # C: rows
   cdef size_t sy = data.shape[0] # C: cols
@@ -362,10 +362,10 @@ def edt2dsq(
       black_border, parallel,
       &outputview[0]      
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.astype(np.uint8)
-    _edt2dsq[bool](
-      <bool*>&arr_memview8[0,0],
+    _edt2dsq[native_bool](
+      <native_bool*>&arr_memview8[0,0],
       sx, sy,
       ax, ay,
       black_border, parallel,
@@ -376,7 +376,7 @@ def edt2dsq(
 
 def edt3d(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C', 
+    native_bool black_border=False, order='C', 
     parallel=1
   ):
   result = edt3dsq(data, anisotropy, black_border, order, parallel)
@@ -384,7 +384,7 @@ def edt3d(
 
 def edt3dsq(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    bool black_border=False, order='C',
+    native_bool black_border=False, order='C',
     int parallel=1
   ):
   cdef uint8_t[:,:,:] arr_memview8
@@ -465,10 +465,10 @@ def edt3dsq(
       black_border, parallel,
       <float*>&outputview[0]
     )
-  elif data.dtype == np.bool:
+  elif data.dtype == bool:
     arr_memview8 = data.view(np.uint8)
-    _edt3dsq[bool](
-      <bool*>&arr_memview8[0,0,0],
+    _edt3dsq[native_bool](
+      <native_bool*>&arr_memview8[0,0,0],
       sx, sy, sz,
       ax, ay, az,
       black_border, parallel,

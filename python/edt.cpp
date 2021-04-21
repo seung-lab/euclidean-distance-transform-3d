@@ -2495,7 +2495,6 @@ static const char __pyx_k_nvl[] = "nvl";
 static const char __pyx_k_obj[] = "obj";
 static const char __pyx_k_val[] = "val";
 static const char __pyx_k_base[] = "base";
-static const char __pyx_k_bool[] = "bool";
 static const char __pyx_k_copy[] = "copy";
 static const char __pyx_k_data[] = "data";
 static const char __pyx_k_dict[] = "__dict__";
@@ -2679,7 +2678,6 @@ static PyObject *__pyx_n_s_ay;
 static PyObject *__pyx_n_s_az;
 static PyObject *__pyx_n_s_base;
 static PyObject *__pyx_n_s_black_border;
-static PyObject *__pyx_n_s_bool;
 static PyObject *__pyx_n_s_c;
 static PyObject *__pyx_n_u_c;
 static PyObject *__pyx_n_s_c_contiguous;
@@ -3884,7 +3882,7 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
  *   else:
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))             # <<<<<<<<<<<<<<
  * 
- * def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):
+ * def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):
  */
     __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 130, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
@@ -3943,7 +3941,7 @@ static PyObject *__pyx_pf_3edt_2edt(CYTHON_UNUSED PyObject *__pyx_self, PyObject
 /* "edt.pyx":132
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
+ * def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
  *   """
  *   edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
  */
@@ -4656,7 +4654,7 @@ static PyObject *__pyx_pf_3edt_4edtsq(CYTHON_UNUSED PyObject *__pyx_self, PyObje
  *   else:
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))             # <<<<<<<<<<<<<<
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):
  */
     __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u_Multi_Label_EDT_library_only_sup, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
@@ -4690,7 +4688,7 @@ static PyObject *__pyx_pf_3edt_4edtsq(CYTHON_UNUSED PyObject *__pyx_self, PyObje
   /* "edt.pyx":132
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
+ * def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
  *   """
  *   edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
  */
@@ -4715,7 +4713,7 @@ static PyObject *__pyx_pf_3edt_4edtsq(CYTHON_UNUSED PyObject *__pyx_self, PyObje
 /* "edt.pyx":186
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   result = edt1dsq(data, anisotropy, black_border)
  *   return np.sqrt(result, result)
  */
@@ -4822,7 +4820,7 @@ static PyObject *__pyx_pf_3edt_6edt1d(CYTHON_UNUSED PyObject *__pyx_self, PyObje
 
   /* "edt.pyx":187
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):
  *   result = edt1dsq(data, anisotropy, black_border)             # <<<<<<<<<<<<<<
  *   return np.sqrt(result, result)
  * 
@@ -4885,11 +4883,11 @@ static PyObject *__pyx_pf_3edt_6edt1d(CYTHON_UNUSED PyObject *__pyx_self, PyObje
   __pyx_t_1 = 0;
 
   /* "edt.pyx":188
- * def edt1d(data, anisotropy=1.0, bool black_border=False):
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):
  *   result = edt1dsq(data, anisotropy, black_border)
  *   return np.sqrt(result, result)             # <<<<<<<<<<<<<<
  * 
- * def edt1dsq(data, anisotropy=1.0, bool black_border=False):
+ * def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 188, __pyx_L1_error)
@@ -4949,7 +4947,7 @@ static PyObject *__pyx_pf_3edt_6edt1d(CYTHON_UNUSED PyObject *__pyx_self, PyObje
   /* "edt.pyx":186
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   result = edt1dsq(data, anisotropy, black_border)
  *   return np.sqrt(result, result)
  */
@@ -4973,7 +4971,7 @@ static PyObject *__pyx_pf_3edt_6edt1d(CYTHON_UNUSED PyObject *__pyx_self, PyObje
 /* "edt.pyx":190
  *   return np.sqrt(result, result)
  * 
- * def edt1dsq(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   cdef uint8_t[:] arr_memview8
  *   cdef uint16_t[:] arr_memview16
  */
@@ -6003,54 +6001,48 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   /* "edt.pyx":262
  *       black_border
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.astype(np.uint8)
- *     squared_edt_1d_multi_seg[bool](
+ *     squared_edt_1d_multi_seg[native_bool](
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 262, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 262, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_bool); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 262, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, __pyx_t_4, Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 262, __pyx_L1_error)
+  __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, ((PyObject*)&PyBool_Type), Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 262, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 262, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   if (__pyx_t_9) {
 
     /* "edt.pyx":263
  *     )
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.astype(np.uint8)             # <<<<<<<<<<<<<<
- *     squared_edt_1d_multi_seg[bool](
- *       <bool*>&arr_memview8[0],
+ *     squared_edt_1d_multi_seg[native_bool](
+ *       <native_bool*>&arr_memview8[0],
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_astype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 263, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_astype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_uint8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 263, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 263, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_uint8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-      __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_4);
-      if (likely(__pyx_t_1)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-        __Pyx_INCREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_4 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
+      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_1);
+      if (likely(__pyx_t_4)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_4, function);
+        __Pyx_DECREF_SET(__pyx_t_1, function);
       }
     }
-    __pyx_t_6 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_1, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
-    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_6 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_4, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint8_t(__pyx_t_6, PyBUF_WRITABLE); if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_v_arr_memview8 = __pyx_t_11;
@@ -6059,8 +6051,8 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
 
     /* "edt.pyx":265
  *     arr_memview8 = data.astype(np.uint8)
- *     squared_edt_1d_multi_seg[bool](
- *       <bool*>&arr_memview8[0],             # <<<<<<<<<<<<<<
+ *     squared_edt_1d_multi_seg[native_bool](
+ *       <native_bool*>&arr_memview8[0],             # <<<<<<<<<<<<<<
  *       &outputview[0],
  *       data.size,
  */
@@ -6076,8 +6068,8 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
     }
 
     /* "edt.pyx":266
- *     squared_edt_1d_multi_seg[bool](
- *       <bool*>&arr_memview8[0],
+ *     squared_edt_1d_multi_seg[native_bool](
+ *       <native_bool*>&arr_memview8[0],
  *       &outputview[0],             # <<<<<<<<<<<<<<
  *       data.size,
  *       1,
@@ -6094,7 +6086,7 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
     }
 
     /* "edt.pyx":267
- *       <bool*>&arr_memview8[0],
+ *       <native_bool*>&arr_memview8[0],
  *       &outputview[0],
  *       data.size,             # <<<<<<<<<<<<<<
  *       1,
@@ -6115,10 +6107,10 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
     __pyx_t_15 = __pyx_PyFloat_AsFloat(__pyx_v_anisotropy); if (unlikely((__pyx_t_15 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 269, __pyx_L1_error)
 
     /* "edt.pyx":264
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.astype(np.uint8)
- *     squared_edt_1d_multi_seg[bool](             # <<<<<<<<<<<<<<
- *       <bool*>&arr_memview8[0],
+ *     squared_edt_1d_multi_seg[native_bool](             # <<<<<<<<<<<<<<
+ *       <native_bool*>&arr_memview8[0],
  *       &outputview[0],
  */
     pyedt::squared_edt_1d_multi_seg<bool>(((bool *)(&(*((uint8_t *) ( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_12 * __pyx_v_arr_memview8.strides[0]) ))))), (&(*((float *) ( /* dim=0 */ (__pyx_v_outputview.data + __pyx_t_14 * __pyx_v_outputview.strides[0]) )))), __pyx_t_13, 1, __pyx_t_15, __pyx_v_black_border);
@@ -6126,9 +6118,9 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
     /* "edt.pyx":262
  *       black_border
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.astype(np.uint8)
- *     squared_edt_1d_multi_seg[bool](
+ *     squared_edt_1d_multi_seg[native_bool](
  */
   }
   __pyx_L3:;
@@ -6148,7 +6140,7 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   /* "edt.pyx":190
  *   return np.sqrt(result, result)
  * 
- * def edt1dsq(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   cdef uint8_t[:] arr_memview8
  *   cdef uint16_t[:] arr_memview16
  */
@@ -6196,7 +6188,7 @@ static PyObject *__pyx_pf_3edt_8edt1dsq(CYTHON_UNUSED PyObject *__pyx_self, PyOb
  * 
  * def edt2d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
 /* Python wrapper */
@@ -6222,7 +6214,7 @@ static PyObject *__pyx_pw_3edt_11edt2d(PyObject *__pyx_self, PyObject *__pyx_arg
  * 
  * def edt2d(
  *     data, anisotropy=(1.0, 1.0),             # <<<<<<<<<<<<<<
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  *     parallel=1
  */
     values[1] = ((PyObject *)__pyx_tuple_);
@@ -6302,7 +6294,7 @@ static PyObject *__pyx_pw_3edt_11edt2d(PyObject *__pyx_self, PyObject *__pyx_arg
       /* "edt.pyx":277
  * def edt2d(
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',             # <<<<<<<<<<<<<<
+ *     native_bool black_border=False, order='C',             # <<<<<<<<<<<<<<
  *     parallel=1
  *   ):
  */
@@ -6326,7 +6318,7 @@ static PyObject *__pyx_pw_3edt_11edt2d(PyObject *__pyx_self, PyObject *__pyx_arg
  * 
  * def edt2d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -6486,7 +6478,7 @@ static PyObject *__pyx_pf_3edt_10edt2d(CYTHON_UNUSED PyObject *__pyx_self, PyObj
  * 
  * def edt2d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -6510,7 +6502,7 @@ static PyObject *__pyx_pf_3edt_10edt2d(CYTHON_UNUSED PyObject *__pyx_self, PyObj
  * 
  * def edt2dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
 /* Python wrapper */
@@ -6536,7 +6528,7 @@ static PyObject *__pyx_pw_3edt_13edt2dsq(PyObject *__pyx_self, PyObject *__pyx_a
  * 
  * def edt2dsq(
  *     data, anisotropy=(1.0, 1.0),             # <<<<<<<<<<<<<<
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  *     parallel=1
  */
     values[1] = ((PyObject *)__pyx_tuple_);
@@ -6616,7 +6608,7 @@ static PyObject *__pyx_pw_3edt_13edt2dsq(PyObject *__pyx_self, PyObject *__pyx_a
       /* "edt.pyx":285
  * def edt2dsq(
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',             # <<<<<<<<<<<<<<
+ *     native_bool black_border=False, order='C',             # <<<<<<<<<<<<<<
  *     parallel=1
  *   ):
  */
@@ -6640,7 +6632,7 @@ static PyObject *__pyx_pw_3edt_13edt2dsq(PyObject *__pyx_self, PyObject *__pyx_a
  * 
  * def edt2dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -6698,7 +6690,7 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   __pyx_pybuffernd_output.rcbuffer = &__pyx_pybuffer_output;
 
   /* "edt.pyx":296
- *   cdef bool[:,:] arr_memviewbool
+ *   cdef native_bool[:,:] arr_memviewbool
  * 
  *   cdef size_t sx = data.shape[1] # C: rows             # <<<<<<<<<<<<<<
  *   cdef size_t sy = data.shape[0] # C: cols
@@ -7649,7 +7641,7 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       black_border, parallel,
  *       &outputview[0]             # <<<<<<<<<<<<<<
  *     )
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  */
     __pyx_t_13 = 0;
     __pyx_t_17 = -1;
@@ -7684,54 +7676,48 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   /* "edt.pyx":365
  *       &outputview[0]
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.astype(np.uint8)
- *     _edt2dsq[bool](
+ *     _edt2dsq[native_bool](
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 365, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_np); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 365, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_bool); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 365, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_8 = PyObject_RichCompare(__pyx_t_1, __pyx_t_6, Py_EQ); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 365, __pyx_L1_error)
+  __pyx_t_8 = PyObject_RichCompare(__pyx_t_1, ((PyObject*)&PyBool_Type), Py_EQ); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 365, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 365, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   if (__pyx_t_5) {
 
     /* "edt.pyx":366
  *     )
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.astype(np.uint8)             # <<<<<<<<<<<<<<
- *     _edt2dsq[bool](
- *       <bool*>&arr_memview8[0,0],
+ *     _edt2dsq[native_bool](
+ *       <native_bool*>&arr_memview8[0,0],
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_astype); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 366, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 366, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_astype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 366, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_uint8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 366, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 366, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_uint8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 366, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
-      __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_6);
-      if (likely(__pyx_t_1)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-        __Pyx_INCREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
+      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_1);
+      if (likely(__pyx_t_6)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        __Pyx_INCREF(__pyx_t_6);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_6, function);
+        __Pyx_DECREF_SET(__pyx_t_1, function);
       }
     }
-    __pyx_t_8 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_6, __pyx_t_1, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2);
-    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_8 = (__pyx_t_6) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_6, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2);
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 366, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_12 = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn_uint8_t(__pyx_t_8, PyBUF_WRITABLE); if (unlikely(!__pyx_t_12.memview)) __PYX_ERR(0, 366, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_v_arr_memview8 = __pyx_t_12;
@@ -7740,8 +7726,8 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
 
     /* "edt.pyx":368
  *     arr_memview8 = data.astype(np.uint8)
- *     _edt2dsq[bool](
- *       <bool*>&arr_memview8[0,0],             # <<<<<<<<<<<<<<
+ *     _edt2dsq[native_bool](
+ *       <native_bool*>&arr_memview8[0,0],             # <<<<<<<<<<<<<<
  *       sx, sy,
  *       ax, ay,
  */
@@ -7789,10 +7775,10 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
     }
 
     /* "edt.pyx":367
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.astype(np.uint8)
- *     _edt2dsq[bool](             # <<<<<<<<<<<<<<
- *       <bool*>&arr_memview8[0,0],
+ *     _edt2dsq[native_bool](             # <<<<<<<<<<<<<<
+ *       <native_bool*>&arr_memview8[0,0],
  *       sx, sy,
  */
     (void)(pyedt::_edt2dsq<bool>(((bool *)(&(*((uint8_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_13 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_14 * __pyx_v_arr_memview8.strides[1]) ))))), __pyx_v_sx, __pyx_v_sy, __pyx_v_ax, __pyx_v_ay, __pyx_v_black_border, __pyx_t_15, (&(*((float *) ( /* dim=0 */ (__pyx_v_outputview.data + __pyx_t_16 * __pyx_v_outputview.strides[0]) ))))));
@@ -7800,9 +7786,9 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
     /* "edt.pyx":365
  *       &outputview[0]
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.astype(np.uint8)
- *     _edt2dsq[bool](
+ *     _edt2dsq[native_bool](
  */
   }
   __pyx_L4:;
@@ -7817,23 +7803,23 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_8 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_output), __pyx_n_s_reshape); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 375, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_shape); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 375, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 375, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_6);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6);
-  __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 375, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_order, __pyx_v_order) < 0) __PYX_ERR(0, 375, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
+  __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 375, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_order, __pyx_v_order) < 0) __PYX_ERR(0, 375, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
+  __pyx_t_6 = 0;
   goto __pyx_L0;
 
   /* "edt.pyx":283
@@ -7841,7 +7827,7 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  * 
  * def edt2dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -7888,7 +7874,7 @@ static PyObject *__pyx_pf_3edt_12edt2dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  * 
  * def edt3d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
 /* Python wrapper */
@@ -7914,7 +7900,7 @@ static PyObject *__pyx_pw_3edt_15edt3d(PyObject *__pyx_self, PyObject *__pyx_arg
  * 
  * def edt3d(
  *     data, anisotropy=(1.0, 1.0, 1.0),             # <<<<<<<<<<<<<<
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  *     parallel=1
  */
     values[1] = ((PyObject *)__pyx_tuple__2);
@@ -7994,7 +7980,7 @@ static PyObject *__pyx_pw_3edt_15edt3d(PyObject *__pyx_self, PyObject *__pyx_arg
       /* "edt.pyx":379
  * def edt3d(
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',             # <<<<<<<<<<<<<<
+ *     native_bool black_border=False, order='C',             # <<<<<<<<<<<<<<
  *     parallel=1
  *   ):
  */
@@ -8018,7 +8004,7 @@ static PyObject *__pyx_pw_3edt_15edt3d(PyObject *__pyx_self, PyObject *__pyx_arg
  * 
  * def edt3d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -8178,7 +8164,7 @@ static PyObject *__pyx_pf_3edt_14edt3d(CYTHON_UNUSED PyObject *__pyx_self, PyObj
  * 
  * def edt3d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -8202,7 +8188,7 @@ static PyObject *__pyx_pf_3edt_14edt3d(CYTHON_UNUSED PyObject *__pyx_self, PyObj
  * 
  * def edt3dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
 /* Python wrapper */
@@ -8228,7 +8214,7 @@ static PyObject *__pyx_pw_3edt_17edt3dsq(PyObject *__pyx_self, PyObject *__pyx_a
  * 
  * def edt3dsq(
  *     data, anisotropy=(1.0, 1.0, 1.0),             # <<<<<<<<<<<<<<
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  *     int parallel=1
  */
     values[1] = ((PyObject *)__pyx_tuple__2);
@@ -8307,7 +8293,7 @@ static PyObject *__pyx_pw_3edt_17edt3dsq(PyObject *__pyx_self, PyObject *__pyx_a
       /* "edt.pyx":387
  * def edt3dsq(
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',             # <<<<<<<<<<<<<<
+ *     native_bool black_border=False, order='C',             # <<<<<<<<<<<<<<
  *     int parallel=1
  *   ):
  */
@@ -8335,7 +8321,7 @@ static PyObject *__pyx_pw_3edt_17edt3dsq(PyObject *__pyx_self, PyObject *__pyx_a
  * 
  * def edt3dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -9347,7 +9333,7 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  *       black_border, parallel,
  *       <float*>&outputview[0]             # <<<<<<<<<<<<<<
  *     )
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  */
     __pyx_t_15 = 0;
     __pyx_t_18 = -1;
@@ -9382,54 +9368,48 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   /* "edt.pyx":468
  *       <float*>&outputview[0]
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.view(np.uint8)
- *     _edt3dsq[bool](
+ *     _edt3dsq[native_bool](
  */
   __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_dtype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 468, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 468, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_bool); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 468, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = PyObject_RichCompare(__pyx_t_2, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 468, __pyx_L1_error)
+  __pyx_t_10 = PyObject_RichCompare(__pyx_t_2, ((PyObject*)&PyBool_Type), Py_EQ); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 468, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_10); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 468, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   if (__pyx_t_5) {
 
     /* "edt.pyx":469
  *     )
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.view(np.uint8)             # <<<<<<<<<<<<<<
- *     _edt3dsq[bool](
- *       <bool*>&arr_memview8[0,0,0],
+ *     _edt3dsq[native_bool](
+ *       <native_bool*>&arr_memview8[0,0,0],
  */
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_view); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 469, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 469, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_view); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_uint8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 469, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_np); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 469, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_uint8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
-      __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_8);
-      if (likely(__pyx_t_2)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-        __Pyx_INCREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __pyx_t_8 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_8)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_8);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_8, function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
       }
     }
-    __pyx_t_10 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_8, __pyx_t_2, __pyx_t_1) : __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_1);
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_10 = (__pyx_t_8) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_8, __pyx_t_1) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1);
+    __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_14 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_nn_uint8_t(__pyx_t_10, PyBUF_WRITABLE); if (unlikely(!__pyx_t_14.memview)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __pyx_v_arr_memview8 = __pyx_t_14;
@@ -9438,8 +9418,8 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
 
     /* "edt.pyx":471
  *     arr_memview8 = data.view(np.uint8)
- *     _edt3dsq[bool](
- *       <bool*>&arr_memview8[0,0,0],             # <<<<<<<<<<<<<<
+ *     _edt3dsq[native_bool](
+ *       <native_bool*>&arr_memview8[0,0,0],             # <<<<<<<<<<<<<<
  *       sx, sy, sz,
  *       ax, ay, az,
  */
@@ -9483,10 +9463,10 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
     }
 
     /* "edt.pyx":470
- *   elif data.dtype == np.bool:
+ *   elif data.dtype == bool:
  *     arr_memview8 = data.view(np.uint8)
- *     _edt3dsq[bool](             # <<<<<<<<<<<<<<
- *       <bool*>&arr_memview8[0,0,0],
+ *     _edt3dsq[native_bool](             # <<<<<<<<<<<<<<
+ *       <native_bool*>&arr_memview8[0,0,0],
  *       sx, sy, sz,
  */
     (void)(pyedt::_edt3dsq<bool>(((bool *)(&(*((uint8_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr_memview8.data + __pyx_t_15 * __pyx_v_arr_memview8.strides[0]) ) + __pyx_t_16 * __pyx_v_arr_memview8.strides[1]) ) + __pyx_t_17 * __pyx_v_arr_memview8.strides[2]) ))))), __pyx_v_sx, __pyx_v_sy, __pyx_v_sz, __pyx_v_ax, __pyx_v_ay, __pyx_v_az, __pyx_v_black_border, __pyx_v_parallel, ((float *)(&(*((float *) ( /* dim=0 */ (__pyx_v_outputview.data + __pyx_t_19 * __pyx_v_outputview.strides[0]) )))))));
@@ -9494,9 +9474,9 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
     /* "edt.pyx":468
  *       <float*>&outputview[0]
  *     )
- *   elif data.dtype == np.bool:             # <<<<<<<<<<<<<<
+ *   elif data.dtype == bool:             # <<<<<<<<<<<<<<
  *     arr_memview8 = data.view(np.uint8)
- *     _edt3dsq[bool](
+ *     _edt3dsq[native_bool](
  */
   }
   __pyx_L4:;
@@ -9509,23 +9489,23 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_10 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_output), __pyx_n_s_reshape); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 478, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_shape); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 478, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_data, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 478, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 478, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_8);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_8);
-  __pyx_t_8 = 0;
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 478, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_order, __pyx_v_order) < 0) __PYX_ERR(0, 478, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_1, __pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 478, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 478, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_order, __pyx_v_order) < 0) __PYX_ERR(0, 478, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 478, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_r = __pyx_t_2;
-  __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_8;
+  __pyx_t_8 = 0;
   goto __pyx_L0;
 
   /* "edt.pyx":385
@@ -9533,7 +9513,7 @@ static PyObject *__pyx_pf_3edt_16edt3dsq(CYTHON_UNUSED PyObject *__pyx_self, PyO
  * 
  * def edt3dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
 
   /* function exit code */
@@ -25069,7 +25049,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_az, __pyx_k_az, sizeof(__pyx_k_az), 0, 0, 1, 1},
   {&__pyx_n_s_base, __pyx_k_base, sizeof(__pyx_k_base), 0, 0, 1, 1},
   {&__pyx_n_s_black_border, __pyx_k_black_border, sizeof(__pyx_k_black_border), 0, 0, 1, 1},
-  {&__pyx_n_s_bool, __pyx_k_bool, sizeof(__pyx_k_bool), 0, 0, 1, 1},
   {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
   {&__pyx_n_u_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 1, 0, 1},
   {&__pyx_n_s_c_contiguous, __pyx_k_c_contiguous, sizeof(__pyx_k_c_contiguous), 0, 0, 1, 1},
@@ -25463,7 +25442,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "edt.pyx":132
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
+ * def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
  *   """
  *   edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
  */
@@ -25475,7 +25454,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "edt.pyx":186
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   result = edt1dsq(data, anisotropy, black_border)
  *   return np.sqrt(result, result)
  */
@@ -25487,7 +25466,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "edt.pyx":190
  *   return np.sqrt(result, result)
  * 
- * def edt1dsq(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   cdef uint8_t[:] arr_memview8
  *   cdef uint16_t[:] arr_memview16
  */
@@ -25501,7 +25480,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * def edt2d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_tuple__33 = PyTuple_Pack(6, __pyx_n_s_data, __pyx_n_s_anisotropy, __pyx_n_s_black_border, __pyx_n_s_order, __pyx_n_s_parallel, __pyx_n_s_result); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(0, 275, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__33);
@@ -25513,7 +25492,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * def edt2dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_tuple__35 = PyTuple_Pack(19, __pyx_n_s_data, __pyx_n_s_anisotropy, __pyx_n_s_black_border, __pyx_n_s_order, __pyx_n_s_parallel, __pyx_n_s_arr_memview8, __pyx_n_s_arr_memview16, __pyx_n_s_arr_memview32, __pyx_n_s_arr_memview64, __pyx_n_s_arr_memviewfloat, __pyx_n_s_arr_memviewdouble, __pyx_n_s_arr_memviewbool, __pyx_n_s_sx, __pyx_n_s_sy, __pyx_n_s_ax, __pyx_n_s_ay, __pyx_n_s_voxels, __pyx_n_s_output, __pyx_n_s_outputview); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(0, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__35);
@@ -25525,7 +25504,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * def edt3d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_tuple__37 = PyTuple_Pack(6, __pyx_n_s_data, __pyx_n_s_anisotropy, __pyx_n_s_black_border, __pyx_n_s_order, __pyx_n_s_parallel, __pyx_n_s_result); if (unlikely(!__pyx_tuple__37)) __PYX_ERR(0, 377, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__37);
@@ -25537,7 +25516,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * 
  * def edt3dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_tuple__39 = PyTuple_Pack(20, __pyx_n_s_data, __pyx_n_s_anisotropy, __pyx_n_s_black_border, __pyx_n_s_order, __pyx_n_s_parallel, __pyx_n_s_arr_memview8, __pyx_n_s_arr_memview16, __pyx_n_s_arr_memview32, __pyx_n_s_arr_memview64, __pyx_n_s_arr_memviewfloat, __pyx_n_s_arr_memviewdouble, __pyx_n_s_sx, __pyx_n_s_sy, __pyx_n_s_sz, __pyx_n_s_ax, __pyx_n_s_ay, __pyx_n_s_az, __pyx_n_s_voxels, __pyx_n_s_output, __pyx_n_s_outputview); if (unlikely(!__pyx_tuple__39)) __PYX_ERR(0, 385, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__39);
@@ -26024,7 +26003,7 @@ if (!__Pyx_RefNanny) {
   #endif
 
   /* "edt.pyx":29
- * from libcpp cimport bool
+ * from libcpp cimport bool as native_bool
  * 
  * import multiprocessing             # <<<<<<<<<<<<<<
  * 
@@ -26083,7 +26062,7 @@ if (!__Pyx_RefNanny) {
   /* "edt.pyx":132
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edtsq(data, anisotropy=None, bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
+ * def edtsq(data, anisotropy=None, native_bool black_border=False, order='C', int parallel=1):             # <<<<<<<<<<<<<<
  *   """
  *   edtsq(data, anisotropy=None, black_border=False, order='C', parallel=1)
  */
@@ -26095,7 +26074,7 @@ if (!__Pyx_RefNanny) {
   /* "edt.pyx":186
  *     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
  * 
- * def edt1d(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1d(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   result = edt1dsq(data, anisotropy, black_border)
  *   return np.sqrt(result, result)
  */
@@ -26107,7 +26086,7 @@ if (!__Pyx_RefNanny) {
   /* "edt.pyx":190
  *   return np.sqrt(result, result)
  * 
- * def edt1dsq(data, anisotropy=1.0, bool black_border=False):             # <<<<<<<<<<<<<<
+ * def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):             # <<<<<<<<<<<<<<
  *   cdef uint8_t[:] arr_memview8
  *   cdef uint16_t[:] arr_memview16
  */
@@ -26121,7 +26100,7 @@ if (!__Pyx_RefNanny) {
  * 
  * def edt2d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_3edt_11edt2d, NULL, __pyx_n_s_edt); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 275, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -26133,7 +26112,7 @@ if (!__Pyx_RefNanny) {
  * 
  * def edt2dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_3edt_13edt2dsq, NULL, __pyx_n_s_edt); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -26145,7 +26124,7 @@ if (!__Pyx_RefNanny) {
  * 
  * def edt3d(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_3edt_15edt3d, NULL, __pyx_n_s_edt); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 377, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -26157,7 +26136,7 @@ if (!__Pyx_RefNanny) {
  * 
  * def edt3dsq(             # <<<<<<<<<<<<<<
  *     data, anisotropy=(1.0, 1.0, 1.0),
- *     bool black_border=False, order='C',
+ *     native_bool black_border=False, order='C',
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_3edt_17edt3dsq, NULL, __pyx_n_s_edt); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 385, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
