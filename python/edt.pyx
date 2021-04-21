@@ -17,7 +17,7 @@ License: GNU 3.0
 
 Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
-Date: July-November 2018
+Date: July 2018 - April 2021
 """
 from libc.stdlib cimport calloc, free
 from libc.stdint cimport (

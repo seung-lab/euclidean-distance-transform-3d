@@ -10,7 +10,7 @@
  *
  * Author: William Silversmith
  * Affiliation: Seung Lab, Princeton Neuroscience Insitute
- * Date: July 2018
+ * Date: July 2018 - April 2021
  */
 
 #ifndef EDT_H
