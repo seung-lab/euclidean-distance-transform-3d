@@ -2511,7 +2511,7 @@ static const char __pyx_k_step[] = "step";
 static const char __pyx_k_stop[] = "stop";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_view[] = "view";
-static const char __pyx_k_2_0_4[] = "2.0.4";
+static const char __pyx_k_2_0_5[] = "2.0.5";
 static const char __pyx_k_ASCII[] = "ASCII";
 static const char __pyx_k_class[] = "__class__";
 static const char __pyx_k_dtype[] = "dtype";
@@ -2631,7 +2631,7 @@ static const char __pyx_k_got_differing_extents_in_dimensi[] = "got differing ex
 static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __reduce__ due to non-trivial __cinit__";
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
 static const char __pyx_k_unable_to_allocate_shape_and_str[] = "unable to allocate shape and strides.";
-static PyObject *__pyx_kp_u_2_0_4;
+static PyObject *__pyx_kp_u_2_0_5;
 static PyObject *__pyx_n_s_ASCII;
 static PyObject *__pyx_kp_s_Buffer_view_does_not_expose_stri;
 static PyObject *__pyx_n_u_C;
@@ -25002,7 +25002,7 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_u_2_0_4, __pyx_k_2_0_4, sizeof(__pyx_k_2_0_4), 0, 1, 0, 0},
+  {&__pyx_kp_u_2_0_5, __pyx_k_2_0_5, sizeof(__pyx_k_2_0_5), 0, 1, 0, 0},
   {&__pyx_n_s_ASCII, __pyx_k_ASCII, sizeof(__pyx_k_ASCII), 0, 0, 1, 1},
   {&__pyx_kp_s_Buffer_view_does_not_expose_stri, __pyx_k_Buffer_view_does_not_expose_stri, sizeof(__pyx_k_Buffer_view_does_not_expose_stri), 0, 0, 1, 0},
   {&__pyx_n_u_C, __pyx_k_C, sizeof(__pyx_k_C), 0, 1, 0, 1},
@@ -26019,7 +26019,7 @@ if (!__Pyx_RefNanny) {
  * cimport numpy as np
  * import numpy as np             # <<<<<<<<<<<<<<
  * 
- * __VERSION__ = '2.0.4'
+ * __VERSION__ = '2.0.5'
  */
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -26029,11 +26029,11 @@ if (!__Pyx_RefNanny) {
   /* "edt.pyx":35
  * import numpy as np
  * 
- * __VERSION__ = '2.0.4'             # <<<<<<<<<<<<<<
+ * __VERSION__ = '2.0.5'             # <<<<<<<<<<<<<<
  * 
  * cdef extern from "edt.hpp" namespace "pyedt":
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_VERSION, __pyx_kp_u_2_0_4) < 0) __PYX_ERR(0, 35, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_VERSION, __pyx_kp_u_2_0_5) < 0) __PYX_ERR(0, 35, __pyx_L1_error)
 
   /* "edt.pyx":63
  *   ) nogil
