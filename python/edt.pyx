@@ -19,7 +19,6 @@ Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
 Date: July 2018 - April 2021
 """
-from libc.stdlib cimport calloc, free
 from libc.stdint cimport (
   uint8_t, uint16_t, uint32_t, uint64_t,
    int8_t,  int16_t,  int32_t,  int64_t
