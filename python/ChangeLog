@@ -1,6 +1,28 @@
 CHANGES
 =======
 
+2.1.0
+-----
+
+* release(2.1.0): experimental voxel\_graph feature
+* feat: edt with voxel connectivity graph (#28)
+
+2.0.5
+-----
+
+* release(2.0.5): fixes np.bool deprecation warnings
+* fix: remove deprecation warning for np.bool in guts of edt.pyx (#33)
+* chore: try without cibuildwheel
+* chore: try github actions
+
+2.0.4
+-----
+
+* release(2.0.4): support py39 on Windows via AppVeyor
+* chore: support for py39 on Windows
+* chore: update travis to drop py27 py35
+* chore: update build system for m1 and py36+
+
 2.0.3
 -----
 

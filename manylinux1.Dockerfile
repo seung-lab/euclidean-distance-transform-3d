@@ -12,9 +12,9 @@ RUN /opt/python/cp36-cp36m/bin/pip3.6 install pip --upgrade
 RUN /opt/python/cp37-cp37m/bin/pip3.7 install pip --upgrade
 RUN /opt/python/cp38-cp38/bin/pip3.8 install pip --upgrade 
 
-RUN /opt/python/cp36-cp36m/bin/pip3.6 install -r requirements.txt
-RUN /opt/python/cp37-cp37m/bin/pip3.7 install -r requirements.txt
-RUN /opt/python/cp38-cp38/bin/pip3.8 install -r requirements.txt
+RUN /opt/python/cp36-cp36m/bin/pip3.6 install oldest-supported-numpy
+RUN /opt/python/cp37-cp37m/bin/pip3.7 install oldest-supported-numpy
+RUN /opt/python/cp38-cp38/bin/pip3.8 install oldest-supported-numpy
 
 RUN /opt/python/cp36-cp36m/bin/python3.6 setup.py bdist_wheel
 RUN /opt/python/cp37-cp37m/bin/python3.7 setup.py bdist_wheel

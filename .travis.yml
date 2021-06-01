@@ -12,8 +12,8 @@ install:
 - if [[ $PYTHON_MAJOR_VERSION == 3 ]]; then virtualenv -p python3 venv; fi
 - source venv/bin/activate
 - cd python
-- if [[ $PYTHON_MAJOR_VERSION == 2 ]]; then pip install -r requirements.txt -r requirements_dev.txt; fi
-- if [[ $PYTHON_MAJOR_VERSION == 3 ]]; then pip3 install -r requirements.txt -r requirements_dev.txt; fi
+- if [[ $PYTHON_MAJOR_VERSION == 2 ]]; then pip install oldest-supported-numpy -r requirements.txt -r requirements_dev.txt; fi
+- if [[ $PYTHON_MAJOR_VERSION == 3 ]]; then pip3 install oldest-supported-numpy -r requirements.txt -r requirements_dev.txt; fi
 - if [[ $PYTHON_MAJOR_VERSION == 2 ]]; then pip install -e .; fi
 - if [[ $PYTHON_MAJOR_VERSION == 3 ]]; then pip3 install -e .; fi
 script:
