@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <limits>
+#include "ipt.hpp"
 #include "threadpool.h"
 
 // The pyedt namespace contains the primary implementation,
@@ -464,22 +465,39 @@ float* _edt3dsq(
   }
 
   pool.join();
-  pool.start(parallel);
 
-  for (size_t y = 0; y < sy; y++) {
-    for (size_t x = 0; x < sx; x++) {
-      pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
+  if (parallel == 1 && sx == sy && sy == sz) {
+    ipt::ipt<T>(labels, sx, sy, sz);
+    ipt::ipt<float>(workspace, sx, sy, sz);
+    for (size_t y = 0; y < sy; y++) {
+      for (size_t x = 0; x < sx; x++) {
         squared_edt_1d_parabolic_multi_seg<T>(
-          (labels + x + sx * y), 
-          (workspace + x + sx * y), 
-          (workspace + x + sx * y), 
-          sz, sxy, wz, black_border
+          (labels + sz * (y + sy * x)), 
+          (workspace + sz * (y + sy * x)), 
+          (workspace + sz * (y + sy * x)), 
+          sz, 1, wz, black_border
         );
-      });
+      }
     }
   }
+  else {
+    pool.start(parallel);
 
-  pool.join();
+    for (size_t y = 0; y < sy; y++) {
+      for (size_t x = 0; x < sx; x++) {
+        pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
+          squared_edt_1d_parabolic_multi_seg<T>(
+            (labels + x + sx * y), 
+            (workspace + x + sx * y), 
+            (workspace + x + sx * y), 
+            sz, sxy, wz, black_border
+          );
+        });
+      }
+    }
+
+    pool.join();
+  }
 
   if (!black_border) {
     toinfinite(workspace, voxels);
@@ -551,29 +569,54 @@ float* _binary_edt3dsq(
   }
 
   pool.join();
-  pool.start(parallel);
 
-  for (y = 0; y < sy; y++) {
-    for (x = 0; x < sx; x++) {
-      offset = x + sx * y;
-      pool.enqueue([sz, sxy, workspace, wz, black_border, offset](){
-        size_t z = 0;
+  if (parallel == 1 && sx == sy && sy == sz) {
+    ipt::ipt<float>(workspace, sx, sy, sz);
+
+    const size_t syz = sy * sz;
+    for (y = 0; y < sy; y++) {
+      for (x = 0; x < sx; x++) {
+        offset = sz * y + syz * x;
+        z = 0;
         for (z = 0; z < sz; z++) {
-          if (workspace[offset + sxy*z]) {
+          if (workspace[offset + z]) {
             break;
           }
         }
         _squared_edt_1d_parabolic(
-          (workspace + offset + sxy * z), 
-          (workspace + offset + sxy * z), 
-          sz - z, sxy, wz, 
+          (workspace + offset + z), 
+          (workspace + offset + z), 
+          sz - z, 1, wz, 
           black_border || (z > 0), black_border
         );
-      });
+      }
     }
   }
+  else {
+    pool.start(parallel);
 
-  pool.join();
+    for (y = 0; y < sy; y++) {
+      for (x = 0; x < sx; x++) {
+        offset = x + sx * y;
+        pool.enqueue([sz, sxy, workspace, wz, black_border, offset](){
+          size_t z = 0;
+          for (z = 0; z < sz; z++) {
+            if (workspace[offset + sxy*z]) {
+              break;
+            }
+          }
+          _squared_edt_1d_parabolic(
+            (workspace + offset + sxy * z), 
+            (workspace + offset + sxy * z), 
+            sz - z, sxy, wz, 
+            black_border || (z > 0), black_border
+          );
+        });
+      }
+    }
+
+    pool.join();
+  }
 
   if (!black_border) {
     toinfinite(workspace, voxels);
