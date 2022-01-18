@@ -1,36 +1,39 @@
-# name: Build Wheels
+name: Build Wheels
 
-# on:  
-#   push:
-#     tags:
-#       - '*'
+on:  
+  push:
+    tags:
+      - '*'
+env:
+  CIBW_SKIP: cp27-* cp33-* cp34-* cp35-* pp27* pp36* pp37* pp38* pp39* pp310* *-musllinux*
 
-# env:
-#   CIBW_SKIP: cp27-* cp33-* cp34-* cp35-* *-manylinux_i686
+jobs:
+  build_wheels:
+    name: Build wheels on ${{matrix.arch}} for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-latest]
+        arch: [auto]
+        include:
+          - os: ubuntu-20.04
+            arch: aarch64
 
-# jobs:
-#   build_wheels:
-#     name: Build wheels on ${{ matrix.os }}
-#     runs-on: ${{ matrix.os }}
-#     strategy:
-#       matrix:
-#         os: [ubuntu-20.04, windows-2019, macos-latest]
-#         python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
 
-#     steps:
-#       - name: Set up Python ${{ matrix.python-version }}
-#         uses: actions/setup-python@v2
-#         with:
-#           python-version: ${{ matrix.python-version }}
+      - name: Set up QEMU
+        if:  ${{ matrix.arch == 'aarch64' }}
+        uses: docker/setup-qemu-action@v1
 
-#       - uses: actions/checkout@v2
+      - name: Build wheels
+        uses: joerick/cibuildwheel@v2.3.1
+        working-directory: ./python
+        # to supply options, put them in 'env', like:
+        env:
+          CIBW_ARCHS_LINUX: ${{matrix.arch}}
+          CIBW_BEFORE_BUILD: pip install oldest-supported-numpy
 
-#       - name: Install Numpy
-#         run: python -m pip install numpy setuptools wheel
-
-#       - name: Compile Wheel
-#         run: cd python && python setup.py bdist_wheel
-
-#       - uses: actions/upload-artifact@v2
-#         with:
-#           path: ./python/dist/*.whl
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
