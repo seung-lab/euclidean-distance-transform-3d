@@ -30,7 +30,7 @@
 
 namespace pyedt {
 
-#define sq(x) ((x) * (x))
+#define sq(x) (static_cast<float>(x) * static_cast<float>(x))
 
 /* 1D Euclidean Distance Transform for Multiple Segids
  *
@@ -901,7 +901,7 @@ float* binary_edtsq(
 
 } // namespace edt
 
-
+#undef sq
 
 #endif
 

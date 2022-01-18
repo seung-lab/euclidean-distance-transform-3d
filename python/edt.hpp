@@ -30,7 +30,7 @@
 
 namespace pyedt {
 
-#define sq(x) ((x) * (x))
+#define sq(x) (static_cast<float>(x) * static_cast<float>(x))
 
 inline void tofinite(float *f, const size_t voxels) {
   for (size_t i = 0; i < voxels; i++) {
@@ -962,7 +962,7 @@ float* binary_edtsq(
 
 } // namespace edt
 
-
+#undef sq
 
 #endif
 
