@@ -49,12 +49,12 @@ namespace pyedt {
  */
 template <typename T>
 void squared_edt_1d_multi_seg(
-    T* segids, float *d, const int n, 
-    const long int stride, const float anistropy,
+    T* segids, float *d, const long int n, 
+    const long long int stride, const float anistropy,
     const bool black_border=false
   ) {
 
-  long int i;
+  long long int i;
 
   T working_segid = segids[0];
 
@@ -79,7 +79,7 @@ void squared_edt_1d_multi_seg(
     }
   }
 
-  long int min_bound = 0;
+  long long int min_bound = 0;
   if (black_border) {
     d[n - stride] = static_cast<float>(segids[n - stride] != 0) * anistropy;
     min_bound = stride;
