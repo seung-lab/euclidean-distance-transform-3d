@@ -815,5 +815,11 @@ def test_anisotropy_range(weight):
 
   assert math.isclose(expected, max_val, rel_tol=0.000001)
 
+def test_nan_large_array():
+  arr = np.ones((46342, 1))
+  arr[0, 0] = 0
+  res = edt.edt(arr)
+  assert not np.any(np.isnan(res))
+
 
 
