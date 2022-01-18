@@ -31,7 +31,7 @@ from cpython cimport array
 cimport numpy as np
 import numpy as np
 
-__VERSION__ = '2.1.1'
+__VERSION__ = '2.1.2'
 
 cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
