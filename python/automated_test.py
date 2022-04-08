@@ -821,5 +821,9 @@ def test_nan_large_array():
   res = edt.edt(arr)
   assert not np.any(np.isnan(res))
 
-
+def test_column_off_by_one():
+  img = np.array([[1,1], [2,1]], dtype=np.int64, order="C")
+  res = edt.edt(img)
+  ans = np.array([[1, 1.41421],[1, 1]], dtype=np.float32)
+  assert np.all(np.isclose(res, ans))
 
