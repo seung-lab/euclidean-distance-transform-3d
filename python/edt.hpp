@@ -362,7 +362,7 @@ void squared_edt_1d_parabolic_multi_seg(
           f + last * stride, 
           d + last * stride, 
           i - last, stride, anisotropy,
-          (black_border || last > 0), (i < n - 1) 
+          (black_border || last > 0), true
         );
       }
       working_segid = segid;
