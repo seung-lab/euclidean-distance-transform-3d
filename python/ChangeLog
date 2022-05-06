@@ -1,6 +1,32 @@
 CHANGES
 =======
 
+2.1.3
+-----
+
+* release(2.1.3): fixes an off-by-one error
+* test: check to make sure this error doesn't come back
+* fix: off-by-one error when comparing last label of column
+
+2.1.2
+-----
+
+* release(2.1.2): fixes overflow from ambiguous cast on MVCC
+* build: try with statement
+* build: try a different way of writing package dir
+* build: try package-dir
+* build: drop unsupported skips
+* build: try different strategy to get to python subdir
+* build: add GHA builds again
+* fix: large array NaN on Windows (#39)
+* install: make sure windows builds in release mode (#38)
+
+2.1.1
+-----
+
+* release(2.1.1): recompile binaries against oldest-supported-numpy
+* chore: set numpy builds to oldest-supported-numpy
+
 2.1.0
 -----
 
