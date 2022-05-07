@@ -17,7 +17,7 @@ License: GNU 3.0
 
 Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
-Date: July 2018 - April 2021
+Date: July 2018 - May 2022
 """
 import operator
 from functools import reduce
@@ -866,10 +866,10 @@ def each(labels, dt, in_place=False):
   """
   each(labels, dt, in_place=False)
 
-  Returns an iterator that extracts each label from a dense labeling.
+  Returns an iterator that extracts each label's distance transform.
+  labels is the original labels the distance transform was calculated from.
+  dt is the distance transform.
 
-  binary: create a binary image from each component (otherwise use the
-    same dtype and label value for the mask)
   in_place: much faster but the resulting image will be read-only
 
   Example:

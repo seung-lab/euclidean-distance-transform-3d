@@ -3154,7 +3154,7 @@ static const char __pyx_k_order_must_be_K_C_or_F_Got[] = "order must be 'K', 'C'
 static const char __pyx_k_No_matching_signature_found[] = "No matching signature found";
 static const char __pyx_k_itemsize_0_for_cython_array[] = "itemsize <= 0 for cython.array";
 static const char __pyx_k_unable_to_allocate_array_data[] = "unable to allocate array data.";
-static const char __pyx_k_Cython_binding_for_the_C_multi[] = "\nCython binding for the C++ multi-label Euclidean Distance\nTransform library by William Silversmith based on the \nalgorithms of Meijister et al (2002) Felzenzwalb et al. (2012) \nand Saito et al. (1994).\n\nGiven a 1d, 2d, or 3d volume of labels, compute the Euclidean\nDistance Transform such that label boundaries are marked as\ndistance 1 and 0 is always 0.\n\nKey methods: \n  edt, edtsq\n  edt1d,   edt2d,   edt3d,\n  edt1dsq, edt2dsq, edt3dsq\n\nLicense: GNU 3.0\n\nAuthor: William Silversmith\nAffiliation: Seung Lab, Princeton Neuroscience Institute\nDate: July 2018 - April 2021\n";
+static const char __pyx_k_Cython_binding_for_the_C_multi[] = "\nCython binding for the C++ multi-label Euclidean Distance\nTransform library by William Silversmith based on the \nalgorithms of Meijister et al (2002) Felzenzwalb et al. (2012) \nand Saito et al. (1994).\n\nGiven a 1d, 2d, or 3d volume of labels, compute the Euclidean\nDistance Transform such that label boundaries are marked as\ndistance 1 and 0 is always 0.\n\nKey methods: \n  edt, edtsq\n  edt1d,   edt2d,   edt3d,\n  edt1dsq, edt2dsq, edt3dsq\n\nLicense: GNU 3.0\n\nAuthor: William Silversmith\nAffiliation: Seung Lab, Princeton Neuroscience Institute\nDate: July 2018 - May 2022\n";
 static const char __pyx_k_strided_and_direct_or_indirect[] = "<strided and direct or indirect>";
 static const char __pyx_k_each_locals_ImageIterator___len[] = "each.<locals>.ImageIterator.__len__";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
@@ -21258,7 +21258,7 @@ static PyObject *__pyx_pf_3edt_40erase(CYTHON_UNUSED PyObject *__pyx_self, std::
 
 /* Python wrapper */
 static PyObject *__pyx_pw_3edt_43each(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_3edt_42each[] = "\n  each(labels, dt, in_place=False)\n\n  Returns an iterator that extracts each label from a dense labeling.\n\n  binary: create a binary image from each component (otherwise use the\n    same dtype and label value for the mask)\n  in_place: much faster but the resulting image will be read-only\n\n  Example:\n  for label, img in cc3d.each(labels, dt, in_place=False):\n    process(img)\n\n  Returns: iterator\n  ";
+static char __pyx_doc_3edt_42each[] = "\n  each(labels, dt, in_place=False)\n\n  Returns an iterator that extracts each label's distance transform.\n  labels is the original labels the distance transform was calculated from.\n  dt is the distance transform.\n\n  in_place: much faster but the resulting image will be read-only\n\n  Example:\n  for label, img in cc3d.each(labels, dt, in_place=False):\n    process(img)\n\n  Returns: iterator\n  ";
 static PyMethodDef __pyx_mdef_3edt_43each = {"each", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_3edt_43each, METH_VARARGS|METH_KEYWORDS, __pyx_doc_3edt_42each};
 static PyObject *__pyx_pw_3edt_43each(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_labels = 0;
@@ -40891,7 +40891,7 @@ if (!__Pyx_RefNanny) {
   #endif
 
   /* "edt.pyx":22
- * Date: July 2018 - April 2021
+ * Date: July 2018 - May 2022
  * """
  * import operator             # <<<<<<<<<<<<<<
  * from functools import reduce
