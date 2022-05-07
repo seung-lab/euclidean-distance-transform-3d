@@ -45,8 +45,15 @@ ctypedef fused UINT:
   uint32_t
   uint64_t
 
+ctypedef fused INT:
+  int8_t
+  int16_t
+  int32_t
+  int64_t
+
 ctypedef fused NUMBER:
   UINT
+  INT
   float
   double
 
@@ -797,9 +804,9 @@ def runs(labels):
   return _runs(reshape(labels, (labels.size,)))
 
 def _runs(
-    np.ndarray[UINT, ndim=1, cast=True] labels
+    np.ndarray[NUMBER, ndim=1, cast=True] labels
   ):
-  return extract_runs(<UINT*>&labels[0], <size_t>labels.size)
+  return extract_runs(<NUMBER*>&labels[0], <size_t>labels.size)
 
 def draw(
   label, 
