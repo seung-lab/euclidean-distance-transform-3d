@@ -827,3 +827,32 @@ def test_column_off_by_one():
   ans = np.array([[1, 1.41421],[1, 1]], dtype=np.float32)
   assert np.all(np.isclose(res, ans))
 
+@pytest.mark.parametrize("dtype", TYPES)
+@pytest.mark.parametrize("in_place", [ True, False ])
+def test_each(dtype, in_place):
+  labels = np.zeros((64,64,64), dtype=dtype)
+  half = 32
+  i = 1
+  for x in range(2):
+    for y in range(2):
+      for z in range(2):
+        labels[x*half:(x+1)*half, y*half:(y+1)*half, z*half:(z+1)*half ] = i
+        i += 1
+
+  mdt = edt.edt(labels) # multiple dt
+
+  for label, dt in edt.each(labels, mdt, in_place=in_place):
+    single = (labels == label) * mdt
+    assert np.all(single == dt), label
+
+@pytest.mark.parametrize("in_place", [ True, False ])
+def test_each_random(in_place):
+  labels = np.random.randint(0,75, size=(62,65,69))
+  mdt = edt.edt(labels) # multiple dt
+
+  for label, dt in edt.each(labels, mdt, in_place=in_place):
+    single = (labels == label) * mdt
+    assert np.all(single == dt), label  
+
+
+
