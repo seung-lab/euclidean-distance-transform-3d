@@ -242,7 +242,7 @@ extract_runs(T* labels, const size_t voxels) {
     return runs;
   }
 
-  size_t cur = labels[0];
+  T cur = labels[0];
   size_t start = 0; // of run
 
   if (voxels == 1) {
