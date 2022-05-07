@@ -19,19 +19,36 @@ Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
 Date: July 2018 - April 2021
 """
+import operator
+from functools import reduce
 from libc.stdint cimport (
   uint8_t, uint16_t, uint32_t, uint64_t,
    int8_t,  int16_t,  int32_t,  int64_t
 )
 from libcpp cimport bool as native_bool
+from libcpp.map cimport map as mapcpp
+from libcpp.utility cimport pair as cpp_pair
+from libcpp.vector cimport vector
 
 import multiprocessing
 
+from cython cimport floating
 from cpython cimport array 
 cimport numpy as np
 import numpy as np
 
 __VERSION__ = '2.1.3'
+
+ctypedef fused UINT:
+  uint8_t
+  uint16_t
+  uint32_t
+  uint64_t
+
+ctypedef fused NUMBER:
+  UINT
+  float
+  double
 
 cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
@@ -71,7 +88,20 @@ cdef extern from "edt_voxel_graph.hpp" namespace "pyedt":
     size_t sx, size_t sy, size_t sz, 
     float wx, float wy, float wz,
     native_bool black_border, float* workspace
-  ) nogil  
+  ) nogil
+  cdef mapcpp[T, vector[cpp_pair[size_t,size_t]]] extract_runs[T](
+    T* labels, size_t voxels
+  )
+  void set_run_voxels[T](
+    T key,
+    vector[cpp_pair[size_t, size_t]] all_runs,
+    T* labels, size_t voxels
+  ) except +
+  void transfer_run_voxels[T](
+    vector[cpp_pair[size_t, size_t]] all_runs,
+    T* src, T* dest,
+    size_t voxels
+  ) except +
 
 def nvl(val, default_val):
   if val is None:
@@ -720,3 +750,154 @@ def __edt3dsq_voxel_graph(
     )
 
   return output.reshape(data.shape, order=order)
+
+
+## These below functions are concerned with fast rendering
+## of a densely labeled image into a series of binary images.
+
+# from https://github.com/seung-lab/fastremap/blob/master/fastremap.pyx
+def reshape(arr, shape, order=None):
+  """
+  If the array is contiguous, attempt an in place reshape
+  rather than potentially making a copy.
+  Required:
+    arr: The input numpy array.
+    shape: The desired shape (must be the same size as arr)
+  Optional: 
+    order: 'C', 'F', or None (determine automatically)
+  Returns: reshaped array
+  """
+  if order is None:
+    if arr.flags['F_CONTIGUOUS']:
+      order = 'F'
+    elif arr.flags['C_CONTIGUOUS']:
+      order = 'C'
+    else:
+      return arr.reshape(shape)
+
+  cdef int nbytes = np.dtype(arr.dtype).itemsize
+
+  if order == 'C':
+    strides = [ reduce(operator.mul, shape[i:]) * nbytes for i in range(1, len(shape)) ]
+    strides += [ nbytes ]
+    return np.lib.stride_tricks.as_strided(arr, shape=shape, strides=strides)
+  else:
+    strides = [ reduce(operator.mul, shape[:i]) * nbytes for i in range(1, len(shape)) ]
+    strides = [ nbytes ] + strides
+    return np.lib.stride_tricks.as_strided(arr, shape=shape, strides=strides)
+
+# from https://github.com/seung-lab/connected-components-3d/blob/master/cc3d.pyx
+def runs(labels):
+  """
+  runs(labels)
+
+  Returns a dictionary describing where each label is located.
+  Use this data in conjunction with render and erase.
+  """
+  return _runs(reshape(labels, (labels.size,)))
+
+def _runs(
+    np.ndarray[UINT, ndim=1, cast=True] labels
+  ):
+  return extract_runs(<UINT*>&labels[0], <size_t>labels.size)
+
+def draw(
+  label, 
+  vector[cpp_pair[size_t, size_t]] runs,
+  image
+):
+  """
+  draw(label, runs, image)
+
+  Draws label onto the provided image according to 
+  runs.
+  """
+  return _draw(label, runs, reshape(image, (image.size,)))
+
+def _draw( 
+  label, 
+  vector[cpp_pair[size_t, size_t]] runs,
+  np.ndarray[NUMBER, ndim=1, cast=True] image
+):
+  set_run_voxels(<NUMBER>label, runs, <NUMBER*>&image[0], <size_t>image.size)
+  return image
+
+def transfer(
+  vector[cpp_pair[size_t, size_t]] runs,
+  src, dest
+):
+  """
+  transfer(runs, src, dest)
+
+  Transfers labels from source to destination image 
+  according to runs.
+  """
+  return _transfer(runs, reshape(src, (src.size,)), reshape(dest, (dest.size,)))
+
+def _transfer( 
+  vector[cpp_pair[size_t, size_t]] runs,
+  np.ndarray[floating, ndim=1, cast=True] src,
+  np.ndarray[floating, ndim=1, cast=True] dest,
+):
+  assert src.size == dest.size
+  transfer_run_voxels(runs, <floating*>&src[0], <floating*>&dest[0], src.size)
+  return dest
+
+def erase( 
+  vector[cpp_pair[size_t, size_t]] runs, 
+  image
+):
+  """
+  erase(runs, image)
+
+  Erases (sets to 0) part of the provided image according to 
+  runs.
+  """
+  return draw(0, runs, image)
+
+def each(labels, dt, in_place=False):
+  """
+  each(labels, dt, in_place=False)
+
+  Returns an iterator that extracts each label from a dense labeling.
+
+  binary: create a binary image from each component (otherwise use the
+    same dtype and label value for the mask)
+  in_place: much faster but the resulting image will be read-only
+
+  Example:
+  for label, img in cc3d.each(labels, dt, in_place=False):
+    process(img)
+
+  Returns: iterator
+  """
+  all_runs = runs(labels)
+  order = 'F' if labels.flags.f_contiguous else 'C'
+  dtype = np.float32
+
+  class ImageIterator():
+    def __len__(self):
+      return len(all_runs) - int(0 in all_runs)
+    def __iter__(self):
+      for key, rns in all_runs.items():
+        if key == 0:
+          continue
+        img = np.zeros(labels.shape, dtype=dtype, order=order)
+        transfer(rns, dt, img)
+        yield (key, img)
+
+  class InPlaceImageIterator(ImageIterator):
+    def __iter__(self):
+      img = np.zeros(labels.shape, dtype=dtype, order=order)
+      for key, rns in all_runs.items():
+        if key == 0:
+          continue
+        transfer(rns, dt, img)
+        img.setflags(write=0)
+        yield (key, img)
+        img.setflags(write=1)
+        erase(rns, img)
+
+  if in_place:
+    return InPlaceImageIterator()
+  return ImageIterator()
