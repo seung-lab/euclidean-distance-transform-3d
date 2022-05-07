@@ -14,7 +14,7 @@ dt = edt.edt(
   labels, anisotropy=(6, 6, 30), 
   black_border=True, order='F',
   parallel=4 # number of threads, <= 0 sets to num cpu
-) 
+)
 ```
 
 ### Use Cases  
@@ -64,7 +64,14 @@ dt = edt.edt(
   labels, anisotropy=(6, 6, 30), 
   black_border=True, order='F',
   parallel=1 # number of threads, <= 0 sets to num cpu
-) 
+)
+
+# You can extract individual components of the distance transform
+# in sequence rapidly using this technique. A random image may be slow
+# as this uses "runs" of voxels to address only parts of the image at a time.
+# in_place=True may be faster and more memory efficient, but is read-only.
+for label, image in edt.each(labels, dt, in_place=True):
+  process(image) # stand in for whatever you'd like to do
 
 # There is also a voxel_graph argument that can be used for dealing
 # with shapes that loop around to touch themselves. This works by
