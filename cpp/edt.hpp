@@ -10,7 +10,7 @@
  *
  * Author: William Silversmith
  * Affiliation: Seung Lab, Princeton Neuroscience Insitute
- * Date: July 2018 - April 2021
+ * Date: July 2018 - May 2022
  */
 
 #ifndef EDT_H
@@ -925,6 +925,27 @@ float* sdf(
   delete []complement_dt;
   return output;
 }
+
+template <typename T>
+float* sdf(
+  T* labels, 
+  const size_t sx, const size_t sy, 
+  const float wx, const float wy, 
+  const bool black_border=false, const int parallel=1, float* output=NULL
+) {
+  return sdf(labels, sx, sy, 1, wx, wy, 1, black_border, parallel, output);
+}
+
+template <typename T>
+float* sdf(
+  T* labels, 
+  const size_t sx, 
+  const float wx, 
+  const bool black_border=false, const int parallel=1, float* output=NULL
+) {
+  return sdf(labels, sx, 1, 1, wx, 1, 1, black_border, parallel, output);
+}
+
 
 } // namespace edt
 
