@@ -117,7 +117,7 @@ def nvl(val, default_val):
 
 def sdf(
   data, anisotropy=None, black_border=False,
-  order="K", int parallel = 1
+  order="K", int parallel = 1, voxel_graph=None
 ):
   """
   sdf(data, anisotropy=None, black_border=False, order="K", parallel=1)
@@ -161,12 +161,13 @@ def sdf(
       black_border=black_border,
       order=order,
       parallel=parallel,
+      voxel_graph=voxel_graph,
     )
   return fn(data) - fn(data == 0)
 
 def sdfsq(
   data, anisotropy=None, black_border=False,
-  order="K", int parallel = 1
+  order="K", int parallel = 1, voxel_graph=None
 ):
   """
   sdfsq(data, anisotropy=None, black_border=False, order="K", parallel=1)
@@ -210,6 +211,7 @@ def sdfsq(
       black_border=black_border,
       order=order,
       parallel=parallel,
+      voxel_graph=voxel_graph,
     )
   return fn(data) - fn(data == 0)
 
