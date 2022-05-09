@@ -15,6 +15,7 @@ dt = edt.edt(
   black_border=True, order='F',
   parallel=4 # number of threads, <= 0 sets to num cpu
 )
+# see more features below
 ```
 
 ### Use Cases  
