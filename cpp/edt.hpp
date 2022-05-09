@@ -898,6 +898,33 @@ float* binary_edtsq(
   return pyedt::_binary_edt3dsq(labels, sx, sy, sz, wx, wy, wz, parallel, output);
 }
 
+// signed distance function
+template <typename T>
+float* sdf(
+  T* labels, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx, const float wy, const float wz,
+  const bool black_border=false, const int parallel=1, float* output=NULL
+) {
+
+  const size_t voxels = sx * sy * sz;
+
+  if (output == NULL) {
+    output = new float[voxels]();
+  }
+  edt(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  uint8_t* complement = new uint8_t[voxels]();
+  for (size_t i = 0; i < voxels; i++) {
+    complement[i] = (labels[i] == 0);
+  }
+  float* complement_dt = edt(complement, sx, sy, sz, wx, wy, wz, black_border, parallel);
+  for (size_t i = 0; i < voxels; i++) {
+    output[i] -= complement_dt[i];
+  }
+  delete []complement;
+  delete []complement_dt;
+  return output;
+}
 
 } // namespace edt
 
