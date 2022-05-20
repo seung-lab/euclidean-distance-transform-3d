@@ -353,10 +353,7 @@ void squared_edt_1d_parabolic_multi_seg(
 
   for (int i = 1; i < n; i++) {
     segid = segids[i * stride];
-    if (segid == 0) {
-      continue;
-    }
-    else if (segid != working_segid) {
+    if (segid != working_segid) {
       if (working_segid != 0) {
         _squared_edt_1d_parabolic(
           f + last * stride, 
