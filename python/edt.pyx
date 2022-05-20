@@ -155,7 +155,7 @@ def sdf(
   Returns: SDF of data
   """
   def fn(labels):
-    return edtsq(
+    return edt(
       labels,
       anisotropy=anisotropy,
       black_border=black_border,
