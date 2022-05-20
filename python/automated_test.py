@@ -854,5 +854,25 @@ def test_each_random(in_place):
     single = (labels == label) * mdt
     assert np.all(single == dt), label  
 
+@pytest.mark.parametrize("dtype", INTEGER_TYPES)
+def test_sdf(dtype):
+  labels = np.array([
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+  ], dtype=dtype)
+
+  ans = edt.edt(labels) - edt.edt(labels == 0)
+  res = edt.sdf(labels)
+  assert np.all(res == ans)
+
+
+
 
 
