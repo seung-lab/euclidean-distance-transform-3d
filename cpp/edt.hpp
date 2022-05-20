@@ -897,24 +897,21 @@ float* binary_edtsq(
 
 // signed distance function
 template <typename T>
-float* sdf(
+float* sdfsq(
   T* labels, 
   const size_t sx, const size_t sy, const size_t sz, 
-  const float wx, const float wy, const float wz,
+  const float wx=1, const float wy=1, const float wz=1,
   const bool black_border=false, const int parallel=1, float* output=NULL
 ) {
 
   const size_t voxels = sx * sy * sz;
 
-  if (output == NULL) {
-    output = new float[voxels]();
-  }
-  edt(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  output = edt<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
   uint8_t* complement = new uint8_t[voxels]();
   for (size_t i = 0; i < voxels; i++) {
     complement[i] = (labels[i] == 0);
   }
-  float* complement_dt = edt(complement, sx, sy, sz, wx, wy, wz, black_border, parallel);
+  float* complement_dt = edtsq(complement, sx, sy, sz, wx, wy, wz, black_border, parallel);
   for (size_t i = 0; i < voxels; i++) {
     output[i] -= complement_dt[i];
   }
@@ -926,23 +923,19 @@ float* sdf(
 template <typename T>
 float* sdf(
   T* labels, 
-  const size_t sx, const size_t sy, 
-  const float wx, const float wy, 
+  const size_t sx, const size_t sy, const size_t sz=1, 
+  const float wx=1, const float wy=1, const float wz=1,
   const bool black_border=false, const int parallel=1, float* output=NULL
 ) {
-  return sdf(labels, sx, sy, 1, wx, wy, 1, black_border, parallel, output);
-}
 
-template <typename T>
-float* sdf(
-  T* labels, 
-  const size_t sx, 
-  const float wx, 
-  const bool black_border=false, const int parallel=1, float* output=NULL
-) {
-  return sdf(labels, sx, 1, 1, wx, 1, 1, black_border, parallel, output);
-}
+  output = sdfsq(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
 
+  for (size_t i = 0; i < sx * sy * sz; i++) {
+    output[i] = std::sqrt(output[i]);
+  }
+
+  return output;
+}
 
 } // namespace edt
 
