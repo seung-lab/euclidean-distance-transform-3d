@@ -854,6 +854,27 @@ def test_each_random(in_place):
     single = (labels == label) * mdt
     assert np.all(single == dt), label  
 
+def test_zero_trailing_2d():
+  labels = np.array([[
+    [1, 1, 1, 0],
+    [1, 1, 1, 1],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ]], dtype=np.uint8)
+
+  ans = np.array([[
+    [9, 4, 1, 0],
+    [4, 4, 2, 1],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ]], dtype=np.uint8)
+
+  assert np.all(ans == edt.edtsq(labels))
+
 @pytest.mark.parametrize("dtype", INTEGER_TYPES)
 def test_sdf(dtype):
   labels = np.array([
