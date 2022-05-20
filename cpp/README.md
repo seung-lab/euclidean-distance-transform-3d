@@ -18,8 +18,6 @@ If you statically integrate `edt.hpp` into your own C++ program, I recommend com
 ```cpp
 #include "edt.hpp"
 
-using namespace edt;
-
 int* labels1d = new int[512]();
 int* labels2d = new int[512*512]();
 int* labels3d = new int[512*512*512]();
@@ -27,24 +25,31 @@ int* labels3d = new int[512*512*512]();
 // ... populate labels ...
 
 // 1d, 2d, and 3d anisotropic transforms, wx = anisotropy on x-axis 
-float* dt = edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
-float* dt = edt<int>(labels2d, 
+float* dt = edt::edt<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
+float* dt = edt::edt<int>(labels2d, 
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
   /*black_border=*/true, /*parallel=*/1); 
-float* dt = edt<int>(labels3d, 
+float* dt = edt::edt<int>(labels3d, 
   /*sx=*/512, /*sy=*/512, /*sz=*/512,
   /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true, /*parallel=*/2); 
 
 // get the squared distance instead (avoids computing sqrt)
-float* dt = edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
-float* dt = edtsq<int>(labels2d, 
+float* dt = edt::edtsq<int>(labels1d, /*sx=*/512, /*wx=*/1.0, /*black_border=*/true); 
+float* dt = edt::edtsq<int>(labels2d, 
   /*sx=*/512, /*sy=*/512, /*wx=*/1.0, /*wy=*/1.0,
   /*black_border=*/true, /*parallel=*/4); 
-float* dt = edtsq<int>(labels3d, 
+float* dt = edt::edtsq<int>(labels3d, 
   /*sx=*/512, /*sy=*/512, /*sz=*/512,
   /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
   /*black_border=*/true, /*parallel=*/8); 
+
+// signed distance field edt::sdf and edt::sdfsq
+float* dt = edt::sdf<int>(labels3d, 
+  /*sx=*/512, /*sy=*/512, /*sz=*/512,
+  /*wx=*/4.0, /*wy=*/4.0, /*wz=*/40.0,
+  /*black_border=*/true, /*parallel=*/8);
+
 ```
 
 ### High Performance Binary Images

@@ -37,7 +37,7 @@ from cpython cimport array
 cimport numpy as np
 import numpy as np
 
-__VERSION__ = '2.1.3'
+__VERSION__ = '2.2.0'
 
 ctypedef fused UINT:
   uint8_t
@@ -114,6 +114,106 @@ def nvl(val, default_val):
   if val is None:
     return default_val
   return val
+
+def sdf(
+  data, anisotropy=None, black_border=False,
+  order="K", int parallel = 1, voxel_graph=None
+):
+  """
+  sdf(data, anisotropy=None, black_border=False, order="K", parallel=1)
+
+  Computes the anisotropic Signed Distance Function (SDF) using the Euclidean
+  Distance Transform (EDT) of up to 3D numpy arrays. The SDF is the same as the
+  EDT except that the background (zero) color is also processed and assigned a 
+  negative distance.
+
+  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
+  The algorithm works both ways, however you'll want to reverse the order of the
+  anisotropic arguments for Fortran order.
+
+  Supported Data Types:
+    (u)int8, (u)int16, (u)int32, (u)int64, 
+     float32, float64, and boolean
+
+  Required:
+    data: a 1d, 2d, or 3d numpy array with a supported data type.
+  Optional:
+    anisotropy:
+      1D: scalar (default: 1.0)
+      2D: (x, y) (default: (1.0, 1.0) )
+      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
+    black_border: (boolean) if true, consider the edge of the
+      image to be surrounded by zeros.
+    order: 'K','C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order. 'K' means "Keep", and will
+      detect whether the array is arleady C or F order and use that.
+      If the array is discontiguous in 'K' mode, it will be copied into 
+      C order, otherwise if 'C' or 'F' is specified, it will copy it
+      into that layout.
+    parallel: number of threads to use (only applies to 2D and 3D)
+
+  Returns: SDF of data
+  """
+  def fn(labels):
+    return edt(
+      labels,
+      anisotropy=anisotropy,
+      black_border=black_border,
+      order=order,
+      parallel=parallel,
+      voxel_graph=voxel_graph,
+    )
+  return fn(data) - fn(data == 0)
+
+def sdfsq(
+  data, anisotropy=None, black_border=False,
+  order="K", int parallel = 1, voxel_graph=None
+):
+  """
+  sdfsq(data, anisotropy=None, black_border=False, order="K", parallel=1)
+
+  Computes the squared anisotropic Signed Distance Function (SDF) using the Euclidean
+  Distance Transform (EDT) of up to 3D numpy arrays. The SDF is the same as the
+  EDT except that the background (zero) color is also processed and assigned a 
+  negative distance.
+
+  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
+  The algorithm works both ways, however you'll want to reverse the order of the
+  anisotropic arguments for Fortran order.
+
+  Supported Data Types:
+    (u)int8, (u)int16, (u)int32, (u)int64, 
+     float32, float64, and boolean
+
+  Required:
+    data: a 1d, 2d, or 3d numpy array with a supported data type.
+  Optional:
+    anisotropy:
+      1D: scalar (default: 1.0)
+      2D: (x, y) (default: (1.0, 1.0) )
+      3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
+    black_border: (boolean) if true, consider the edge of the
+      image to be surrounded by zeros.
+    order: 'K','C' or 'F' interpret the input data as C (row major) 
+      or Fortran (column major) order. 'K' means "Keep", and will
+      detect whether the array is arleady C or F order and use that.
+      If the array is discontiguous in 'K' mode, it will be copied into 
+      C order, otherwise if 'C' or 'F' is specified, it will copy it
+      into that layout.
+    parallel: number of threads to use (only applies to 2D and 3D)
+
+  Returns: squared SDF of data
+  """
+  def fn(labels):
+    return edtsq(
+      labels,
+      anisotropy=anisotropy,
+      black_border=black_border,
+      order=order,
+      parallel=parallel,
+      voxel_graph=voxel_graph,
+    )
+  return fn(data) - fn(data == 0)
 
 def edt(
     data, anisotropy=None, black_border=False, 

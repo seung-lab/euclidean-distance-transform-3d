@@ -15,6 +15,7 @@ dt = edt.edt(
   black_border=True, order='F',
   parallel=4 # number of threads, <= 0 sets to num cpu
 )
+# see more features below
 ```
 
 ### Use Cases  
@@ -65,6 +66,8 @@ dt = edt.edt(
   black_border=True, order='F',
   parallel=1 # number of threads, <= 0 sets to num cpu
 )
+# signed distance function (0 is considered background)
+sdf = edt.sdf(...) # same arguments as edt
 
 # You can extract individual components of the distance transform
 # in sequence rapidly using this technique. A random image may be slow
@@ -286,16 +289,6 @@ def ndimage_test():
     extracted = ndimage.distance_transform_edt(extracted)
 
 ```
-
-
-### Side Notes on Further Performance Improvements
-
-If this scheme seems good to you and you're working with binary images, it is possible to reduce memory usage down to 1x (down from 2x) by reusing the input volume. Additionally, it is possible to convert to nearly all integer operations when using the squared distance. Outputing the real euclidean distance requires either fixed or floating decimal points. 
-
-The most expensive operation appears to be the Z scan of our 512x512x512 float cubes. This is almost certainly because of L1 cache misses. The X scan has a stride of 4 bytes and is very fast. The Y scan has a stride of 512\*4 bytes (2 KiB), and is also very fast. The Z scan has a stride of 512\*512\*4 bytes (1 MiB) and seems to add 3-5 seconds to the running time. The L1 cache on the tested computer is 32kB. I considered using half precision floats, but that would only bring it down to 512KiB, which is still a cache miss.  
-
-For our use case, this EDT implementation is probably fast enough. I have found that for 512<sup>3</sup> voxels, the dominant factor now is by far the fast masking operation (81 out of 90 seconds for 300 labels). However, there is a class of algorithms  by Hongkai Zhao [8]\[9] called the "fast sweep" method for Eikonal equations (i.e. superset of boundary distance equations) that appear to reduce the number of sweeps from two per a dimension to one. Therefore, I expect that an implementation of fast sweep would improve the EDT by a factor of about 2.  
-
 
 ### References
 

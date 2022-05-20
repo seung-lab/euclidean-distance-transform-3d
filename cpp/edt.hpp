@@ -10,7 +10,7 @@
  *
  * Author: William Silversmith
  * Affiliation: Seung Lab, Princeton Neuroscience Insitute
- * Date: July 2018 - April 2021
+ * Date: July 2018 - May 2022
  */
 
 #ifndef EDT_H
@@ -334,10 +334,7 @@ void squared_edt_1d_parabolic_multi_seg(
 
   for (int i = 1; i < n; i++) {
     segid = segids[i * stride];
-    if (segid == 0) {
-      continue;
-    }
-    else if (segid != working_segid) {
+    if (segid != working_segid) {
       if (working_segid != 0) {
         _squared_edt_1d_parabolic(
           f + last * stride, 
@@ -898,6 +895,54 @@ float* binary_edtsq(
   return pyedt::_binary_edt3dsq(labels, sx, sy, sz, wx, wy, wz, parallel, output);
 }
 
+// signed distance function
+template <typename T>
+float* sdfsq(
+  T* labels, 
+  const size_t sx, const size_t sy, const size_t sz, 
+  const float wx=1, const float wy=1, const float wz=1,
+  const bool black_border=false, const int parallel=1, float* output=NULL
+) {
+
+  const size_t voxels = sx * sy * sz;
+
+  output = edtsq<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  std::unique_ptr<uint8_t[]> complement(new uint8_t[voxels]());
+  for (size_t i = 0; i < voxels; i++) {
+    complement[i] = (labels[i] == 0);
+  }
+  std::unique_ptr<float[]> complement_dt(
+    edtsq(complement.get(), sx, sy, sz, wx, wy, wz, black_border, parallel)
+  );
+  for (size_t i = 0; i < voxels; i++) {
+    output[i] -= complement_dt[i];
+  }
+  return output;
+}
+
+template <typename T>
+float* sdf(
+  T* labels, 
+  const size_t sx, const size_t sy, const size_t sz=1, 
+  const float wx=1, const float wy=1, const float wz=1,
+  const bool black_border=false, const int parallel=1, float* output=NULL
+) {
+  
+  const size_t voxels = sx * sy * sz;
+
+  output = edt<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  std::unique_ptr<uint8_t[]> complement(new uint8_t[voxels]());
+  for (size_t i = 0; i < voxels; i++) {
+    complement[i] = (labels[i] == 0);
+  }
+  std::unique_ptr<float[]> complement_dt(
+    edt(complement.get(), sx, sy, sz, wx, wy, wz, black_border, parallel)
+  );
+  for (size_t i = 0; i < voxels; i++) {
+    output[i] -= complement_dt[i];
+  }
+  return output;
+}
 
 } // namespace edt
 
