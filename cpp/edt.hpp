@@ -906,17 +906,17 @@ float* sdfsq(
 
   const size_t voxels = sx * sy * sz;
 
-  output = edt<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
-  uint8_t* complement = new uint8_t[voxels]();
+  output = edtsq<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  std::unique_ptr<uint8_t[]> complement(new uint8_t[voxels]());
   for (size_t i = 0; i < voxels; i++) {
     complement[i] = (labels[i] == 0);
   }
-  float* complement_dt = edtsq(complement, sx, sy, sz, wx, wy, wz, black_border, parallel);
+  std::unique_ptr<float[]> complement_dt(
+    edtsq(complement.get(), sx, sy, sz, wx, wy, wz, black_border, parallel)
+  );
   for (size_t i = 0; i < voxels; i++) {
     output[i] -= complement_dt[i];
   }
-  delete []complement;
-  delete []complement_dt;
   return output;
 }
 
@@ -927,13 +927,20 @@ float* sdf(
   const float wx=1, const float wy=1, const float wz=1,
   const bool black_border=false, const int parallel=1, float* output=NULL
 ) {
+  
+  const size_t voxels = sx * sy * sz;
 
-  output = sdfsq(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
-
-  for (size_t i = 0; i < sx * sy * sz; i++) {
-    output[i] = std::sqrt(output[i]);
+  output = edt<T>(labels, sx, sy, sz, wx, wy, wz, black_border, parallel, output);
+  std::unique_ptr<uint8_t[]> complement(new uint8_t[voxels]());
+  for (size_t i = 0; i < voxels; i++) {
+    complement[i] = (labels[i] == 0);
   }
-
+  std::unique_ptr<float[]> complement_dt(
+    edt(complement.get(), sx, sy, sz, wx, wy, wz, black_border, parallel)
+  );
+  for (size_t i = 0; i < voxels; i++) {
+    output[i] -= complement_dt[i];
+  }
   return output;
 }
 
