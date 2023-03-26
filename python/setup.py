@@ -1,7 +1,13 @@
 import setuptools
 import sys
 
-import numpy as np
+class NumpyImport:
+  def __repr__(self):
+    import numpy as np
+
+    return np.get_include()
+
+  __fspath__ = __repr__
 
 # NOTE: If edt.cpp does not exist:
 # cython -3 --fast-fail -v --cplus edt.pyx
@@ -22,13 +28,13 @@ if sys.platform == 'darwin':
 
 setuptools.setup(
   setup_requires=['pbr'],
-  python_requires="~=3.6", # >= 3.6 < 4.0
+  python_requires=">=3.7,<4",
   ext_modules=[
     setuptools.Extension(
       'edt',
       sources=[ 'edt.cpp' ],
       language='c++',
-      include_dirs=[ np.get_include() ],
+      include_dirs=[ NumpyImport() ],
       extra_compile_args=extra_compile_args,
     ),
   ],
