@@ -1,6 +1,18 @@
 CHANGES
 =======
 
+2.3.0
+-----
+
+* release(2.3.0): adds sdf, sdfsq functions + fixes trailing zero bug
+* feat(sdf): adds signed distance function  (#44)
+
+2.2.0
+-----
+
+* feat: edt.each — extract individual dts rapidly (#42)
+* chore: update changelog
+
 2.1.3
 -----
 

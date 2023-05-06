@@ -1,6 +1,7 @@
 name: Build Wheels
 
-on:  
+on:
+  workflow_dispatch:
   push:
     tags:
       - '*'
@@ -27,7 +28,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@v2.12.3
         with:
           package-dir: ./python
           output-dir: ./wheelhouse
