@@ -37,7 +37,7 @@ from cpython cimport array
 cimport numpy as np
 import numpy as np
 
-__VERSION__ = '2.3.0'
+__VERSION__ = '2.3.1'
 
 ctypedef fused UINT:
   uint8_t

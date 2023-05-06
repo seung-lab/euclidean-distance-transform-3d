@@ -27,12 +27,12 @@ if sys.platform == 'darwin':
 
 
 setuptools.setup(
-  setup_requires=['pbr'],
+  setup_requires=['pbr', 'cython'],
   python_requires=">=3.7,<4",
   ext_modules=[
     setuptools.Extension(
       'edt',
-      sources=[ 'edt.cpp' ],
+      sources=[ 'edt.pyx' ],
       language='c++',
       include_dirs=[ NumpyImport() ],
       extra_compile_args=extra_compile_args,

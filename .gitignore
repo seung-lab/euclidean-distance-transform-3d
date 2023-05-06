@@ -39,3 +39,5 @@
 
 .pytest_cache
 cpp/test
+
+python/edt.cpp
