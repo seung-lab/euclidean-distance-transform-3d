@@ -34,7 +34,7 @@ setuptools.setup(
       'edt',
       sources=[ 'edt.pyx' ],
       language='c++',
-      include_dirs=[ NumpyImport() ],
+      include_dirs=[ str(NumpyImport()) ],
       extra_compile_args=extra_compile_args,
     ),
   ],
