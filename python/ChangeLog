@@ -1,6 +1,30 @@
 CHANGES
 =======
 
+2.3.2
+-----
+
+* build: update for py312
+* docs: describe voxel\_graph parameter
+* fix: use cython.binding(True) on headline methods
+* fix: use cython.binding(True) on headline methods
+* build: add pyproject.toml
+* ci: add testing and update wheel builds for py312
+* build: str of NumpyImport
+* build: update cibuildwheel
+* update build
+* chore: update supported python versions
+* chore: remove appveyor
+
+2.3.1
+-----
+
+* release(2.3.1): update build system
+* fix: update build for py311
+* build: add py311 to tox
+* chore: update edt.cpp
+* install: delay numpy invocation
+
 2.3.0
 -----
 
