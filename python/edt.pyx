@@ -1,3 +1,4 @@
+# cython: language_level=3
 """
 Cython binding for the C++ multi-label Euclidean Distance
 Transform library by William Silversmith based on the 
@@ -17,7 +18,7 @@ License: GNU 3.0
 
 Author: William Silversmith
 Affiliation: Seung Lab, Princeton Neuroscience Institute
-Date: July 2018 - May 2022
+Date: July 2018 - December 2023
 """
 import operator
 from functools import reduce
@@ -32,6 +33,7 @@ from libcpp.vector cimport vector
 
 import multiprocessing
 
+import cython
 from cython cimport floating
 from cpython cimport array 
 cimport numpy as np
@@ -115,13 +117,12 @@ def nvl(val, default_val):
     return default_val
   return val
 
+@cython.binding(True)
 def sdf(
   data, anisotropy=None, black_border=False,
   order="K", int parallel = 1, voxel_graph=None
 ):
   """
-  sdf(data, anisotropy=None, black_border=False, order="K", parallel=1)
-
   Computes the anisotropic Signed Distance Function (SDF) using the Euclidean
   Distance Transform (EDT) of up to 3D numpy arrays. The SDF is the same as the
   EDT except that the background (zero) color is also processed and assigned a 
@@ -165,6 +166,7 @@ def sdf(
     )
   return fn(data) - fn(data == 0)
 
+@cython.binding(True)
 def sdfsq(
   data, anisotropy=None, black_border=False,
   order="K", int parallel = 1, voxel_graph=None
@@ -215,13 +217,12 @@ def sdfsq(
     )
   return fn(data) - fn(data == 0)
 
+@cython.binding(True)
 def edt(
     data, anisotropy=None, black_border=False, 
-    order='K', int parallel=1, voxel_graph=None
+    order='K', int parallel=1, voxel_graph=None,
   ):
   """
-  edt(data, anisotropy=None, black_border=False, order='K', parallel=1, voxel_graph=None)
-
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
   data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
@@ -254,14 +255,12 @@ def edt(
   dt = edtsq(data, anisotropy, black_border, order, parallel, voxel_graph)
   return np.sqrt(dt,dt)
 
-
+@cython.binding(True)
 def edtsq(
     data, anisotropy=None, native_bool black_border=False, 
     order='C', int parallel=1, voxel_graph=None
   ):
   """
-  edtsq(data, anisotropy=None, black_border=False, order='K', parallel=1, voxel_graph=None)
-
   Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
   Squaring allows for omitting an sqrt operation, so may be faster if your use case allows for it.
@@ -962,10 +961,9 @@ def erase(
   """
   return draw(0, runs, image)
 
+@cython.binding(True)
 def each(labels, dt, in_place=False):
   """
-  each(labels, dt, in_place=False)
-
   Returns an iterator that extracts each label's distance transform.
   labels is the original labels the distance transform was calculated from.
   dt is the distance transform.
