@@ -249,6 +249,13 @@ def edt(
       C order, otherwise if 'C' or 'F' is specified, it will copy it
       into that layout.
     parallel: number of threads to use (only applies to 2D and 3D)
+    voxel_graph: A numpy array where each voxel contains a  bitfield that 
+      represents a directed graph of the allowed directions for transit 
+      between voxels. If a connection is allowed, the respective direction 
+      is set to 1 else it set to 0.
+
+      See https://github.com/seung-lab/connected-components-3d/blob/master/cc3d.pyx#L743-L783
+      for details.
 
   Returns: EDT of data
   """
