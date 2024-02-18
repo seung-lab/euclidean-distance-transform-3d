@@ -32,7 +32,11 @@ jobs:
           python -m pip install pytest numpy scipy setuptools wheel
 
       - name: Compile
-        run: python python/setup.py develop
+        with:
+          package-dir: ./python
+        run: python setup.py develop
 
       - name: Test with pytest
-        run: python -m pytest -v -x python/automated_test.py
+        with:
+          package-dir: ./python
+        run: python -m pytest -v -x automated_test.py
