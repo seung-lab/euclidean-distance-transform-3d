@@ -16,10 +16,11 @@
 #ifndef EDT_H
 #define EDT_H
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <algorithm>
 #include <limits>
+#include <memory>
 #include "threadpool.h"
 
 // The pyedt namespace contains the primary implementation,
@@ -173,13 +174,13 @@ void squared_edt_1d_parabolic(
   const float w2 = anisotropy * anisotropy;
 
   int k = 0;
-  int* v = new int[n]();
-  float* ff = new float[n]();
+  std::unique_ptr<int[]> v(new int[n]());
+  std::unique_ptr<float[]> ff(new float[n]());
   for (long int i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
   
-  float* ranges = new float[n + 1]();
+  std::unique_ptr<float[]> ranges(new float[n + 1]());
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -231,10 +232,6 @@ void squared_edt_1d_parabolic(
       f[i * stride] = std::fminf(w2 * sq(n - i), f[i * stride]);      
     }
   }
-
-  delete [] v;
-  delete [] ff;
-  delete [] ranges;
 }
 
 // about 5% faster
@@ -252,13 +249,13 @@ void squared_edt_1d_parabolic(
   const float w2 = anisotropy * anisotropy;
 
   int k = 0;
-  int* v = new int[n]();
-  float* ff = new float[n]();
+  std::unique_ptr<int[]> v(new int[n]());
+  std::unique_ptr<float[]> ff(new float[n]());
   for (long int i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
 
-  float* ranges = new float[n + 1]();
+  std::unique_ptr<float[]> ranges(new float[n + 1]());
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -302,10 +299,6 @@ void squared_edt_1d_parabolic(
     envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
     f[i * stride] = std::fminf(envelope, f[i * stride]);
   }
-
-  delete [] v;
-  delete [] ff;
-  delete [] ranges;
 }
 
 void _squared_edt_1d_parabolic(
