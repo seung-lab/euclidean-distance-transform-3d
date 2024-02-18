@@ -15,11 +15,11 @@ class NumpyImport:
 extra_compile_args = []
 if sys.platform == 'win32':
   extra_compile_args += [
-    '/std:c++11', '/O2'
+    '/std:c++17', '/O2'
   ]
 else:
   extra_compile_args += [
-    '-std=c++11', '-O3', '-ffast-math', '-pthread'
+    '-std=c++17', '-O3', '-ffast-math', '-pthread'
   ]
 
 if sys.platform == 'darwin':

@@ -22,7 +22,7 @@ freely, subject to the following restrictions:
 
 Notice of Alteration
 William Silversmith
-May 2019
+May 2019, December 2023
 
 - The license file was moved from a seperate file to the top of this one.
 - Created public "join" member function from destructor code.
