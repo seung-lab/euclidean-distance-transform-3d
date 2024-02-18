@@ -428,15 +428,15 @@ float* _edt3dsq(
   ThreadPool pool(parallel);
 
   for (size_t z = 0; z < sz; z++) {
-    for (size_t y = 0; y < sy; y++) {
-      pool.enqueue([labels, y, z, sx, sxy, wx, workspace, black_border](){
+    pool.enqueue([labels, sy, z, sx, sxy, wx, workspace, black_border](){
+      for (size_t y = 0; y < sy; y++) {
         squared_edt_1d_multi_seg<T>(
           (labels + sx * y + sxy * z), 
           (workspace + sx * y + sxy * z), 
           sx, 1, wx, black_border
         ); 
-      });
-    }
+      }
+    });
   }
 
   pool.join();
@@ -448,32 +448,30 @@ float* _edt3dsq(
   pool.start(parallel);
 
   for (size_t z = 0; z < sz; z++) {
-    for (size_t x = 0; x < sx; x++) {
-      pool.enqueue([labels, x, sxy, z, workspace, sx, sy, wy, black_border](){
+    pool.enqueue([labels, sxy, z, workspace, sx, sy, wy, black_border](){
+      for (size_t x = 0; x < sx; x++) {
         squared_edt_1d_parabolic_multi_seg<T>(
           (labels + x + sxy * z),
           (workspace + x + sxy * z), 
-          (workspace + x + sxy * z), 
           sy, sx, wy, black_border
         );
-      });
-    }
+      }
+    });
   }
 
   pool.join();
   pool.start(parallel);
 
   for (size_t y = 0; y < sy; y++) {
-    for (size_t x = 0; x < sx; x++) {
-      pool.enqueue([labels, x, sx, y, workspace, sz, sxy, wz, black_border](){
+    pool.enqueue([labels, sx, y, workspace, sz, sxy, wz, black_border](){
+      for (size_t x = 0; x < sx; x++) {
         squared_edt_1d_parabolic_multi_seg<T>(
           (labels + x + sx * y), 
           (workspace + x + sx * y), 
-          (workspace + x + sx * y), 
           sz, sxy, wz, black_border
         );
-      });
-    }
+      }
+    });
   }
 
   pool.join();
