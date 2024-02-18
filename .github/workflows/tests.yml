@@ -28,15 +28,12 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd python
           python -m pip install --upgrade pip
           python -m pip install pytest numpy scipy setuptools wheel
 
       - name: Compile
-        with:
-          package-dir: ./python
-        run: python setup.py develop
+        run: cd python && python setup.py develop
 
       - name: Test with pytest
-        with:
-          package-dir: ./python
-        run: python -m pytest -v -x automated_test.py
+        run: python -m pytest -v -x python/automated_test.py
