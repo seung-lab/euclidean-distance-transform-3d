@@ -1,6 +1,7 @@
 #include "edt.hpp"
 
 #include <chrono>
+#include <thread>
 
 using namespace pyedt;
 using namespace edt;
@@ -66,7 +67,7 @@ void test2d(int n) {
   delete [] input;
 }
 
-double test3d(int n) {
+void test3d(int n) {
   int N = n*n*n;
   int* input = new int[N]();
   
@@ -80,33 +81,24 @@ double test3d(int n) {
 
   input[N / 2] = 0;
 
-  auto begin = std::chrono::high_resolution_clock::now();
+  printf("Warm up");
+  float* dest = edtsq<int>(input, n,n,n, 1.,1.,1., true); // Warmp up. 
+  const auto processor_count = std::thread::hardware_concurrency();
+  for (int nw = 1; nw <= processor_count; ++nw) {
+    auto begin = std::chrono::high_resolution_clock::now();
 
-  float* dest = edtsq<int>(input, n,n,n, 1.,1.,1., true);
+    float* dest = edtsq<int>(input, n,n,n, 1.,1.,1., true, nw);
 
-  auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
 
-  if (n < 20) {
-    for (int i = 0; i < n*n*n; i++) {
-      if (i % n == 0 && i > 0) {
-        printf("\n");
-      }
-      if (i % (n*n) == 0 && i > 0) {
-        printf("\n");
-      }
-      printf("%.2f, ", dest[i]);
-    }
+    delete []dest;
 
-    printf("\n\n\n");
+    auto duration =
+          std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+              .count();
+    auto secs = static_cast<double>(duration) / 1000. / 1000.;
+    printf("Took %.3f sec. with nw=%d\n", secs, nw);
   }
-
-  delete []dest;
-
-  auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-            .count();
-  auto secs = static_cast<double>(duration) / 1000. / 1000.;
-  return secs;
 }
 
 void print(int *in, float* f, float* ans, int n) {
@@ -223,12 +215,5 @@ void test_two_d_parabola () {
 }
 
 int main () {
-  // try {
-  //  test_two_d_parabola();
-  // }
-  // catch (char const *c) {
-  //  printf("%s", c);
-  // }
-  auto secs = test3d(512);
-  printf("Took %.3f sec.\n", secs);
+  test3d(512);
 }
