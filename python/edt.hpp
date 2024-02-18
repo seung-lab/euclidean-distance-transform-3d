@@ -110,7 +110,7 @@ void squared_edt_1d_multi_seg(
   }
 }
 
- /* 1D Euclidean Distance Transform based on:
+/* 1D Euclidean Distance Transform based on:
  * 
  * http://cs.brown.edu/people/pfelzens/dt/
  * 
@@ -158,9 +158,8 @@ void squared_edt_1d_multi_seg(
  * Returns: writes distance transform of f to d
  */
 void squared_edt_1d_parabolic(
-    float* f, 
-    float *d, 
-    const int n, 
+    float* f,
+    const long int n, 
     const long int stride, 
     const float anisotropy, 
     const bool black_border_left,
@@ -218,18 +217,18 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
+    f[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
       envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
-      d[i * stride] = std::fminf(envelope, d[i * stride]);
+      f[i * stride] = std::fminf(envelope, f[i * stride]);
     }
     else if (black_border_left) {
-      d[i * stride] = std::fminf(w2 * sq(i + 1), d[i * stride]);
+      f[i * stride] = std::fminf(w2 * sq(i + 1), f[i * stride]);
     }
     else if (black_border_right) {
-      d[i * stride] = std::fminf(w2 * sq(n - i), d[i * stride]);      
+      f[i * stride] = std::fminf(w2 * sq(n - i), f[i * stride]);      
     }
   }
 
@@ -240,8 +239,7 @@ void squared_edt_1d_parabolic(
 
 // about 5% faster
 void squared_edt_1d_parabolic(
-    float* f, 
-    float *d, 
+    float* f,
     const int n, 
     const long int stride, 
     const float anisotropy
@@ -298,11 +296,11 @@ void squared_edt_1d_parabolic(
       k++;
     }
 
-    d[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
+    f[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
-    d[i * stride] = std::fminf(envelope, d[i * stride]);
+    f[i * stride] = std::fminf(envelope, f[i * stride]);
   }
 
   delete [] v;
@@ -312,7 +310,6 @@ void squared_edt_1d_parabolic(
 
 void _squared_edt_1d_parabolic(
     float* f, 
-    float *d, 
     const int n, 
     const long int stride, 
     const float anisotropy, 
@@ -321,10 +318,10 @@ void _squared_edt_1d_parabolic(
   ) {
 
   if (black_border_left && black_border_right) {
-    squared_edt_1d_parabolic(f, d, n, stride, anisotropy);
+    squared_edt_1d_parabolic(f, n, stride, anisotropy);
   }
   else {
-    squared_edt_1d_parabolic(f, d, n, stride, anisotropy, black_border_left, black_border_right); 
+    squared_edt_1d_parabolic(f, n, stride, anisotropy, black_border_left, black_border_right); 
   }
 }
 
@@ -334,18 +331,18 @@ void _squared_edt_1d_parabolic(
  *  Parameters:
  *    *segids: an integer labeled image where 0 is background
  *    *f: the image ("sampled function" in the paper)
- *    *d: write destination, same size in voxels as *f
  *    n: number of voxels in *f
  *    stride: 1, sx, or sx*sy to handle multidimensional arrays
  *    anisotropy: e.g. (4.0 = 4nm, 40.0 = 40nm)
  * 
- * Returns: writes squared distance transform of f to d
+ * Returns: writes squared distance transform in f
  */
 template <typename T>
 void squared_edt_1d_parabolic_multi_seg(
-    T* segids, float* f, float *d, 
-    const int n, const long int stride, const float anisotropy,
-    const bool black_border=false) {
+  T* segids, float* f,
+  const int n, const long int stride, const float anisotropy,
+  const bool black_border=false
+) {
 
   T working_segid = segids[0];
   T segid;
@@ -357,7 +354,6 @@ void squared_edt_1d_parabolic_multi_seg(
       if (working_segid != 0) {
         _squared_edt_1d_parabolic(
           f + last * stride, 
-          d + last * stride, 
           i - last, stride, anisotropy,
           (black_border || last > 0), true
         );
@@ -370,7 +366,6 @@ void squared_edt_1d_parabolic_multi_seg(
   if (working_segid != 0 && last < n) {
     _squared_edt_1d_parabolic(
       f + last * stride, 
-      d + last * stride, 
       n - last, stride, anisotropy,
       (black_border || last > 0), black_border
     );
@@ -536,8 +531,7 @@ float* _binary_edt3dsq(
 
       pool.enqueue([sx, sy, y, workspace, wy, black_border, offset](){
         _squared_edt_1d_parabolic(
-          (workspace + offset + sx * y), 
-          (workspace + offset + sx * y), 
+          (workspace + offset + sx * y),
           sy - y, sx, wy, 
           black_border || (y > 0), black_border
         );
@@ -559,7 +553,6 @@ float* _binary_edt3dsq(
           }
         }
         _squared_edt_1d_parabolic(
-          (workspace + offset + sxy * z), 
           (workspace + offset + sxy * z), 
           sz - z, sxy, wz, 
           black_border || (z > 0), black_border
@@ -664,7 +657,6 @@ float* _edt2dsq(
       squared_edt_1d_parabolic_multi_seg<T>(
         (input + x), 
         (workspace + x), 
-        (workspace + x), 
         sy, sx, wy,
         black_border
       );
@@ -718,7 +710,6 @@ float* _binary_edt2dsq(T* binaryimg,
       }
 
       _squared_edt_1d_parabolic(
-        (workspace + x + y * sx), 
         (workspace + x + y * sx), 
         sy - y, sx, wy,
         black_border || (y > 0), black_border
