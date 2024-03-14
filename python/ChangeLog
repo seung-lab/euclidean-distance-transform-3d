@@ -1,6 +1,22 @@
 CHANGES
 =======
 
+2.4.0
+-----
+
+* build: update cibuildwheel
+* refactor: use std::unique\_ptr for memory management
+* refactor: remove d\* field
+* perf: extend #50 to the python code
+* perf: reduce threading overhead (#50)
+* docs: remove travis-ci badge
+* test: try another method
+* test: try again
+* test: set directory
+* test: use streamlined install
+* build: bump to cpp17 and update both copies of threadpool.h
+* fix: update version number and threadpool.h to modern c++
+
 2.3.2
 -----
 

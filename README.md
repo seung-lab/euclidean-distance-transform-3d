@@ -1,4 +1,4 @@
-[![PyPI version](https://badge.fury.io/py/edt.svg)](https://badge.fury.io/py/edt)
+[![PyPI version](https://badge.fury.io/py/edt.svg)](https://badge.fury.io/py/edt) [![DOI](https://zenodo.org/badge/142239683.svg)](https://zenodo.org/doi/10.5281/zenodo.10815870)
 
 ## Multi-Label Anisotropic 3D Euclidean Distance Transform (MLAEDT-3D)
 
