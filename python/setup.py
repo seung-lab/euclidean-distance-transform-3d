@@ -28,7 +28,7 @@ if sys.platform == 'darwin':
 
 setuptools.setup(
   setup_requires=['pbr', 'cython'],
-  python_requires=">=3.7,<4",
+  python_requires=">=3.8,<4",
   ext_modules=[
     setuptools.Extension(
       'edt',
