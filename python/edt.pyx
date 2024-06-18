@@ -37,9 +37,9 @@ import cython
 from cython cimport floating
 from cpython cimport array 
 cimport numpy as np
-import numpy as np
+np.import_array()
 
-__VERSION__ = '2.3.2'
+import numpy as np
 
 ctypedef fused UINT:
   uint8_t
