@@ -1,4 +1,0 @@
-include edt.hpp
-include edt_voxel_graph.hpp
-include threadpool.h
-include LICENSE

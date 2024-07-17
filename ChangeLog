@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+2.4.1
+-----
+
+* fix: ensure works with numpy 2.0
+* release(2.4.1): compile with numpy 2.0
+* docs: add zenodo release
+
 2.4.0
 -----
 

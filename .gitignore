@@ -40,4 +40,9 @@
 .pytest_cache
 cpp/test
 
-python/edt.cpp
+src/edt.cpp
+
+test.py
+test2.py
+test3.py
+test4.py

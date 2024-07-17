@@ -32,9 +32,9 @@ setuptools.setup(
   ext_modules=[
     setuptools.Extension(
       'edt',
-      sources=[ 'edt.pyx' ],
+      sources=[ 'src/edt.pyx' ],
       language='c++',
-      include_dirs=[ str(NumpyImport()) ],
+      include_dirs=[ 'src', str(NumpyImport()) ],
       extra_compile_args=extra_compile_args,
     ),
   ],
