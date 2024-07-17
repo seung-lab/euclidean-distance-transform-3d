@@ -104,14 +104,7 @@ reverse the order of the dimension and anisotropy arguments (sx,sy,sz -> sz,sy,s
 
 ### Compiling
 
-You only need `edt.hpp`, `test.cpp` is only there for testing.
-
-```bash
-make shared # compile edt.so
-make test # compile ./test with debugging information
-```
-
-If you statically integrate `edt.hpp` into your own C++ program, I recommend compiler flags `-O3` and `-ffast-math` for optimal performance.
+You only need `src/edt.hpp` and `src/threadpool.h` for most purposes.
 
 ### C++ Examples
 
