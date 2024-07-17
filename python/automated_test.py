@@ -434,7 +434,7 @@ def test_three_d():
         print(ans)
         result = edt.edtsq(
           labels, anisotropy=anisotropy, 
-          black_border=True, order='C', 
+          black_border=True, 
           parallel=parallel
         )
         assert np.all(result.T == ans) # written in human understandable order so needs transpose 
@@ -564,7 +564,7 @@ def test_3d_scipy_comparison(dtype, parallel, order):
     print(labels)
 
     print("MLAEDT")
-    mlaedt_result = edt.edt(labels, black_border=False, order=order, parallel=parallel)
+    mlaedt_result = edt.edt(labels, black_border=False, parallel=parallel)
     print(mlaedt_result)
 
     print("SCIPY")
@@ -632,7 +632,7 @@ def compare_scipy_edt(labels):
 def test_2d_even_anisotropy():
   labels = np.zeros( (15,15), dtype=bool, order='F')
   labels[2:12, 2:12] = True
-  img = edt.edt(labels, anisotropy=(1,1), order='F')
+  img = edt.edt(labels, anisotropy=(1,1))
   for i in range(1, 150):
     w = float(i)
     aimg = edt.edt(labels, anisotropy=(w, w))
@@ -663,8 +663,8 @@ def test_2d_lopsided():
   ]
 
   for size in sizes:
-    cres = edt.edt(gen(size[0], size[1], 'C'), order='C')
-    fres = edt.edt(gen(size[0], size[1], 'F'), order='F')
+    cres = edt.edt(gen(size[0], size[1], 'C'))
+    fres = edt.edt(gen(size[0], size[1], 'F'))
 
     print(size)
     assert np.all(cres[:] == fres[:])
@@ -678,8 +678,8 @@ def test_2d_lopsided_anisotropic(size):
     x[60:110,5:50] = 2
     return x
 
-  cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3), order='C')
-  fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3), order='F')
+  cres = edt.edt(gen(size[0], size[1], 'C'), anisotropy=(2,3))
+  fres = edt.edt(gen(size[0], size[1], 'F'), anisotropy=(2,3))
   assert np.all(np.isclose(cres, fres))
 
 @pytest.mark.parametrize("size", [     
@@ -695,8 +695,8 @@ def test_3d_lopsided(size):
     x[60:110, 5:50, 0:25] = 2
     return x
 
-  cres = edt.edt(gen(size[0], size[1], size[2], 'C'), order='C')
-  fres = edt.edt(gen(size[0], size[1], size[2], 'F'), order='F')
+  cres = edt.edt(gen(size[0], size[1], size[2], 'C'))
+  fres = edt.edt(gen(size[0], size[1], size[2], 'F'))
   assert np.all(np.isclose(cres, fres))
 
 def test_3d_high_anisotropy():

@@ -120,7 +120,7 @@ def nvl(val, default_val):
 @cython.binding(True)
 def sdf(
   data, anisotropy=None, black_border=False,
-  order="K", int parallel = 1, voxel_graph=None
+  int parallel = 1, voxel_graph=None
 ):
   """
   Computes the anisotropic Signed Distance Function (SDF) using the Euclidean
@@ -145,12 +145,6 @@ def sdf(
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
-    order: 'K','C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order. 'K' means "Keep", and will
-      detect whether the array is arleady C or F order and use that.
-      If the array is discontiguous in 'K' mode, it will be copied into 
-      C order, otherwise if 'C' or 'F' is specified, it will copy it
-      into that layout.
     parallel: number of threads to use (only applies to 2D and 3D)
 
   Returns: SDF of data
@@ -160,7 +154,6 @@ def sdf(
       labels,
       anisotropy=anisotropy,
       black_border=black_border,
-      order=order,
       parallel=parallel,
       voxel_graph=voxel_graph,
     )
@@ -169,7 +162,7 @@ def sdf(
 @cython.binding(True)
 def sdfsq(
   data, anisotropy=None, black_border=False,
-  order="K", int parallel = 1, voxel_graph=None
+  int parallel = 1, voxel_graph=None
 ):
   """
   sdfsq(data, anisotropy=None, black_border=False, order="K", parallel=1)
@@ -196,12 +189,6 @@ def sdfsq(
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
-    order: 'K','C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order. 'K' means "Keep", and will
-      detect whether the array is arleady C or F order and use that.
-      If the array is discontiguous in 'K' mode, it will be copied into 
-      C order, otherwise if 'C' or 'F' is specified, it will copy it
-      into that layout.
     parallel: number of threads to use (only applies to 2D and 3D)
 
   Returns: squared SDF of data
@@ -211,7 +198,6 @@ def sdfsq(
       labels,
       anisotropy=anisotropy,
       black_border=black_border,
-      order=order,
       parallel=parallel,
       voxel_graph=voxel_graph,
     )
@@ -220,7 +206,7 @@ def sdfsq(
 @cython.binding(True)
 def edt(
     data, anisotropy=None, black_border=False, 
-    order='K', int parallel=1, voxel_graph=None,
+    int parallel=1, voxel_graph=None,
   ):
   """
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
@@ -242,12 +228,6 @@ def edt(
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
-    order: 'K','C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order. 'K' means "Keep", and will
-      detect whether the array is arleady C or F order and use that.
-      If the array is discontiguous in 'K' mode, it will be copied into 
-      C order, otherwise if 'C' or 'F' is specified, it will copy it
-      into that layout.
     parallel: number of threads to use (only applies to 2D and 3D)
     voxel_graph: A numpy array where each voxel contains a  bitfield that 
       represents a directed graph of the allowed directions for transit 
@@ -259,14 +239,14 @@ def edt(
 
   Returns: EDT of data
   """
-  dt = edtsq(data, anisotropy, black_border, order, parallel, voxel_graph)
+  dt = edtsq(data, anisotropy, black_border, parallel, voxel_graph)
   return np.sqrt(dt,dt)
 
 @cython.binding(True)
 def edtsq(
-    data, anisotropy=None, native_bool black_border=False, 
-    order='C', int parallel=1, voxel_graph=None
-  ):
+  data, anisotropy=None, native_bool black_border=False, 
+  int parallel=1, voxel_graph=None
+):
   """
   Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -289,8 +269,6 @@ def edtsq(
       3D: (x, y, z) (default: (1.0, 1.0, 1.0) )
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
-    order: 'C' or 'F' interpret the input data as C (row major) 
-      or Fortran (column major) order.
     parallel: number of threads to use (only applies to 2D and 3D)
 
   Returns: Squared EDT of data
@@ -303,16 +281,9 @@ def edtsq(
   if data.size == 0:
     return np.zeros(shape=data.shape, dtype=np.float32)
 
+  order = 'F' if data.flags.f_contiguous else 'C'
   if not data.flags.c_contiguous and not data.flags.f_contiguous:
-    order = 'C' if order != 'F' else 'F'
-    data = np.copy(data, order=order)
-  elif order == 'K' and data.flags.c_contiguous:
-    order = 'C'
-  elif order == 'K' and data.flags.f_contiguous:
-    order = 'F'
-
-  if order not in ('C', 'F'):
-    raise ValueError("order must be 'K', 'C' or 'F'. Got: " + str(order))
+    data = np.ascontiguousarray(data)
 
   if parallel <= 0:
     parallel = multiprocessing.cpu_count()
@@ -331,10 +302,10 @@ def edtsq(
     return edt1dsq(data, anisotropy, black_border)
   elif dims == 2:
     anisotropy = nvl(anisotropy, (1.0, 1.0))
-    return edt2dsq(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
+    return edt2dsq(data, anisotropy, black_border, parallel=parallel, voxel_graph=voxel_graph)
   elif dims == 3:
     anisotropy = nvl(anisotropy, (1.0, 1.0, 1.0))
-    return edt3dsq(data, anisotropy, black_border, order, parallel=parallel, voxel_graph=voxel_graph)
+    return edt3dsq(data, anisotropy, black_border, parallel=parallel, voxel_graph=voxel_graph)
   else:
     raise TypeError("Multi-Label EDT library only supports up to 3 dimensions got {}.".format(dims))
 
@@ -429,24 +400,24 @@ def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
 
 def edt2d(
     data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False, order='C', 
+    native_bool black_border=False,
     parallel=1, voxel_graph=None
   ):
-  result = edt2dsq(data, anisotropy, black_border, order, parallel, voxel_graph)
+  result = edt2dsq(data, anisotropy, black_border, parallel, voxel_graph)
   return np.sqrt(result, result)
 
 def edt2dsq(
     data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False, order='C',
+    native_bool black_border=False,
     parallel=1, voxel_graph=None
   ):
   if voxel_graph is not None:
-    return __edt2dsq_voxel_graph(data, voxel_graph, anisotropy, black_border, order)
-  return __edt2dsq(data, anisotropy, black_border, order, parallel)
+    return __edt2dsq_voxel_graph(data, voxel_graph, anisotropy, black_border)
+  return __edt2dsq(data, anisotropy, black_border, parallel)
 
 def __edt2dsq(
     data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False, order='C',
+    native_bool black_border=False,
     parallel=1
   ):
   cdef uint8_t[:,:] arr_memview8
@@ -462,11 +433,13 @@ def __edt2dsq(
   cdef float ax = anisotropy[1]
   cdef float ay = anisotropy[0]
 
-  if order == 'F':
+  order = 'C'
+  if data.flags.f_contiguous:
     sx = data.shape[0] # F: cols
     sy = data.shape[1] # F: rows
     ax = anisotropy[0]
     ay = anisotropy[1]
+    order = 'F'
 
   cdef size_t voxels = sx * sy
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
@@ -540,7 +513,7 @@ def __edt2dsq(
 
 def __edt2dsq_voxel_graph(
     data, voxel_graph, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False, order='C'
+    native_bool black_border=False,
   ):
   cdef uint8_t[:,:] arr_memview8
   cdef uint16_t[:,:] arr_memview16
@@ -560,12 +533,14 @@ def __edt2dsq_voxel_graph(
   cdef size_t sy = data.shape[0] # C: cols
   cdef float ax = anisotropy[1]
   cdef float ay = anisotropy[0]
+  order = 'C'
 
-  if order == 'F':
+  if data.flags.f_contiguous:
     sx = data.shape[0] # F: cols
     sy = data.shape[1] # F: rows
     ax = anisotropy[0]
     ay = anisotropy[1]
+    order = 'F'
 
   cdef size_t voxels = sx * sy
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
@@ -646,24 +621,24 @@ def __edt2dsq_voxel_graph(
 
 def edt3d(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False, order='C', 
+    native_bool black_border=False,
     parallel=1, voxel_graph=None
   ):
-  result = edt3dsq(data, anisotropy, black_border, order, parallel, voxel_graph)
+  result = edt3dsq(data, anisotropy, black_border, parallel, voxel_graph)
   return np.sqrt(result, result)
 
 def edt3dsq(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False, order='C',
+    native_bool black_border=False,
     int parallel=1, voxel_graph=None
   ):
   if voxel_graph is not None:
-    return __edt3dsq_voxel_graph(data, voxel_graph, anisotropy, black_border, order)
-  return __edt3dsq(data, anisotropy, black_border, order, parallel)
+    return __edt3dsq_voxel_graph(data, voxel_graph, anisotropy, black_border)
+  return __edt3dsq(data, anisotropy, black_border, parallel)
 
 def __edt3dsq(
     data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False, order='C',
+    native_bool black_border=False,
     int parallel=1
   ):
   cdef uint8_t[:,:,:] arr_memview8
@@ -680,11 +655,13 @@ def __edt3dsq(
   cdef float ay = anisotropy[1]
   cdef float az = anisotropy[0]
 
-  if order == 'F':
+  order = 'C'
+  if data.flags.f_contiguous:
     sx, sy, sz = sz, sy, sx
     ax = anisotropy[0]
     ay = anisotropy[1]
     az = anisotropy[2]
+    order = 'F'
 
   cdef size_t voxels = sx * sy * sz
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
@@ -759,7 +736,7 @@ def __edt3dsq(
 def __edt3dsq_voxel_graph(
     data, voxel_graph, 
     anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False, order='C',
+    native_bool black_border=False,
   ):
   cdef uint8_t[:,:,:] arr_memview8
   cdef uint16_t[:,:,:] arr_memview16
@@ -780,12 +757,14 @@ def __edt3dsq_voxel_graph(
   cdef float ax = anisotropy[2]
   cdef float ay = anisotropy[1]
   cdef float az = anisotropy[0]
+  order = 'C'
 
-  if order == 'F':
+  if data.flags.f_contiguous:
     sx, sy, sz = sz, sy, sx
     ax = anisotropy[0]
     ay = anisotropy[1]
     az = anisotropy[2]
+    order = 'F'
 
   cdef size_t voxels = sx * sy * sz
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
