@@ -22,18 +22,16 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-          package-dir: ./python
 
       - uses: actions/checkout@v2
 
       - name: Install dependencies
         run: |
-          cd python
           python -m pip install --upgrade pip
           python -m pip install pytest numpy scipy setuptools wheel
 
       - name: Compile
-        run: cd python && python setup.py develop
+        run: python setup.py develop
 
       - name: Test with pytest
-        run: python -m pytest -v -x python/automated_test.py
+        run: python -m pytest -v -x automated_test.py
