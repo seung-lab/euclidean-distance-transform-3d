@@ -120,17 +120,13 @@ def nvl(val, default_val):
 @cython.binding(True)
 def sdf(
   data, anisotropy=None, black_border=False,
-  int parallel = 1, voxel_graph=None
+  int parallel = 1, voxel_graph=None, order=None
 ):
   """
   Computes the anisotropic Signed Distance Function (SDF) using the Euclidean
   Distance Transform (EDT) of up to 3D numpy arrays. The SDF is the same as the
   EDT except that the background (zero) color is also processed and assigned a 
   negative distance.
-
-  data is assumed to be memory contiguous in either C (XYZ) or Fortran (ZYX) order. 
-  The algorithm works both ways, however you'll want to reverse the order of the
-  anisotropic arguments for Fortran order.
 
   Supported Data Types:
     (u)int8, (u)int16, (u)int32, (u)int64, 
@@ -146,7 +142,7 @@ def sdf(
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
     parallel: number of threads to use (only applies to 2D and 3D)
-
+    order: no longer functional, for backwards compatibility
   Returns: SDF of data
   """
   def fn(labels):
@@ -206,7 +202,7 @@ def sdfsq(
 @cython.binding(True)
 def edt(
     data, anisotropy=None, black_border=False, 
-    int parallel=1, voxel_graph=None,
+    int parallel=1, voxel_graph=None, order=None,
   ):
   """
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
@@ -236,6 +232,7 @@ def edt(
 
       See https://github.com/seung-lab/connected-components-3d/blob/master/cc3d.pyx#L743-L783
       for details.
+    order: no longer functional, for backwards compatibility
 
   Returns: EDT of data
   """
@@ -245,7 +242,7 @@ def edt(
 @cython.binding(True)
 def edtsq(
   data, anisotropy=None, native_bool black_border=False, 
-  int parallel=1, voxel_graph=None
+  int parallel=1, voxel_graph=None, order=None,
 ):
   """
   Computes the squared anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
@@ -270,6 +267,7 @@ def edtsq(
     black_border: (boolean) if true, consider the edge of the
       image to be surrounded by zeros.
     parallel: number of threads to use (only applies to 2D and 3D)
+    order: no longer functional, for backwards compatibility
 
   Returns: Squared EDT of data
   """
