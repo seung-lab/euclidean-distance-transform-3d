@@ -12,7 +12,7 @@ import numpy as np
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
 dt = edt.edt(
   labels, anisotropy=(6, 6, 30), 
-  black_border=True, order='F',
+  black_border=True,
   parallel=4 # number of threads, <= 0 sets to num cpu
 )
 # see more features below
@@ -49,11 +49,9 @@ Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` 
 
 If for some reason you'd like to use a specific 'D' function, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are available.
 
-The three optional parameters are `anisotropy`, `black_border`, and `order`. Anisotropy is used to correct for distortions in voxel space, e.g. if X and Y were acquired with a microscope, but the Z axis was cut more corsely. 
+The two optional parameters are `anisotropy` and `black_border`. Anisotropy is used to correct for distortions in voxel space, e.g. if X and Y were acquired with a microscope, but the Z axis was cut more corsely. 
 
 `black_border` allows you to specify that the edges of the image should be considered in computing pixel distances (it's also slightly faster).  
-
-`order` allows the programmer to determine how the underlying array should be interpreted. `'C'` (C-order, XYZ, row-major) and `'F'` (Fortran-order, ZYX, column major) are supported. `'C'` order is the default.
 
 ```python
 import edt
@@ -63,7 +61,7 @@ import numpy as np
 labels = np.ones(shape=(512, 512, 512), dtype=np.uint32, order='F')
 dt = edt.edt(
   labels, anisotropy=(6, 6, 30), 
-  black_border=True, order='F',
+  black_border=True,
   parallel=1 # number of threads, <= 0 sets to num cpu
 )
 # signed distance function (0 is considered background)
@@ -89,7 +87,7 @@ graph[122,334,312] &= 0b11111110 # +x isn't allowed at this location
 graph[123,334,312] &= 0b11111101 # -x isn't allowed at this location
 dt = edt.edt(
   labels, anisotropy=(6, 6, 30), 
-  black_border=True, order='F',
+  black_border=True,
   parallel=1, # number of threads, <= 0 sets to num cpu
   voxel_graph=graph,
 ) 
