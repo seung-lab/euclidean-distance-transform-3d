@@ -153,7 +153,9 @@ def sdf(
       parallel=parallel,
       voxel_graph=voxel_graph,
     )
-  return fn(data) - fn(data == 0)
+  dt = fn(data)
+  dt -= fn(data == 0)
+  return dt
 
 @cython.binding(True)
 def sdfsq(
