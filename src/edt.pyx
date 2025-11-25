@@ -203,9 +203,9 @@ def sdfsq(
 
 @cython.binding(True)
 def edt(
-    data, anisotropy=None, black_border=False, 
-    int parallel=1, voxel_graph=None, order=None,
-  ):
+  data, anisotropy=None, black_border=False, 
+  int parallel=1, voxel_graph=None, order=None,
+):
   """
   Computes the anisotropic Euclidean Distance Transform (EDT) of 1D, 2D, or 3D numpy arrays.
 
@@ -399,27 +399,27 @@ def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
   return output
 
 def edt2d(
-    data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False,
-    parallel=1, voxel_graph=None
-  ):
+  data, anisotropy=(1.0, 1.0), 
+  native_bool black_border=False,
+  parallel=1, voxel_graph=None
+):
   result = edt2dsq(data, anisotropy, black_border, parallel, voxel_graph)
   return np.sqrt(result, result)
 
 def edt2dsq(
-    data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False,
-    parallel=1, voxel_graph=None
-  ):
+  data, anisotropy=(1.0, 1.0), 
+  native_bool black_border=False,
+  parallel=1, voxel_graph=None
+):
   if voxel_graph is not None:
     return __edt2dsq_voxel_graph(data, voxel_graph, anisotropy, black_border)
   return __edt2dsq(data, anisotropy, black_border, parallel)
 
 def __edt2dsq(
-    data, anisotropy=(1.0, 1.0), 
-    native_bool black_border=False,
-    parallel=1
-  ):
+  data, anisotropy=(1.0, 1.0), 
+  native_bool black_border=False,
+  parallel=1
+):
   cdef uint8_t[:,:] arr_memview8
   cdef uint16_t[:,:] arr_memview16
   cdef uint32_t[:,:] arr_memview32
@@ -620,27 +620,27 @@ def __edt2dsq_voxel_graph(
   return output.reshape( data.shape, order=order)
 
 def edt3d(
-    data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False,
-    parallel=1, voxel_graph=None
-  ):
+  data, anisotropy=(1.0, 1.0, 1.0), 
+  native_bool black_border=False,
+  parallel=1, voxel_graph=None
+):
   result = edt3dsq(data, anisotropy, black_border, parallel, voxel_graph)
   return np.sqrt(result, result)
 
 def edt3dsq(
-    data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False,
-    int parallel=1, voxel_graph=None
-  ):
+  data, anisotropy=(1.0, 1.0, 1.0), 
+  native_bool black_border=False,
+  int parallel=1, voxel_graph=None
+):
   if voxel_graph is not None:
     return __edt3dsq_voxel_graph(data, voxel_graph, anisotropy, black_border)
   return __edt3dsq(data, anisotropy, black_border, parallel)
 
 def __edt3dsq(
-    data, anisotropy=(1.0, 1.0, 1.0), 
-    native_bool black_border=False,
-    int parallel=1
-  ):
+  data, anisotropy=(1.0, 1.0, 1.0), 
+  native_bool black_border=False,
+  int parallel=1
+):
   cdef uint8_t[:,:,:] arr_memview8
   cdef uint16_t[:,:,:] arr_memview16
   cdef uint32_t[:,:,:] arr_memview32
