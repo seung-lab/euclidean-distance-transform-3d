@@ -71,6 +71,10 @@ void squared_edt_1d_multi_seg(
     const bool black_border=false
   ) {
 
+  if (n == 0) {
+    return;
+  }
+
   int64_t i;
 
   T working_segid = segids[0];
