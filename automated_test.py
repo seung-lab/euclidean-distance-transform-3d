@@ -714,6 +714,10 @@ def test_3d_high_anisotropy():
   assert mx <= (1e6 * 256) ** 2 + (1e6 * 256) ** 2 + (666 * 256) ** 2
 
   resscipy = ndimage.distance_transform_edt(labels, sampling=anisotropy)
+
+  print("min difference:", np.min(np.abs(resscipy - resedt)))
+  print("max difference:", np.max(np.abs(resscipy - resedt)))
+
   assert np.all(np.isclose(resscipy, resedt))
 
 def test_all_inf():
