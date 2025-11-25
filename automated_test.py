@@ -714,10 +714,7 @@ def test_3d_high_anisotropy():
   assert mx <= (1e6 * 256) ** 2 + (1e6 * 256) ** 2 + (666 * 256) ** 2
 
   resscipy = ndimage.distance_transform_edt(labels, sampling=anisotropy)
-  resscipy[ resscipy == 0 ] = 1
-  resedt[ resedt == 0 ] = 1
-  ratio = np.abs(resscipy / resedt)
-  assert np.all(ratio < 1.000001) and np.all(ratio > 0.999999)
+  assert np.all(np.isclose(resscipy, resedt))
 
 def test_all_inf():
   shape = (128, 128, 128)
