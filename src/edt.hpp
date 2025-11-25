@@ -181,13 +181,15 @@ void squared_edt_1d_parabolic(
   const double w2 = anisotropy * anisotropy;
 
   int64_t k = 0;
-  std::unique_ptr<int64_t[]> v(new int64_t[n]());
-  std::unique_ptr<double[]> ff(new double[n]());
+  std::unique_ptr<int64_t[]> v(new int64_t[n]);
+  v[0] = 0;
+
+  std::unique_ptr<double[]> ff(new double[n]);
   for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
   
-  std::unique_ptr<double[]> ranges(new double[n + 1]());
+  std::unique_ptr<double[]> ranges(new double[n + 1]);
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -256,13 +258,15 @@ void squared_edt_1d_parabolic(
   const double w2 = anisotropy * anisotropy;
 
   int64_t k = 0;
-  std::unique_ptr<int64_t[]> v(new int64_t[n]());
-  std::unique_ptr<double[]> ff(new double[n]());
+  std::unique_ptr<int64_t[]> v(new int64_t[n]);
+  v[0] = 0;
+  
+  std::unique_ptr<double[]> ff(new double[n]);
   for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
 
-  std::unique_ptr<double[]> ranges(new double[n + 1]());
+  std::unique_ptr<double[]> ranges(new double[n + 1]);
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
