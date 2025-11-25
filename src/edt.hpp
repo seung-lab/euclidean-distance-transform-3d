@@ -31,7 +31,10 @@
 
 namespace pyedt {
 
-#define sq(x) (static_cast<float>(x) * static_cast<float>(x))
+template <typename T>
+double sq(T x) {
+  return static_cast<double>(x) * static_cast<double>(x);
+}
 
 inline void tofinite(float *f, const int64_t voxels) {
   for (int64_t i = 0; i < voxels; i++) {
@@ -175,16 +178,16 @@ void squared_edt_1d_parabolic(
     return;
   }
 
-  const float w2 = anisotropy * anisotropy;
+  const double w2 = anisotropy * anisotropy;
 
   int64_t k = 0;
-  std::unique_ptr<int[]> v(new int[n]());
-  std::unique_ptr<float[]> ff(new float[n]());
+  std::unique_ptr<int64_t[]> v(new int64_t[n]());
+  std::unique_ptr<double[]> ff(new double[n]());
   for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
   
-  std::unique_ptr<float[]> ranges(new float[n + 1]());
+  std::unique_ptr<double[]> ranges(new double[n + 1]());
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -195,17 +198,17 @@ void squared_edt_1d_parabolic(
    * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
    * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
    */
-  float s;
-  float factor1, factor2;
+  double s;
+  double factor1, factor2;
   for (int64_t i = 1; i < n; i++) {
-    factor1 = static_cast<float>(i - v[k]) * w2;
-    factor2 =  static_cast<float>(i + v[k]);
+    factor1 = static_cast<double>(i - v[k]) * w2;
+    factor2 =  static_cast<double>(i + v[k]);
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (k > 0 && s <= ranges[k]) {
       k--;
-      factor1 = static_cast<float>(i - v[k]) * w2;
-      factor2 =  static_cast<float>(i + v[k]);
+      factor1 = static_cast<double>(i - v[k]) * w2;
+      factor2 =  static_cast<double>(i + v[k]);
       s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
@@ -216,24 +219,24 @@ void squared_edt_1d_parabolic(
   }
 
   k = 0;
-  float envelope;
+  double envelope;
   for (int64_t i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
     }
 
-    f[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
+    f[i * stride] = static_cast<float>(w2 * sq(i - v[k]) + ff[v[k]]);
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
     if (black_border_left && black_border_right) {
-      envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
-      f[i * stride] = std::fminf(envelope, f[i * stride]);
+      envelope = std::fmin(w2 * sq(i + 1), w2 * sq(n - i));
+      f[i * stride] = std::fminf(static_cast<float>(envelope), f[i * stride]);
     }
     else if (black_border_left) {
-      f[i * stride] = std::fminf(w2 * sq(i + 1), f[i * stride]);
+      f[i * stride] = std::fminf(w2 * sq(i + 1), static_cast<float>(f[i * stride]));
     }
     else if (black_border_right) {
-      f[i * stride] = std::fminf(w2 * sq(n - i), f[i * stride]);      
+      f[i * stride] = std::fminf(w2 * sq(n - i), static_cast<float>(f[i * stride]));
     }
   }
 }
@@ -250,16 +253,16 @@ void squared_edt_1d_parabolic(
     return;
   }
 
-  const float w2 = anisotropy * anisotropy;
+  const double w2 = anisotropy * anisotropy;
 
   int64_t k = 0;
-  std::unique_ptr<int[]> v(new int[n]());
-  std::unique_ptr<float[]> ff(new float[n]());
+  std::unique_ptr<int64_t[]> v(new int64_t[n]());
+  std::unique_ptr<double[]> ff(new double[n]());
   for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
 
-  std::unique_ptr<float[]> ranges(new float[n + 1]());
+  std::unique_ptr<double[]> ranges(new double[n + 1]());
 
   ranges[0] = -INFINITY;
   ranges[1] = +INFINITY;
@@ -270,17 +273,17 @@ void squared_edt_1d_parabolic(
    * 1: s = (f(r) - f(p) + (r^2 - p^2)) / 2(r-p)
    * 2: s = (f(r) - r(p) + (r+p)(r-p)) / 2(r-p) <-- can reuse r-p, replace mult w/ add
    */
-  float s;
-  float factor1, factor2;
+  double s;
+  double factor1, factor2;
   for (int64_t i = 1; i < n; i++) {
-    factor1 = static_cast<float>(i - v[k]) * w2;
-    factor2 = static_cast<float>(i + v[k]);
+    factor1 = static_cast<double>(i - v[k]) * w2;
+    factor2 = static_cast<double>(i + v[k]);
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (k > 0 && s <= ranges[k]) {
       k--;
-      factor1 = static_cast<float>(i - v[k]) * w2;
-      factor2 = static_cast<float>(i + v[k]);
+      factor1 = static_cast<double>(i - v[k]) * w2;
+      factor2 = static_cast<double>(i + v[k]);
       s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
@@ -291,7 +294,7 @@ void squared_edt_1d_parabolic(
   }
 
   k = 0;
-  float envelope;
+  double envelope;
   for (int64_t i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
@@ -300,8 +303,8 @@ void squared_edt_1d_parabolic(
     f[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
     // Two lines below only about 3% of perf cost, thought it would be more
     // They are unnecessary if you add a black border around the image.
-    envelope = std::fminf(w2 * sq(i + 1), w2 * sq(n - i));
-    f[i * stride] = std::fminf(envelope, f[i * stride]);
+    envelope = std::fmin(w2 * sq(i + 1), w2 * sq(n - i));
+    f[i * stride] = std::fminf(static_cast<float>(envelope), f[i * stride]);
   }
 }
 
