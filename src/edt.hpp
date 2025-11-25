@@ -38,7 +38,7 @@ double sq(T x) {
 
 inline void tofinite(float *f, const int64_t voxels) {
   for (int64_t i = 0; i < voxels; i++) {
-    if (f[i] == INFINITY) {
+    if (std::isinf(f[i])) {
       f[i] = std::numeric_limits<float>::max() - 1;
     }
   }
