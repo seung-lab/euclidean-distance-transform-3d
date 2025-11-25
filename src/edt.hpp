@@ -66,7 +66,7 @@ inline void toinfinite(float *f, const int64_t voxels) {
  */
 template <typename T>
 void squared_edt_1d_multi_seg(
-    T* segids, float *d, const int n, 
+    T* segids, float *d, const int64_t n, 
     const int64_t stride, const float anistropy,
     const bool black_border=false
   ) {
