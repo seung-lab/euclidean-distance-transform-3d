@@ -63,15 +63,15 @@ cdef extern from "edt.hpp" namespace "pyedt":
   cdef void squared_edt_1d_multi_seg[T](
     T *labels,
     float *dest,
-    int n,
-    int stride,
+    int64_t n,
+    int64_t stride,
     float anisotropy,
     native_bool black_border
   ) nogil
 
   cdef float* _edt2dsq[T](
     T* labels,
-    size_t sx, size_t sy, 
+    int64_t sx, int64_t sy, 
     float wx, float wy,
     native_bool black_border, int parallel,
     float* output
@@ -79,7 +79,7 @@ cdef extern from "edt.hpp" namespace "pyedt":
 
   cdef float* _edt3dsq[T](
     T* labels, 
-    size_t sx, size_t sy, size_t sz,
+    int64_t sx, int64_t sy, int64_t sz,
     float wx, float wy, float wz,
     native_bool black_border, int parallel,
     float* output
@@ -88,28 +88,28 @@ cdef extern from "edt.hpp" namespace "pyedt":
 cdef extern from "edt_voxel_graph.hpp" namespace "pyedt":
   cdef float* _edt2dsq_voxel_graph[T,GRAPH_TYPE](
     T* labels, GRAPH_TYPE* graph,
-    size_t sx, size_t sy,
+    int64_t sx, int64_t sy,
     float wx, float wy,
     native_bool black_border, float* workspace
   ) nogil 
   cdef float* _edt3dsq_voxel_graph[T,GRAPH_TYPE](
     T* labels, GRAPH_TYPE* graph,
-    size_t sx, size_t sy, size_t sz, 
+    int64_t sx, int64_t sy, int64_t sz, 
     float wx, float wy, float wz,
     native_bool black_border, float* workspace
   ) nogil
-  cdef mapcpp[T, vector[cpp_pair[size_t,size_t]]] extract_runs[T](
-    T* labels, size_t voxels
+  cdef mapcpp[T, vector[cpp_pair[int64_t,int64_t]]] extract_runs[T](
+    T* labels, int64_t voxels
   )
   void set_run_voxels[T](
     T key,
-    vector[cpp_pair[size_t, size_t]] all_runs,
-    T* labels, size_t voxels
+    vector[cpp_pair[int64_t, int64_t]] all_runs,
+    T* labels, int64_t voxels
   ) except +
   void transfer_run_voxels[T](
-    vector[cpp_pair[size_t, size_t]] all_runs,
+    vector[cpp_pair[int64_t, int64_t]] all_runs,
     T* src, T* dest,
-    size_t voxels
+    int64_t voxels
   ) except +
 
 def nvl(val, default_val):
@@ -321,7 +321,7 @@ def edt1dsq(data, anisotropy=1.0, native_bool black_border=False):
   cdef float[:] arr_memviewfloat
   cdef double[:] arr_memviewdouble
 
-  cdef size_t voxels = data.size
+  cdef int64_t voxels = data.size
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
   cdef float[:] outputview = output
 
@@ -428,8 +428,8 @@ def __edt2dsq(
   cdef double[:,:] arr_memviewdouble
   cdef native_bool[:,:] arr_memviewbool
 
-  cdef size_t sx = data.shape[1] # C: rows
-  cdef size_t sy = data.shape[0] # C: cols
+  cdef int64_t sx = data.shape[1] # C: rows
+  cdef int64_t sy = data.shape[0] # C: cols
   cdef float ax = anisotropy[1]
   cdef float ay = anisotropy[0]
 
@@ -441,7 +441,7 @@ def __edt2dsq(
     ay = anisotropy[1]
     order = 'F'
 
-  cdef size_t voxels = sx * sy
+  cdef int64_t voxels = sx * sy
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
   cdef float[:] outputview = output
 
@@ -529,8 +529,8 @@ def __edt2dsq_voxel_graph(
   else:
     graph_memview8 = voxel_graph.astype(np.uint8) # we only need first 6 bits
 
-  cdef size_t sx = data.shape[1] # C: rows
-  cdef size_t sy = data.shape[0] # C: cols
+  cdef int64_t sx = data.shape[1] # C: rows
+  cdef int64_t sy = data.shape[0] # C: cols
   cdef float ax = anisotropy[1]
   cdef float ay = anisotropy[0]
   order = 'C'
@@ -542,7 +542,7 @@ def __edt2dsq_voxel_graph(
     ay = anisotropy[1]
     order = 'F'
 
-  cdef size_t voxels = sx * sy
+  cdef int64_t voxels = sx * sy
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
   cdef float[:] outputview = output
 
@@ -648,9 +648,9 @@ def __edt3dsq(
   cdef float[:,:,:] arr_memviewfloat
   cdef double[:,:,:] arr_memviewdouble
 
-  cdef size_t sx = data.shape[2]
-  cdef size_t sy = data.shape[1]
-  cdef size_t sz = data.shape[0]
+  cdef int64_t sx = data.shape[2]
+  cdef int64_t sy = data.shape[1]
+  cdef int64_t sz = data.shape[0]
   cdef float ax = anisotropy[2]
   cdef float ay = anisotropy[1]
   cdef float az = anisotropy[0]
@@ -663,7 +663,7 @@ def __edt3dsq(
     az = anisotropy[2]
     order = 'F'
 
-  cdef size_t voxels = sx * sy * sz
+  cdef int64_t voxels = sx * sy * sz
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
   cdef float[:] outputview = output
 
@@ -751,9 +751,9 @@ def __edt3dsq_voxel_graph(
   else:
     graph_memview8 = voxel_graph.astype(np.uint8) # we only need first 6 bits
 
-  cdef size_t sx = data.shape[2]
-  cdef size_t sy = data.shape[1]
-  cdef size_t sz = data.shape[0]
+  cdef int64_t sx = data.shape[2]
+  cdef int64_t sy = data.shape[1]
+  cdef int64_t sz = data.shape[0]
   cdef float ax = anisotropy[2]
   cdef float ay = anisotropy[1]
   cdef float az = anisotropy[0]
@@ -766,7 +766,7 @@ def __edt3dsq_voxel_graph(
     az = anisotropy[2]
     order = 'F'
 
-  cdef size_t voxels = sx * sy * sz
+  cdef int64_t voxels = sx * sy * sz
   cdef np.ndarray[float, ndim=1] output = np.zeros( (voxels,), dtype=np.float32 )
   cdef float[:] outputview = output
 
@@ -891,11 +891,11 @@ def runs(labels):
 def _runs(
     np.ndarray[NUMBER, ndim=1, cast=True] labels
   ):
-  return extract_runs(<NUMBER*>&labels[0], <size_t>labels.size)
+  return extract_runs(<NUMBER*>&labels[0], <int64_t>labels.size)
 
 def draw(
   label, 
-  vector[cpp_pair[size_t, size_t]] runs,
+  vector[cpp_pair[int64_t, int64_t]] runs,
   image
 ):
   """
@@ -908,14 +908,14 @@ def draw(
 
 def _draw( 
   label, 
-  vector[cpp_pair[size_t, size_t]] runs,
+  vector[cpp_pair[int64_t, int64_t]] runs,
   np.ndarray[NUMBER, ndim=1, cast=True] image
 ):
-  set_run_voxels(<NUMBER>label, runs, <NUMBER*>&image[0], <size_t>image.size)
+  set_run_voxels(<NUMBER>label, runs, <NUMBER*>&image[0], <int64_t>image.size)
   return image
 
 def transfer(
-  vector[cpp_pair[size_t, size_t]] runs,
+  vector[cpp_pair[int64_t, int64_t]] runs,
   src, dest
 ):
   """
@@ -927,7 +927,7 @@ def transfer(
   return _transfer(runs, reshape(src, (src.size,)), reshape(dest, (dest.size,)))
 
 def _transfer( 
-  vector[cpp_pair[size_t, size_t]] runs,
+  vector[cpp_pair[int64_t, int64_t]] runs,
   np.ndarray[floating, ndim=1, cast=True] src,
   np.ndarray[floating, ndim=1, cast=True] dest,
 ):
@@ -936,7 +936,7 @@ def _transfer(
   return dest
 
 def erase( 
-  vector[cpp_pair[size_t, size_t]] runs, 
+  vector[cpp_pair[int64_t, int64_t]] runs, 
   image
 ):
   """

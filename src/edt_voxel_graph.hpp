@@ -54,21 +54,21 @@ namespace pyedt {
 template <typename T, typename GRAPH_TYPE = uint8_t>
 float* _edt2dsq_voxel_graph(
     T* labels, GRAPH_TYPE* graph,
-    const size_t sx, const size_t sy,
+    const int64_t sx, const int64_t sy,
     const float wx, const float wy, 
     const bool black_border=false,  float* workspace=NULL
   ) {
 
-  const size_t voxels = sx * sy;
-  const size_t sx2 = 2 * sx;
+  const int64_t voxels = sx * sy;
+  const int64_t sx2 = 2 * sx;
 
   uint8_t* double_labels = new uint8_t[voxels * 4]();
 
-  size_t loc = 0;
-  size_t loc2 = 0;
+  int64_t loc = 0;
+  int64_t loc2 = 0;
 
-  for (size_t y = 0; y < sy; y++) {
-    for (size_t x = 0; x < sx; x++) {
+  for (int64_t y = 0; y < sy; y++) {
+    for (int64_t x = 0; x < sx; x++) {
       loc = x + sx * y;
       loc2 = 2 * x + 4 * sx * y;
 
@@ -85,7 +85,7 @@ float* _edt2dsq_voxel_graph(
     }
   }
   if (black_border) {
-    for (size_t x = 0; x < sx2; x++) {
+    for (int64_t x = 0; x < sx2; x++) {
       double_labels[4 * voxels - x - 1] = 0;
     }
   }
@@ -103,8 +103,8 @@ float* _edt2dsq_voxel_graph(
     workspace = new float[voxels]();
   }
 
-  for (size_t y = 0; y < sy; y++) {
-    for (size_t x = 0; x < sx; x++) {
+  for (int64_t y = 0; y < sy; y++) {
+    for (int64_t x = 0; x < sx; x++) {
       loc = x + sx * y;
       loc2 = 2 * x + 4 * sx * y;
 
@@ -118,23 +118,23 @@ float* _edt2dsq_voxel_graph(
 
 template <typename T, typename GRAPH_TYPE = uint8_t>
 float* _edt3dsq_voxel_graph(
-    T* labels, GRAPH_TYPE* graph,
-    const size_t sx, const size_t sy, const size_t sz, 
-    const float wx, const float wy, const float wz,
-    const bool black_border=false,  float* workspace=NULL
-  ) {
+  T* labels, GRAPH_TYPE* graph,
+  const int64_t sx, const int64_t sy, const int64_t sz, 
+  const float wx, const float wy, const float wz,
+  const bool black_border=false,  float* workspace=NULL
+) {
 
-  const size_t sxy = sx * sy;
-  const size_t voxels = sx * sy * sz;
-  const size_t sx2 = 2 * sx;
-  const size_t sxy2 = 4 * sxy;
+  const int64_t sxy = sx * sy;
+  const int64_t voxels = sx * sy * sz;
+  const int64_t sx2 = 2 * sx;
+  const int64_t sxy2 = 4 * sxy;
 
   uint8_t* double_labels = new uint8_t[voxels * 8]();
 
-  size_t loc = 0;
-  size_t loc2 = 0;
+  int64_t loc = 0;
+  int64_t loc2 = 0;
 
-  size_t x, y, z;
+  int64_t x, y, z;
 
   for (z = 0; z < sz; z++) {
     for (y = 0; y < sy; y++) {
@@ -216,9 +216,10 @@ float* _edt3dsq_voxel_graph(
 template <typename T, typename GRAPH_TYPE = uint8_t>
 float* _edt3d_voxel_graph(
   T* labels, GRAPH_TYPE* graph,
-  const size_t sx, const size_t sy, const size_t sz, 
+  const int64_t sx, const int64_t sy, const int64_t sz, 
   const float wx, const float wy, const float wz,
-  const bool black_border=false, float* workspace=NULL) {
+  const bool black_border=false, float* workspace=NULL
+) {
 
   float* transform = _edt3dsq_voxel_graph<T, GRAPH_TYPE>(
     labels, graph,
@@ -227,7 +228,7 @@ float* _edt3d_voxel_graph(
     black_border, workspace
   );
 
-  for (size_t i = 0; i < sx * sy * sz; i++) {
+  for (int64_t i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
@@ -235,32 +236,32 @@ float* _edt3d_voxel_graph(
 }
 
 template <typename T>
-std::map<T, std::vector<std::pair<size_t, size_t>>> 
-extract_runs(T* labels, const size_t voxels) {
-  std::map<T, std::vector<std::pair<size_t, size_t>>> runs;
+std::map<T, std::vector<std::pair<int64_t, int64_t>>> 
+extract_runs(T* labels, const int64_t voxels) {
+  std::map<T, std::vector<std::pair<int64_t, int64_t>>> runs;
   if (voxels == 0) {
     return runs;
   }
 
   T cur = labels[0];
-  size_t start = 0; // of run
+  int64_t start = 0; // of run
 
   if (voxels == 1) {
-    runs[cur].push_back(std::pair<size_t,size_t>(0,1));
+    runs[cur].push_back(std::pair<int64_t,int64_t>(0,1));
     return runs;
   }
 
-  size_t loc = 1;
+  int64_t loc = 1;
   for (loc = 1; loc < voxels; loc++) {
     if (labels[loc] != cur) {
-      runs[cur].push_back(std::pair<size_t,size_t>(start,loc));
+      runs[cur].push_back(std::pair<int64_t,int64_t>(start,loc));
       cur = labels[loc];
       start = loc;
     }
   }
 
   if (loc > start) {
-    runs[cur].push_back(std::pair<size_t,size_t>(start,voxels));
+    runs[cur].push_back(std::pair<int64_t,int64_t>(start,voxels));
   }
 
   return runs;
@@ -269,10 +270,10 @@ extract_runs(T* labels, const size_t voxels) {
 template <typename T>
 void set_run_voxels(
   const T val,
-  const std::vector<std::pair<size_t, size_t>> runs,
-  T* labels, const size_t voxels
+  const std::vector<std::pair<int64_t, int64_t>> runs,
+  T* labels, const int64_t voxels
 ) {
-  for (std::pair<size_t, size_t> run : runs) {
+  for (std::pair<int64_t, int64_t> run : runs) {
     if (
       run.first < 0 || run.second > voxels 
       || run.second < 0 || run.second > voxels
@@ -281,7 +282,7 @@ void set_run_voxels(
       throw std::runtime_error("Invalid run.");
     }
 
-    for (size_t loc = run.first; loc < run.second; loc++) {
+    for (int64_t loc = run.first; loc < run.second; loc++) {
       labels[loc] = val;
     }
   }
@@ -289,11 +290,11 @@ void set_run_voxels(
 
 template <typename T = float>
 void transfer_run_voxels(
-  const std::vector<std::pair<size_t, size_t>> runs,
+  const std::vector<std::pair<int64_t, int64_t>> runs,
   T* src, T* dest,
-  const size_t voxels
+  const int64_t voxels
 ) {
-  for (std::pair<size_t, size_t> run : runs) {
+  for (std::pair<int64_t, int64_t> run : runs) {
     if (
       run.first < 0 || run.second > voxels 
       || run.second < 0 || run.second > voxels
@@ -302,7 +303,7 @@ void transfer_run_voxels(
       throw std::runtime_error("Invalid run.");
     }
 
-    for (size_t loc = run.first; loc < run.second; loc++) {
+    for (int64_t loc = run.first; loc < run.second; loc++) {
       dest[loc] = src[loc];
     }
   }

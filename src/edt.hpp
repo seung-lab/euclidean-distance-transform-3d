@@ -33,16 +33,16 @@ namespace pyedt {
 
 #define sq(x) (static_cast<float>(x) * static_cast<float>(x))
 
-inline void tofinite(float *f, const size_t voxels) {
-  for (size_t i = 0; i < voxels; i++) {
+inline void tofinite(float *f, const int64_t voxels) {
+  for (int64_t i = 0; i < voxels; i++) {
     if (f[i] == INFINITY) {
       f[i] = std::numeric_limits<float>::max() - 1;
     }
   }
 }
 
-inline void toinfinite(float *f, const size_t voxels) {
-  for (size_t i = 0; i < voxels; i++) {
+inline void toinfinite(float *f, const int64_t voxels) {
+  for (int64_t i = 0; i < voxels; i++) {
     if (f[i] >= std::numeric_limits<float>::max() - 1) {
       f[i] = INFINITY;
     }
@@ -67,11 +67,11 @@ inline void toinfinite(float *f, const size_t voxels) {
 template <typename T>
 void squared_edt_1d_multi_seg(
     T* segids, float *d, const int n, 
-    const long int stride, const float anistropy,
+    const int64_t stride, const float anistropy,
     const bool black_border=false
   ) {
 
-  long int i;
+  int64_t i;
 
   T working_segid = segids[0];
 
@@ -96,7 +96,7 @@ void squared_edt_1d_multi_seg(
     }
   }
 
-  long int min_bound = 0;
+  int64_t min_bound = 0;
   if (black_border) {
     d[n - stride] = static_cast<float>(segids[n - stride] != 0) * anistropy;
     min_bound = stride;
@@ -160,8 +160,8 @@ void squared_edt_1d_multi_seg(
  */
 void squared_edt_1d_parabolic(
     float* f,
-    const long int n, 
-    const long int stride, 
+    const int64_t n, 
+    const int64_t stride, 
     const float anisotropy, 
     const bool black_border_left,
     const bool black_border_right
@@ -173,10 +173,10 @@ void squared_edt_1d_parabolic(
 
   const float w2 = anisotropy * anisotropy;
 
-  int k = 0;
+  int64_t k = 0;
   std::unique_ptr<int[]> v(new int[n]());
   std::unique_ptr<float[]> ff(new float[n]());
-  for (long int i = 0; i < n; i++) {
+  for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
   
@@ -193,15 +193,15 @@ void squared_edt_1d_parabolic(
    */
   float s;
   float factor1, factor2;
-  for (long int i = 1; i < n; i++) {
-    factor1 = (i - v[k]) * w2;
-    factor2 =  i + v[k];
+  for (int64_t i = 1; i < n; i++) {
+    factor1 = static_cast<float>(i - v[k]) * w2;
+    factor2 =  static_cast<float>(i + v[k]);
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (k > 0 && s <= ranges[k]) {
       k--;
-      factor1 = (i - v[k]) * w2;
-      factor2 =  i + v[k];
+      factor1 = static_cast<float>(i - v[k]) * w2;
+      factor2 =  static_cast<float>(i + v[k]);
       s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
@@ -213,7 +213,7 @@ void squared_edt_1d_parabolic(
 
   k = 0;
   float envelope;
-  for (long int i = 0; i < n; i++) {
+  for (int64_t i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
     }
@@ -237,8 +237,8 @@ void squared_edt_1d_parabolic(
 // about 5% faster
 void squared_edt_1d_parabolic(
     float* f,
-    const int n, 
-    const long int stride, 
+    const int64_t n, 
+    const int64_t stride, 
     const float anisotropy
   ) {
 
@@ -248,10 +248,10 @@ void squared_edt_1d_parabolic(
 
   const float w2 = anisotropy * anisotropy;
 
-  int k = 0;
+  int64_t k = 0;
   std::unique_ptr<int[]> v(new int[n]());
   std::unique_ptr<float[]> ff(new float[n]());
-  for (long int i = 0; i < n; i++) {
+  for (int64_t i = 0; i < n; i++) {
     ff[i] = f[i * stride];
   }
 
@@ -268,15 +268,15 @@ void squared_edt_1d_parabolic(
    */
   float s;
   float factor1, factor2;
-  for (long int i = 1; i < n; i++) {
-    factor1 = (i - v[k]) * w2;
-    factor2 = i + v[k];
+  for (int64_t i = 1; i < n; i++) {
+    factor1 = static_cast<float>(i - v[k]) * w2;
+    factor2 = static_cast<float>(i + v[k]);
     s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
 
     while (k > 0 && s <= ranges[k]) {
       k--;
-      factor1 = (i - v[k]) * w2;
-      factor2 = i + v[k];
+      factor1 = static_cast<float>(i - v[k]) * w2;
+      factor2 = static_cast<float>(i + v[k]);
       s = (ff[i] - ff[v[k]] + factor1 * factor2) / (2.0 * factor1);
     }
 
@@ -288,7 +288,7 @@ void squared_edt_1d_parabolic(
 
   k = 0;
   float envelope;
-  for (long int i = 0; i < n; i++) {
+  for (int64_t i = 0; i < n; i++) {
     while (ranges[k + 1] < i) { 
       k++;
     }
@@ -303,8 +303,8 @@ void squared_edt_1d_parabolic(
 
 void _squared_edt_1d_parabolic(
     float* f, 
-    const int n, 
-    const long int stride, 
+    const int64_t n, 
+    const int64_t stride, 
     const float anisotropy, 
     const bool black_border_left,
     const bool black_border_right
@@ -333,15 +333,15 @@ void _squared_edt_1d_parabolic(
 template <typename T>
 void squared_edt_1d_parabolic_multi_seg(
   T* segids, float* f,
-  const int n, const long int stride, const float anisotropy,
+  const int64_t n, const int64_t stride, const float anisotropy,
   const bool black_border=false
 ) {
 
   T working_segid = segids[0];
   T segid;
-  long int last = 0;
+  int64_t last = 0;
 
-  for (int i = 1; i < n; i++) {
+  for (int64_t i = 1; i < n; i++) {
     segid = segids[i * stride];
     if (segid != working_segid) {
       if (working_segid != 0) {
@@ -399,15 +399,16 @@ void squared_edt_1d_parabolic_multi_seg(
  */
 template <typename T>
 float* _edt3dsq(
-    T* labels, 
-    const size_t sx, const size_t sy, const size_t sz, 
-    const float wx, const float wy, const float wz,
-    const bool black_border=false, const int parallel=1,
-    float* workspace=NULL
-  ) {
+  T* labels, 
+  const int64_t sx, const int64_t sy, const int64_t sz, 
+  const float wx, const float wy, const float wz,
+  const bool black_border = false,
+  const int parallel = 1,
+  float* workspace = NULL
+) {
 
-  const size_t sxy = sx * sy;
-  const size_t voxels = sz * sxy;
+  const int64_t sxy = sx * sy;
+  const int64_t voxels = sz * sxy;
 
   if (workspace == NULL) {
     workspace = new float[sx * sy * sz]();
@@ -415,9 +416,9 @@ float* _edt3dsq(
 
   ThreadPool pool(parallel);
 
-  for (size_t z = 0; z < sz; z++) {
+  for (int64_t z = 0; z < sz; z++) {
     pool.enqueue([labels, sy, z, sx, sxy, wx, workspace, black_border](){
-      for (size_t y = 0; y < sy; y++) {
+      for (int64_t y = 0; y < sy; y++) {
         squared_edt_1d_multi_seg<T>(
           (labels + sx * y + sxy * z), 
           (workspace + sx * y + sxy * z), 
@@ -435,9 +436,9 @@ float* _edt3dsq(
 
   pool.start(parallel);
 
-  for (size_t z = 0; z < sz; z++) {
+  for (int64_t z = 0; z < sz; z++) {
     pool.enqueue([labels, sxy, z, workspace, sx, sy, wy, black_border](){
-      for (size_t x = 0; x < sx; x++) {
+      for (int64_t x = 0; x < sx; x++) {
         squared_edt_1d_parabolic_multi_seg<T>(
           (labels + x + sxy * z),
           (workspace + x + sxy * z), 
@@ -450,9 +451,9 @@ float* _edt3dsq(
   pool.join();
   pool.start(parallel);
 
-  for (size_t y = 0; y < sy; y++) {
+  for (int64_t y = 0; y < sy; y++) {
     pool.enqueue([labels, sx, y, workspace, sz, sxy, wz, black_border](){
-      for (size_t x = 0; x < sx; x++) {
+      for (int64_t x = 0; x < sx; x++) {
         squared_edt_1d_parabolic_multi_seg<T>(
           (labels + x + sx * y), 
           (workspace + x + sx * y), 
@@ -474,17 +475,17 @@ float* _edt3dsq(
 // skipping multi-seg logic results in a large speedup
 template <typename T>
 float* _binary_edt3dsq(
-    T* binaryimg, 
-    const size_t sx, const size_t sy, const size_t sz, 
-    const float wx, const float wy, const float wz,
-    const bool black_border=false, const int parallel=1, 
-    float* workspace=NULL
-  ) {
+  T* binaryimg, 
+  const int64_t sx, const int64_t sy, const int64_t sz, 
+  const float wx, const float wy, const float wz,
+  const bool black_border=false, const int parallel=1, 
+  float* workspace=NULL
+) {
 
-  const size_t sxy = sx * sy;
-  const size_t voxels = sz * sxy;
+  const int64_t sxy = sx * sy;
+  const int64_t voxels = sz * sxy;
 
-  size_t x,y,z;
+  int64_t x,y,z;
 
   if (workspace == NULL) {
     workspace = new float[sx * sy * sz]();
@@ -512,7 +513,7 @@ float* _binary_edt3dsq(
 
   pool.start(parallel);
 
-  size_t offset;
+  int64_t offset;
   for (z = 0; z < sz; z++) {
     for (x = 0; x < sx; x++) {
       offset = x + sxy * z;
@@ -539,7 +540,7 @@ float* _binary_edt3dsq(
     for (x = 0; x < sx; x++) {
       offset = x + sx * y;
       pool.enqueue([sz, sxy, workspace, wz, black_border, offset](){
-        size_t z = 0;
+        int64_t z = 0;
         for (z = 0; z < sz; z++) {
           if (workspace[offset + sxy*z]) {
             break;
@@ -567,7 +568,7 @@ float* _binary_edt3dsq(
 // multisegment logic in parabolic
 template <typename T>
 float* _edt3dsq(bool* binaryimg, 
-  const size_t sx, const size_t sy, const size_t sz, 
+  const int64_t sx, const int64_t sy, const int64_t sz, 
   const float wx, const float wy, const float wz, 
   const bool black_border=false, const int parallel=1, float* workspace=NULL) {
 
@@ -578,13 +579,13 @@ float* _edt3dsq(bool* binaryimg,
 // euclidean distance.
 template <typename T>
 float* _edt3d(T* input, 
-  const size_t sx, const size_t sy, const size_t sz, 
+  const int64_t sx, const int64_t sy, const int64_t sz, 
   const float wx, const float wy, const float wz,
   const bool black_border=false, const int parallel=1, float* workspace=NULL) {
 
   float* transform = _edt3dsq<T>(input, sx, sy, sz, wx, wy, wz, black_border, parallel, workspace);
 
-  for (size_t i = 0; i < sx * sy * sz; i++) {
+  for (int64_t i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
@@ -595,7 +596,7 @@ float* _edt3d(T* input,
 template <typename T>
 float* _binary_edt3d(
     T* input, 
-    const size_t sx, const size_t sy, const size_t sz, 
+    const int64_t sx, const int64_t sy, const int64_t sz, 
     const float wx, const float wy, const float wz,
     const bool black_border=false, const int parallel=1, 
     float* workspace=NULL
@@ -609,7 +610,7 @@ float* _binary_edt3d(
     workspace
   );
 
-  for (size_t i = 0; i < sx * sy * sz; i++) {
+  for (int64_t i = 0; i < sx * sy * sz; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
@@ -620,19 +621,19 @@ float* _binary_edt3d(
 template <typename T>
 float* _edt2dsq(
     T* input, 
-    const size_t sx, const size_t sy,
+    const int64_t sx, const int64_t sy,
     const float wx, const float wy,
     const bool black_border=false, const int parallel=1,
     float* workspace=NULL
   ) {
 
-  const size_t voxels = sx * sy;
+  const int64_t voxels = sx * sy;
 
   if (workspace == NULL) {
     workspace = new float[voxels]();
   }
 
-  for (size_t y = 0; y < sy; y++) { 
+  for (int64_t y = 0; y < sy; y++) { 
     squared_edt_1d_multi_seg<T>(
       (input + sx * y), (workspace + sx * y), 
       sx, 1, wx, black_border
@@ -645,7 +646,7 @@ float* _edt2dsq(
 
   ThreadPool pool(parallel);
 
-  for (size_t x = 0; x < sx; x++) {
+  for (int64_t x = 0; x < sx; x++) {
     pool.enqueue([input, x, workspace, sy, sx, wy, black_border](){
       squared_edt_1d_parabolic_multi_seg<T>(
         (input + x), 
@@ -668,13 +669,13 @@ float* _edt2dsq(
 // skipping multi-seg logic results in a large speedup
 template <typename T>
 float* _binary_edt2dsq(T* binaryimg, 
-  const size_t sx, const size_t sy,
+  const int64_t sx, const int64_t sy,
   const float wx, const float wy,
   const bool black_border=false, const int parallel=1,
   float* workspace=NULL) {
 
-  const size_t voxels = sx * sy;
-  size_t x,y;
+  const int64_t voxels = sx * sy;
+  int64_t x,y;
 
   if (workspace == NULL) {
     workspace = new float[sx * sy]();
@@ -695,7 +696,7 @@ float* _binary_edt2dsq(T* binaryimg,
 
   for (x = 0; x < sx; x++) {
     pool.enqueue([workspace, x, sx, sy, wy, black_border](){
-      size_t y = 0;
+      int64_t y = 0;
       for (y = 0; y < sy; y++) {
         if (workspace[x + y * sx]) {
           break;
@@ -722,7 +723,7 @@ float* _binary_edt2dsq(T* binaryimg,
 // skipping multi-seg logic results in a large speedup
 template <typename T>
 float* _binary_edt2d(T* binaryimg, 
-  const size_t sx, const size_t sy,
+  const int64_t sx, const int64_t sy,
   const float wx, const float wy,
   const bool black_border=false, const int parallel=1,
   float* output=NULL) {
@@ -735,7 +736,7 @@ float* _binary_edt2d(T* binaryimg,
     output
   );
 
-  for (size_t i = 0; i < sx * sy; i++) {
+  for (int64_t i = 0; i < sx * sy; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
@@ -745,7 +746,7 @@ float* _binary_edt2d(T* binaryimg,
 // 2D version of _edt3dsq
 template <typename T>
 float* _edt2dsq(bool* binaryimg, 
-  const size_t sx, const size_t sy,
+  const int64_t sx, const int64_t sy,
   const float wx, const float wy,
   const bool black_border=false, const int parallel=1,
   float* output=NULL) {
@@ -763,7 +764,7 @@ float* _edt2dsq(bool* binaryimg,
 template <typename T>
 float* _edt2d(
     T* input, 
-    const size_t sx, const size_t sy,
+    const int64_t sx, const int64_t sy,
     const float wx, const float wy,
     const bool black_border=false, const int parallel=1,
     float* output=NULL
@@ -777,7 +778,7 @@ float* _edt2d(
     output
   );
 
-  for (size_t i = 0; i < sx * sy; i++) {
+  for (int64_t i = 0; i < sx * sy; i++) {
     transform[i] = std::sqrt(transform[i]);
   }
 
