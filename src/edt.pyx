@@ -24,6 +24,7 @@ Environment Variables (runtime):
   EDT_ADAPTIVE_THREADS         - 0/1, enable adaptive thread limiting by array size (default: 1)
   EDT_ND_MIN_VOXELS_PER_THREAD - min voxels per thread (default: 4000)
   EDT_ND_MIN_LINES_PER_THREAD  - min scanlines per thread (default: 32)
+  EDT_ND_PROFILE               - if set, record shape/thread info in edt._nd_profile_last (default: off)
 
 Environment Variables (build-time):
   EDT_MARCH_NATIVE          - 0/1, compile with -march=native (default: 1)
@@ -91,6 +92,44 @@ def _prepare_array(arr, dtype):
         return np.asfortranarray(arr, dtype=dtype), True
     # Non-contiguous: force C-order copy
     return np.ascontiguousarray(arr, dtype=dtype), False
+
+
+def _resolve_label_dtype(arr):
+    """Map a label array's dtype to the uint dtype used internally.
+
+    bool -> uint8; signed/float -> same-width uint; already-uint -> unchanged.
+    Returned dtype is always one of uint8/uint16/uint32/uint64.
+    """
+    dtype = arr.dtype
+    if dtype == np.bool_:
+        return np.uint8
+    if dtype in (np.uint8, np.uint16, np.uint32, np.uint64):
+        return dtype
+    unsigned_map = {1: np.uint8, 2: np.uint16, 4: np.uint32, 8: np.uint64}
+    return unsigned_map.get(dtype.itemsize, np.uint32)
+
+
+def _normalize_anisotropy(anisotropy, nd):
+    """Return anisotropy as a float tuple of length nd.
+
+    None -> isotropic (1.0,)*nd; scalar -> replicated; sequence -> validated.
+    """
+    if anisotropy is None:
+        return (1.0,) * nd
+    if hasattr(anisotropy, '__len__'):
+        anis = tuple(float(a) for a in anisotropy)
+    else:
+        anis = (float(anisotropy),) * nd
+    if len(anis) != nd:
+        raise ValueError(f"anisotropy must have {nd} elements, got {len(anis)}")
+    return anis
+
+
+def _resolve_parallel(parallel):
+    """Cap parallel thread count to cpu_count; 0 or negative means use all CPUs."""
+    if parallel <= 0:
+        return multiprocessing.cpu_count()
+    return max(1, min(parallel, multiprocessing.cpu_count()))
 
 
 cdef extern from "edt.hpp" namespace "nd":
@@ -254,13 +293,7 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
     # For signed/float types, use .view() to reinterpret as same-width
     # unsigned — zero-copy, and equality semantics are identical.
     labels = np.asarray(labels)
-    dtype = labels.dtype
-    if dtype == np.bool_:
-        dtype = np.uint8
-    elif dtype not in (np.uint8, np.uint16, np.uint32, np.uint64):
-        unsigned_map = {1: np.uint8, 2: np.uint16, 4: np.uint32, 8: np.uint64}
-        dtype = unsigned_map.get(dtype.itemsize, np.uint32)
-
+    dtype = _resolve_label_dtype(labels)
     labels, is_fortran = _prepare_array(labels, labels.dtype)
     if labels.dtype != dtype:
         labels = labels.view(dtype)
@@ -269,21 +302,10 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
 
     _check_dims(nd)
 
-    if anisotropy is None:
-        anisotropy = (1.0,) * nd
-    elif not hasattr(anisotropy, '__len__'):
-        anisotropy = (float(anisotropy),) * nd
-    else:
-        anisotropy = tuple(float(a) for a in anisotropy)
-
-    if len(anisotropy) != nd:
-        raise ValueError(f"anisotropy must have {nd} elements")
+    anisotropy = _normalize_anisotropy(anisotropy, nd)
 
     parallel_requested = parallel
-    if parallel <= 0:
-        parallel = multiprocessing.cpu_count()
-    else:
-        parallel = max(1, min(parallel, multiprocessing.cpu_count()))
+    parallel = _resolve_parallel(parallel)
     parallel = _adaptive_thread_limit_nd(parallel, shape)
 
     # For F-contiguous arrays, reverse shape and anisotropy so C++ sees a
@@ -291,13 +313,14 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
     cpp_shape = tuple(reversed(shape)) if is_fortran else shape
     cpp_anis  = tuple(reversed(anisotropy)) if is_fortran else anisotropy
 
-    global _nd_profile_last
-    _nd_profile_last = {
-        'shape': shape,
-        'dims': nd,
-        'parallel_requested': parallel_requested,
-        'parallel_used': parallel,
-    }
+    if os.environ.get('EDT_ND_PROFILE'):
+        global _nd_profile_last
+        _nd_profile_last = {
+            'shape': shape,
+            'dims': nd,
+            'parallel_requested': parallel_requested,
+            'parallel_used': parallel,
+        }
 
     cdef size_t* cshape = <size_t*> malloc(nd * sizeof(size_t))
     cdef float* canis = <float*> malloc(nd * sizeof(float))
@@ -313,7 +336,7 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
         cshape[i] = <size_t>cpp_shape[i]
         canis[i] = <float>cpp_anis[i]
 
-    cdef np.ndarray output = np.zeros(cpp_shape, dtype=np.float32)
+    cdef np.ndarray output = np.empty(cpp_shape, dtype=np.float32)
     cdef float* outp = <float*> np.PyArray_DATA(output)
     cdef native_bool bb = black_border
     cdef int par = parallel
@@ -402,32 +425,21 @@ def edtsq_graph(graph, anisotropy=None, black_border=False, parallel=0):
     # direction-specific connectivity. Always copy to C-order to ensure correct bit interpretation.
     graph = np.ascontiguousarray(graph, dtype=graph_dtype)
 
-    if anisotropy is None:
-        anisotropy = (1.0,) * nd
-    elif not hasattr(anisotropy, '__len__'):
-        anisotropy = (float(anisotropy),) * nd
-    else:
-        anisotropy = tuple(float(a) for a in anisotropy)
-
-    if len(anisotropy) != nd:
-        raise ValueError(f"anisotropy must have {nd} elements")
+    anisotropy = _normalize_anisotropy(anisotropy, nd)
 
     parallel_requested = parallel
-    if parallel <= 0:
-        parallel = multiprocessing.cpu_count()
-    else:
-        parallel = max(1, min(parallel, multiprocessing.cpu_count()))
+    parallel = _resolve_parallel(parallel)
     parallel = _adaptive_thread_limit_nd(parallel, shape)
 
-    global _nd_profile_last
-    _nd_profile_last = {
-        'shape': shape,
-        'dims': nd,
-        'parallel_requested': parallel_requested,
-        'parallel_used': parallel,
-    }
+    if os.environ.get('EDT_ND_PROFILE'):
+        global _nd_profile_last
+        _nd_profile_last = {
+            'shape': shape,
+            'dims': nd,
+            'parallel_requested': parallel_requested,
+            'parallel_used': parallel,
+        }
 
-    cdef size_t total = 1
     cdef size_t* cshape = <size_t*> malloc(nd * sizeof(size_t))
     cdef float* canis = <float*> malloc(nd * sizeof(float))
     if cshape == NULL or canis == NULL:
@@ -441,9 +453,8 @@ def edtsq_graph(graph, anisotropy=None, black_border=False, parallel=0):
     for i in range(nd):
         cshape[i] = <size_t>shape[i]
         canis[i] = <float>anisotropy[i]
-        total *= cshape[i]
 
-    cdef np.ndarray output = np.zeros(shape, dtype=np.float32)
+    cdef np.ndarray output = np.empty(shape, dtype=np.float32)
     cdef float* outp = <float*> np.PyArray_DATA(output)
 
     cdef native_bool bb = black_border
@@ -503,25 +514,17 @@ def build_graph(labels, parallel=0):
     # For signed/float types, use .view() to reinterpret as same-width
     # unsigned — zero-copy, and equality semantics are identical.
     labels = np.asarray(labels)
-    dtype = labels.dtype
-    if dtype == np.bool_:
-        dtype = np.uint8
-    elif dtype not in (np.uint8, np.uint16, np.uint32, np.uint64):
-        unsigned_map = {1: np.uint8, 2: np.uint16, 4: np.uint32, 8: np.uint64}
-        dtype = unsigned_map.get(dtype.itemsize, np.uint32)
-
+    dtype = _resolve_label_dtype(labels)
     labels = np.ascontiguousarray(labels, dtype=labels.dtype)
     if labels.dtype != dtype:
         labels = labels.view(dtype)
     cdef int nd = labels.ndim
     cdef tuple shape = labels.shape
 
-    if parallel <= 0:
-        parallel = multiprocessing.cpu_count()
+    parallel = _resolve_parallel(parallel)
 
     graph_dtype = _graph_dtype(nd)
 
-    cdef size_t total = 1
     cdef size_t* cshape = <size_t*> malloc(nd * sizeof(size_t))
     if cshape == NULL:
         raise MemoryError('Allocation failure')
@@ -529,7 +532,6 @@ def build_graph(labels, parallel=0):
     cdef int i
     for i in range(nd):
         cshape[i] = <size_t>shape[i]
-        total *= cshape[i]
 
     cdef np.ndarray graph = np.zeros(shape, dtype=graph_dtype)
     cdef int par = parallel
@@ -632,7 +634,7 @@ def build_graph(labels, parallel=0):
 
 
 # Signed Distance Function - positive inside foreground, negative in background
-def sdf(data, anisotropy=None, black_border=False, int parallel=1):
+def sdf(data, anisotropy=None, black_border=False, int parallel=0):
     """
     Compute the Signed Distance Function (SDF).
 
@@ -659,7 +661,7 @@ def sdf(data, anisotropy=None, black_border=False, int parallel=1):
     dt -= edt(data == 0, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
     return dt
 
-def sdfsq(data, anisotropy=None, black_border=False, int parallel=1):
+def sdfsq(data, anisotropy=None, black_border=False, int parallel=0):
     """Squared SDF - same as sdf but with squared distances."""
     dt = edtsq(data, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
     dt -= edtsq(data == 0, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
@@ -673,7 +675,7 @@ except ImportError:
     legacy = None
 
 # expand_labels and feature_transform - ported from barrier implementation
-def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
+def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, return_features=False):
     """Expand nonzero labels to zeros by nearest-neighbor in Euclidean metric (ND).
 
     Parameters
@@ -682,6 +684,8 @@ def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
         Input array; nonzero elements are seeds whose values are the labels.
     anisotropy : float or sequence of float, optional
         Per-axis voxel size (default 1.0 for all axes).
+    black_border : bool, optional
+        Treat image edges as background (default False).
     parallel : int, optional
         Number of threads; if <= 0, uses cpu_count().
     return_features : bool, optional
@@ -695,7 +699,6 @@ def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
         If return_features=True, the nearest-seed linear indices.
     """
     cdef Py_ssize_t nd
-    cdef int cpu_cap
     cdef size_t total
     cdef size_t* cshape
     cdef float* canis
@@ -704,40 +707,34 @@ def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
     cdef uint32_t* feat_u32_p
     cdef size_t* feat_sz_p
     cdef bint use_u32_feat
+    cdef bint is_fortran
+    cdef native_bool bb
     cdef np.ndarray[np.uint32_t, ndim=1] labels_out
     cdef np.ndarray[np.uint32_t, ndim=1] feat_u32
     cdef np.ndarray feat_sz
     cdef Py_ssize_t ii
 
     arr = np.asarray(data)
-    if arr.dtype == np.uint32:
-        if not arr.flags.c_contiguous:
-            arr = np.ascontiguousarray(arr)
-    elif arr.dtype == np.int32:
+    if arr.dtype == np.int32:
         # Same width — reinterpret without copy; label values are non-negative so
         # bit patterns are identical to the uint32 representation.
-        arr = np.ascontiguousarray(arr).view(np.uint32)
+        arr, is_fortran = _prepare_array(arr, np.int32)
+        arr = arr.view(np.uint32)
     else:
-        arr = np.ascontiguousarray(arr, dtype=np.uint32)
+        arr, is_fortran = _prepare_array(arr, np.uint32)
     nd = arr.ndim
     _check_dims(nd)
 
-    if anisotropy is None:
-        anis = (1.0,) * nd
-    else:
-        anis = tuple(anisotropy) if hasattr(anisotropy, '__len__') else (float(anisotropy),) * nd
-        if len(anis) != nd:
-            raise ValueError('anisotropy length must match data.ndim')
+    anis = _normalize_anisotropy(anisotropy, nd)
 
-    cpu_cap = 1
-    try:
-        cpu_cap = multiprocessing.cpu_count()
-    except Exception:
-        cpu_cap = max(1, parallel)
-    if parallel <= 0:
-        parallel = cpu_cap
-    else:
-        parallel = max(1, min(parallel, cpu_cap))
+    # For F-contiguous arrays, reverse shape and anisotropy so C++ sees a
+    # C-order array of reversed shape — same memory, no copy.
+    cpp_shape = tuple(reversed(arr.shape)) if is_fortran else tuple(arr.shape)
+    cpp_anis  = tuple(reversed(anis)) if is_fortran else anis
+
+    parallel = _resolve_parallel(parallel)
+
+    bb = black_border
 
     cshape = <size_t*> malloc(nd * sizeof(size_t))
     canis = <float*> malloc(nd * sizeof(float))
@@ -748,8 +745,8 @@ def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
 
     total = 1
     for ii in range(nd):
-        cshape[ii] = <size_t>arr.shape[ii]
-        canis[ii] = <float>anis[ii]
+        cshape[ii] = <size_t>cpp_shape[ii]
+        canis[ii] = <float>cpp_anis[ii]
         total *= cshape[ii]
 
     labels_out = np.empty((total,), dtype=np.uint32)
@@ -765,27 +762,41 @@ def expand_labels(data, anisotropy=None, int parallel=1, return_features=False):
                 with nogil:
                     expand_labels_features_fused[uint32_t, uint32_t](
                         data_p, lout_p, feat_u32_p,
-                        cshape, canis, <size_t>nd, False, parallel)
+                        cshape, canis, <size_t>nd, bb, parallel)
             else:
                 feat_sz = np.empty((total,), dtype=np.uintp)
                 feat_sz_p = <size_t*> np.PyArray_DATA(feat_sz)
                 with nogil:
                     expand_labels_features_fused[uint32_t, size_t](
                         data_p, lout_p, feat_sz_p,
-                        cshape, canis, <size_t>nd, False, parallel)
+                        cshape, canis, <size_t>nd, bb, parallel)
         else:
             with nogil:
                 expand_labels_fused[uint32_t](
-                    data_p, lout_p, cshape, canis, <size_t>nd, False, parallel)
+                    data_p, lout_p, cshape, canis, <size_t>nd, bb, parallel)
     finally:
         free(cshape)
         free(canis)
 
     if return_features:
+        if is_fortran:
+            # C++ returned flat buffer offsets in cpp_shape (reversed) space.
+            # Convert to C-order linear indices in the original arr.shape so the
+            # caller gets consistent indices regardless of input memory order.
+            if use_u32_feat:
+                raw = feat_u32.reshape(cpp_shape)
+                coords = np.unravel_index(raw, cpp_shape)
+                feat_conv = np.ravel_multi_index(coords[::-1], tuple(arr.shape)).astype(np.uint32)
+                return labels_out.reshape(cpp_shape).T, feat_conv.T
+            else:
+                raw = feat_sz.reshape(cpp_shape)
+                coords = np.unravel_index(raw, cpp_shape)
+                feat_conv = np.ravel_multi_index(coords[::-1], tuple(arr.shape)).astype(np.uintp)
+                return labels_out.reshape(cpp_shape).T, feat_conv.T
         if use_u32_feat:
             return labels_out.reshape(arr.shape), feat_u32.reshape(arr.shape)
         return labels_out.reshape(arr.shape), feat_sz.reshape(arr.shape)
-    return labels_out.reshape(arr.shape)
+    return labels_out.reshape(cpp_shape).T if is_fortran else labels_out.reshape(arr.shape)
 
 
 def configure(
@@ -886,30 +897,15 @@ def feature_transform(data, anisotropy=None, black_border=False, int parallel=1,
     arr = np.asarray(data)
     if arr.size == 0:
         if return_distances:
-            return np.zeros_like(arr, dtype=np.uint64), np.zeros_like(arr, dtype=np.float32)
-        return np.zeros_like(arr, dtype=np.uint64)
+            return np.zeros_like(arr, dtype=np.uint32), np.zeros_like(arr, dtype=np.float32)
+        return np.zeros_like(arr, dtype=np.uint32)
 
     dims = arr.ndim
     _check_dims(dims)
-    if anisotropy is None:
-        anis = (1.0,) * dims
-    else:
-        anis = tuple(anisotropy) if hasattr(anisotropy, '__len__') else (float(anisotropy),) * dims
-        if len(anis) != dims:
-            raise ValueError('anisotropy length must match data.ndim')
+    anis = _normalize_anisotropy(anisotropy, dims)
+    parallel = _resolve_parallel(parallel)
 
-    if parallel <= 0:
-        try:
-            parallel = multiprocessing.cpu_count()
-        except Exception:
-            parallel = 1
-    else:
-        try:
-            parallel = max(1, min(parallel, multiprocessing.cpu_count()))
-        except Exception:
-            parallel = max(1, parallel)
-
-    labels, feats = expand_labels(arr, anis, parallel, True)
+    labels, feats = expand_labels(arr, anisotropy=anis, black_border=black_border, parallel=parallel, return_features=True)
 
     if return_distances:
         dist = edt(arr != 0, anis, black_border, parallel)

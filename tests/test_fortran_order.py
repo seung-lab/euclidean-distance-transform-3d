@@ -107,3 +107,69 @@ def test_fortran_labels_with_voxel_graph_2d():
     result_c = edt.edt(labels, voxel_graph=vg)
     result_f = edt.edt(np.asfortranarray(labels), voxel_graph=vg)
     np.testing.assert_allclose(result_c, result_f, rtol=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# expand_labels + Fortran-order
+# ---------------------------------------------------------------------------
+
+def test_expand_labels_fortran_matches_c_2d():
+    """F-contiguous input to expand_labels gives same result as C-contiguous."""
+    rng = np.random.default_rng(7)
+    labels = np.zeros((30, 40), dtype=np.uint32)
+    labels[5, 5] = 1
+    labels[20, 30] = 2
+    labels[10, 25] = 3
+
+    result_c = edt.expand_labels(labels)
+    result_f = edt.expand_labels(np.asfortranarray(labels))
+    np.testing.assert_array_equal(result_c, result_f)
+
+
+def test_expand_labels_fortran_matches_c_3d():
+    """F-contiguous 3D input to expand_labels gives same result as C-contiguous."""
+    labels = np.zeros((15, 20, 25), dtype=np.uint32)
+    labels[2, 3, 4] = 1
+    labels[10, 15, 20] = 2
+    labels[7, 10, 12] = 3
+
+    result_c = edt.expand_labels(labels)
+    result_f = edt.expand_labels(np.asfortranarray(labels))
+    np.testing.assert_array_equal(result_c, result_f)
+
+
+def test_expand_labels_fortran_output_is_fortran():
+    """F-contiguous input should produce F-contiguous output."""
+    labels = np.zeros((20, 30), dtype=np.uint32)
+    labels[5, 5] = 1
+    labels[15, 25] = 2
+
+    result = edt.expand_labels(np.asfortranarray(labels))
+    assert result.flags.f_contiguous, "F-contiguous input should yield F-contiguous output"
+    assert result.shape == labels.shape
+
+
+def test_expand_labels_fortran_with_anisotropy():
+    """F-contiguous input with anisotropy gives same result as C-contiguous."""
+    labels = np.zeros((20, 30), dtype=np.uint32)
+    labels[5, 5] = 1
+    labels[15, 25] = 2
+
+    anis = (2.0, 0.5)
+    result_c = edt.expand_labels(labels, anisotropy=anis)
+    result_f = edt.expand_labels(np.asfortranarray(labels), anisotropy=anis)
+    np.testing.assert_array_equal(result_c, result_f)
+
+
+def test_expand_labels_fortran_return_features():
+    """F-contiguous input with return_features=True gives same result."""
+    labels = np.zeros((20, 30), dtype=np.uint32)
+    labels[5, 5] = 1
+    labels[15, 25] = 2
+
+    lbl_c, feat_c = edt.expand_labels(labels, return_features=True)
+    lbl_f, feat_f = edt.expand_labels(np.asfortranarray(labels), return_features=True)
+    np.testing.assert_array_equal(lbl_c, lbl_f)
+    np.testing.assert_array_equal(feat_c, feat_f)
+    assert lbl_f.flags.f_contiguous
+    assert feat_f.flags.f_contiguous

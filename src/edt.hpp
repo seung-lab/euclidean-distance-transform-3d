@@ -1101,18 +1101,22 @@ inline void expand_labels_fused(
             std::fill(labels_out, labels_out + n, uint32_t(0));
             return;
         }
-        if (seeds.size() == 1) {
-            std::fill(labels_out, labels_out + n, (uint32_t)data[seeds[0]]);
-            return;
-        }
-        // Midpoints between adjacent seeds (as floats)
-        std::vector<double> mids(seeds.size() - 1);
+        // Midpoints between adjacent real seeds
+        std::vector<double> mids(seeds.size() > 1 ? seeds.size() - 1 : 0);
         for (size_t i = 0; i < mids.size(); ++i)
             mids[i] = (seeds[i] + seeds[i + 1]) * 0.5;
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
-            labels_out[i] = (uint32_t)data[seeds[std::min(k, seeds.size() - 1)]];
+            const size_t si = seeds[std::min(k, seeds.size() - 1)];
+            if (black_border) {
+                // Border acts as a virtual seed at distance min(i+1, n-i).
+                // If the border is at least as close as the real seed, label = 0.
+                const size_t border_dist = std::min(i + 1, n - i);
+                const size_t seed_dist   = (i >= si) ? (i - si) : (si - i);
+                if (border_dist <= seed_dist) { labels_out[i] = 0; continue; }
+            }
+            labels_out[i] = (uint32_t)data[si];
         }
         return;
     }
@@ -1207,18 +1211,25 @@ inline void expand_labels_features_fused(
             std::fill(features_out, features_out + n, INDEX(0));
             return;
         }
-        if (seeds.size() == 1) {
-            std::fill(labels_out, labels_out + n, (uint32_t)data[seeds[0]]);
-            std::fill(features_out, features_out + n, INDEX(seeds[0]));
-            return;
-        }
-        std::vector<double> mids(seeds.size() - 1);
+        // Midpoints between adjacent real seeds
+        std::vector<double> mids(seeds.size() > 1 ? seeds.size() - 1 : 0);
         for (size_t i = 0; i < mids.size(); ++i)
             mids[i] = (seeds[i] + seeds[i + 1]) * 0.5;
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
             const size_t si = seeds[std::min(k, seeds.size() - 1)];
+            if (black_border) {
+                // Border acts as a virtual seed at distance min(i+1, n-i).
+                // If the border is at least as close as the real seed, label = 0.
+                const size_t border_dist = std::min(i + 1, n - i);
+                const size_t seed_dist   = (i >= si) ? (i - si) : (si - i);
+                if (border_dist <= seed_dist) {
+                    labels_out[i]   = 0;
+                    features_out[i] = INDEX(si);  // nearest real seed, same as ND path
+                    continue;
+                }
+            }
             labels_out[i]   = (uint32_t)data[si];
             features_out[i] = INDEX(si);
         }
