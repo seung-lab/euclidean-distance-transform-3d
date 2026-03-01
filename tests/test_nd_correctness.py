@@ -120,7 +120,7 @@ def _expected_parallel_used(shape, requested):
         parallel = cpu_cap
     else:
         parallel = max(1, min(parallel, cpu_cap))
-    return edt._adaptive_thread_limit_nd(parallel, shape, requested)
+    return edt._adaptive_thread_limit_nd(parallel, shape)
 
 
 def test_nd_thread_limit_heuristics():

@@ -227,10 +227,8 @@ def _voxel_graph_to_nd(voxel_graph, labels=None):
             f"but {ndim}D requires at least {min_bits} bits"
         )
 
-    # Build mask for positive direction bits only
-    pos_mask = 0
-    for axis in range(ndim):
-        pos_mask |= (1 << (2 * (ndim - 1 - axis)))
+    # Build mask for positive direction bits only (even bits 0, 2, ..., 2*(ndim-1))
+    pos_mask = sum(1 << (2 * i) for i in range(ndim))
 
     # Extract positive direction bits and shift left by 1 to make room for FG at bit 0
     # Use minimal dtype based on ndim (not input dtype) to avoid large intermediates
@@ -293,14 +291,13 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
     # For signed/float types, use .view() to reinterpret as same-width
     # unsigned — zero-copy, and equality semantics are identical.
     labels = np.asarray(labels)
+    _check_dims(labels.ndim)
     dtype = _resolve_label_dtype(labels)
     labels, is_fortran = _prepare_array(labels, labels.dtype)
     if labels.dtype != dtype:
         labels = labels.view(dtype)
     cdef int nd = labels.ndim
     cdef tuple shape = labels.shape
-
-    _check_dims(nd)
 
     anisotropy = _normalize_anisotropy(anisotropy, nd)
 
@@ -661,6 +658,7 @@ def sdf(data, anisotropy=None, black_border=False, int parallel=0):
     dt -= edt(data == 0, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
     return dt
 
+
 def sdfsq(data, anisotropy=None, black_border=False, int parallel=0):
     """Squared SDF - same as sdf but with squared distances."""
     dt = edtsq(data, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
@@ -715,6 +713,7 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
     cdef Py_ssize_t ii
 
     arr = np.asarray(data)
+    _check_dims(arr.ndim)
     if arr.dtype == np.int32:
         # Same width — reinterpret without copy; label values are non-negative so
         # bit patterns are identical to the uint32 representation.
@@ -723,7 +722,6 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
     else:
         arr, is_fortran = _prepare_array(arr, np.uint32)
     nd = arr.ndim
-    _check_dims(nd)
 
     anis = _normalize_anisotropy(anisotropy, nd)
 
@@ -784,15 +782,13 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
             # Convert to C-order linear indices in the original arr.shape so the
             # caller gets consistent indices regardless of input memory order.
             if use_u32_feat:
-                raw = feat_u32.reshape(cpp_shape)
-                coords = np.unravel_index(raw, cpp_shape)
-                feat_conv = np.ravel_multi_index(coords[::-1], tuple(arr.shape)).astype(np.uint32)
-                return labels_out.reshape(cpp_shape).T, feat_conv.T
+                feat_raw = feat_u32
             else:
-                raw = feat_sz.reshape(cpp_shape)
-                coords = np.unravel_index(raw, cpp_shape)
-                feat_conv = np.ravel_multi_index(coords[::-1], tuple(arr.shape)).astype(np.uintp)
-                return labels_out.reshape(cpp_shape).T, feat_conv.T
+                feat_raw = feat_sz
+            coords = np.unravel_index(feat_raw.reshape(cpp_shape), cpp_shape)
+            feat_dtype = np.uint32 if use_u32_feat else np.uintp
+            feat_conv = np.ravel_multi_index(coords[::-1], tuple(arr.shape)).astype(feat_dtype)
+            return labels_out.reshape(cpp_shape).T, feat_conv.T
         if use_u32_feat:
             return labels_out.reshape(arr.shape), feat_u32.reshape(arr.shape)
         return labels_out.reshape(arr.shape), feat_sz.reshape(arr.shape)
@@ -835,7 +831,7 @@ def _env_int(name, default):
     except Exception:
         return default
 
-def _adaptive_thread_limit_nd(parallel, shape, requested=None):
+def _adaptive_thread_limit_nd(parallel, shape):
     """Cap thread count so each thread has enough work to justify its overhead.
 
     Two criteria, both must hold (whichever allows fewer threads wins):
@@ -860,12 +856,8 @@ def _adaptive_thread_limit_nd(parallel, shape, requested=None):
     longest = max(shape)
     lines = max(1, total // longest)
 
-    min_voxels = _env_int('EDT_ND_MIN_VOXELS_PER_THREAD', _ND_MIN_VOXELS_PER_THREAD_DEFAULT)
-    if min_voxels < 1:
-        min_voxels = _ND_MIN_VOXELS_PER_THREAD_DEFAULT
-    min_lines = _env_int('EDT_ND_MIN_LINES_PER_THREAD', _ND_MIN_LINES_PER_THREAD_DEFAULT)
-    if min_lines < 1:
-        min_lines = _ND_MIN_LINES_PER_THREAD_DEFAULT
+    min_voxels = max(1, _env_int('EDT_ND_MIN_VOXELS_PER_THREAD', _ND_MIN_VOXELS_PER_THREAD_DEFAULT))
+    min_lines  = max(1, _env_int('EDT_ND_MIN_LINES_PER_THREAD',  _ND_MIN_LINES_PER_THREAD_DEFAULT))
 
     cap = min(max(1, total // min_voxels), max(1, lines // min_lines))
     return max(1, min(parallel, cap))
