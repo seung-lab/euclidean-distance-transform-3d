@@ -56,13 +56,13 @@ inline ThreadPool& shared_pool_for(size_t threads) {
 // Per-pass thread cap: further limits threads based on work in a single EDT axis pass.
 // This is a C++-level inner cap applied per axis pass; the caller-supplied `desired`
 // is already capped at the Python level by _adaptive_thread_limit_nd.
-inline size_t compute_threads(size_t desired, size_t total_lines, size_t axis_length) {
+inline size_t compute_threads(size_t desired, size_t total_lines, size_t axis_len) {
     if (desired <= 1 || total_lines <= 1) return 1;
 
     size_t threads = std::min<size_t>(desired, total_lines);
 
     // Further cap based on work per pass (total_work = voxels along this axis sweep)
-    const size_t total_work = axis_length * total_lines;
+    const size_t total_work = axis_len * total_lines;
     if (total_work <= 60000) {
         threads = std::min<size_t>(threads, 4);
     } else if (total_work <= 120000) {
@@ -100,27 +100,27 @@ inline void dispatch_parallel(size_t threads, size_t total, size_t max_chunks, F
 // exposes for_each_line() to iterate every scanline in a slice range.
 struct AxisPassInfo {
     size_t num_other = 0;   // number of non-axis dims
-    size_t other_ext[32];   // extents of non-axis dims (in shape order)
-    size_t other_str[32];   // strides of non-axis dims
+    size_t other_extents[32];   // extents of non-axis dims (in shape order)
+    size_t other_strides[32];   // strides of non-axis dims
     size_t total_lines = 1; // product of all other extents
-    size_t first_ext  = 1;  // extent of first other dim  (parallelized over)
-    size_t first_str  = 0;  // stride of first other dim
-    size_t rest_prod  = 1;  // product of other_ext[1..num_other-1]
+    size_t first_extent  = 1;  // extent of first other dim  (parallelized over)
+    size_t first_stride  = 0;  // stride of first other dim
+    size_t rest_prod  = 1;  // product of other_extents[1..num_other-1]
 
     AxisPassInfo(const size_t* shape, const size_t* strides,
                  size_t dims, size_t axis) {
         for (size_t d = 0; d < dims; d++) {
             if (d == axis) continue;
-            other_ext[num_other] = shape[d];
-            other_str[num_other] = strides[d];
+            other_extents[num_other] = shape[d];
+            other_strides[num_other] = strides[d];
             total_lines *= shape[d];
             num_other++;
         }
         if (num_other > 0) {
-            first_ext = other_ext[0];
-            first_str = other_str[0];
+            first_extent = other_extents[0];
+            first_stride = other_strides[0];
             for (size_t d = 1; d < num_other; d++)
-                rest_prod *= other_ext[d];
+                rest_prod *= other_extents[d];
         }
     }
 
@@ -135,20 +135,20 @@ struct AxisPassInfo {
         if (num_other <= 1) {
             // Simple path: one scanline per first-dim row
             for (size_t i0 = begin; i0 < end; i0++)
-                fn(i0 * first_str);
+                fn(i0 * first_stride);
         } else {
             // ND path: iterate the inner dims with a multi-dim counter.
             // coords reused across i0 rows; invariant: all-zero at start of each row.
             size_t coords[32] = {};
             for (size_t i0 = begin; i0 < end; i0++) {
-                size_t base = i0 * first_str;
+                size_t base = i0 * first_stride;
                 for (size_t i = 0; i < rest_prod; i++) {
                     fn(base);
                     for (size_t d = 1; d < num_other; d++) {
                         coords[d]++;
-                        base += other_str[d];
-                        if (coords[d] < other_ext[d]) break;
-                        base -= coords[d] * other_str[d];
+                        base += other_strides[d];
+                        if (coords[d] < other_extents[d]) break;
+                        base -= coords[d] * other_strides[d];
                         coords[d] = 0;
                     }
                 }
@@ -266,7 +266,7 @@ inline void edt_pass0_from_graph_direct_parallel(
         });
     };
 
-    dispatch_parallel(threads, info.first_ext, threads, process_range);
+    dispatch_parallel(threads, info.first_extent, threads, process_range);
 }
 
 /*
@@ -477,7 +477,7 @@ inline void edt_pass_parabolic_from_graph_fused_parallel(
         });
     };
 
-    dispatch_parallel(threads, info.first_ext, threads, process_range);
+    dispatch_parallel(threads, info.first_extent, threads, process_range);
 }
 
 //-----------------------------------------------------------------------------
@@ -558,21 +558,21 @@ inline void build_connectivity_graph(
     if (voxels == 0) return;
 
     const int threads = std::max(1, parallel);
-    constexpr GRAPH_T FG = 0b00000001;  // Foreground bit (bit 0)
+    constexpr GRAPH_T fg_bit = 0b00000001;  // Foreground bit (bit 0)
 
     //-------------------------------------------------------------------------
     // 1D path: simple linear scan
     //-------------------------------------------------------------------------
     if (dims == 1) {
         const size_t n = shape[0];
-        constexpr GRAPH_T BIT = 0b00000010;  // axis 0 bit for 1D
+        constexpr GRAPH_T axis_bit = 0b00000010;  // axis 0 bit for 1D
 
         auto process_1d = [&](size_t begin, size_t end) {
             for (size_t i = begin; i < end; i++) {
                 const T label = labels[i];
-                GRAPH_T g = (label != 0) ? FG : 0;
+                GRAPH_T g = (label != 0) ? fg_bit : 0;
                 if (label != 0 && i + 1 < n && labels[i + 1] == label) {
-                    g |= BIT;
+                    g |= axis_bit;
                 }
                 graph[i] = g;
             }
@@ -662,7 +662,7 @@ inline void build_connectivity_graph(
                         for (int64_t i = 0; i < CHUNK; i++) {
                             const int64_t xi = x + i;
                             const T label = row[xi];
-                            GRAPH_T g = (label != 0) ? FG : 0;
+                            GRAPH_T g = (label != 0) ? fg_bit : 0;
                             if (label != 0) {
                                 if (xi + 1 < last_extent && row[xi + 1] == label) g |= last_bit;
                                 if (can_d0 && row_d0_next[xi] == label) g |= first_bit;
@@ -676,7 +676,7 @@ inline void build_connectivity_graph(
                 }
                 for (; x < last_extent; x++) {
                     const T label = row[x];
-                    GRAPH_T g = (label != 0) ? FG : 0;
+                    GRAPH_T g = (label != 0) ? fg_bit : 0;
                     if (label != 0) {
                         if (x + 1 < last_extent && row[x + 1] == label) g |= last_bit;
                         if (can_d0 && row_d0_next[x] == label) g |= first_bit;
