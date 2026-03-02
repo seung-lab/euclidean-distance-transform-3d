@@ -14,7 +14,7 @@
  *   O(N) per scanline, parallelized across scanlines.
  *   For edtsq_from_graph: step 1 is skipped (caller supplies the pre-built graph).
  *
- * See src/README.md for graph bit encoding, memory layout, and algorithm details.
+ * See src/README.mid for graph bit encoding, memory layout, and algorithm details.
  */
 
 #ifndef EDT_HPP
@@ -88,9 +88,9 @@ inline void dispatch_parallel(size_t threads, size_t total, size_t max_chunks, F
     ThreadPool& pool = shared_pool_for(threads);
     std::vector<std::future<void>> pending;
     pending.reserve(n_chunks);
-    for (size_t start = 0; start < total; start += chunk_sz) {
-        const size_t end = std::min(total, start + chunk_sz);
-        pending.push_back(pool.enqueue([=]() { work(start, end); }));
+    for (size_t begin = 0; begin < total; begin += chunk_sz) {
+        const size_t end = std::min(total, begin + chunk_sz);
+        pending.push_back(pool.enqueue([=]() { work(begin, end); }));
     }
     for (auto& f : pending) f.get();
 }
@@ -178,22 +178,20 @@ inline void squared_edt_1d_from_graph_direct(
 ) {
     if (n <= 0) return;
 
-    const float anis_sq = anisotropy * anisotropy;
+    const float wsq = anisotropy * anisotropy;
     int i = 0;
 
     while (i < n) {
-        const int64_t base_idx = i * stride;
-
         // Check if this voxel is background (graph == 0)
-        if (graph[base_idx] == 0) {
-            d[base_idx] = 0.0f;
+        if (graph[i * stride] == 0) {
+            d[i * stride] = 0.0f;
             i++;
             continue;
         }
 
         // Foreground: find segment extent using connectivity bits
         const int seg_start = i;
-        GRAPH_T edge = graph[base_idx];
+        GRAPH_T edge = graph[i * stride];
         i++;
 
         // Follow connectivity along axis
@@ -206,13 +204,13 @@ inline void squared_edt_1d_from_graph_direct(
 
         // Compute squared EDT for this segment.
         // Store squared distances directly to avoid a separate squaring pass.
-        const bool left_boundary = (seg_start > 0) || black_border;
-        const bool right_boundary = (i < n) || black_border;
+        const bool left_border = (seg_start > 0) || black_border;
+        const bool right_border = (i < n) || black_border;
 
-        // Forward pass: squared distance from left boundary
-        if (left_boundary) {
+        // Forward pass: squared distance from left border
+        if (left_border) {
             for (int k = 0; k < seg_len; k++) {
-                d[(seg_start + k) * stride] = anis_sq * sq(k + 1);
+                d[(seg_start + k) * stride] = wsq * sq(k + 1);
             }
         } else {
             const float inf = std::numeric_limits<float>::infinity();
@@ -221,10 +219,10 @@ inline void squared_edt_1d_from_graph_direct(
             }
         }
 
-        // Backward pass: take min with squared distance from right boundary
-        if (right_boundary) {
+        // Backward pass: take min with squared distance from right border
+        if (right_border) {
             for (int k = seg_len - 1; k >= 0; k--) {
-                const float v_sq = anis_sq * sq(seg_len - k);
+                const float v_sq = wsq * sq(seg_len - k);
                 const int64_t idx = (seg_start + k) * stride;
                 if (v_sq < d[idx]) {
                     d[idx] = v_sq;
@@ -253,7 +251,7 @@ inline void edt_pass0_from_graph_direct_parallel(
 ) {
     if (dims == 0) return;
     const int n = int(shape[axis]);
-    const int64_t stride_ax = strides[axis];
+    const int64_t axis_stride = strides[axis];
     if (n == 0) return;
 
     const AxisPassInfo info(shape, strides, dims, axis);
@@ -263,7 +261,7 @@ inline void edt_pass0_from_graph_direct_parallel(
         info.for_each_line(begin, end, [&](size_t base) {
             squared_edt_1d_from_graph_direct<GRAPH_T>(
                 graph + base, output + base,
-                n, stride_ax, axis_bit, anisotropy, black_border
+                n, axis_stride, axis_bit, anisotropy, black_border
             );
         });
     };
@@ -293,7 +291,7 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
     if (n <= 0) return;
 
     constexpr int SMALL_THRESHOLD = 8;
-    const float w2 = anisotropy * anisotropy;
+    const float wsq = anisotropy * anisotropy;
 
     // Fast path for small segments: O(n²) brute force
     auto process_small_run = [&](int start, int len, bool left_border, bool right_border) {
@@ -304,15 +302,15 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
         for (int j = 0; j < len; ++j) {
             float best = original[j];
             if (left_border) {
-                const float cap_left = w2 * sq(j + 1);
+                const float cap_left = wsq * sq(j + 1);
                 if (cap_left < best) best = cap_left;
             }
             if (right_border) {
-                const float cap_right = w2 * sq(len - j);
+                const float cap_right = wsq * sq(len - j);
                 if (cap_right < best) best = cap_right;
             }
             for (int q = 0; q < len; ++q) {
-                const float candidate = original[q] + w2 * sq(j - q);
+                const float candidate = original[q] + wsq * sq(j - q);
                 if (candidate < best) best = candidate;
             }
             f[(start + j) * stride] = best;
@@ -344,7 +342,7 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
         // Use double arithmetic to avoid catastrophic cancellation when
         // ff[b] - ff[a] is tiny relative to the large squared-distance values.
         auto intersect = [&](int a, int b) -> float {
-            const double d1 = double(b - a) * double(w2);
+            const double d1 = double(b - a) * double(wsq);
             return float((double(ff[b]) - double(ff[a]) + d1 * double(a + b)) / (2.0 * d1));
         };
 
@@ -365,36 +363,36 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
             ranges[k + 1] = std::numeric_limits<float>::infinity();
         }
 
-        // Output pass - use specialized loops to avoid per-iteration conditionals
+        // Output pass: use specialized loops to avoid per-iteration conditionals
         k = 0;
         if (left_border && right_border) {
             // Both borders: take min of border distances and parabolic result
             for (int i = 0; i < len; i++) {
                 while (ranges[k + 1] < i) k++;
-                const float result = w2 * sq(i - v[k]) + ff[v[k]];
-                const float envelope = w2 * std::fminf(sq(i + 1), sq(len - i));
-                f[(start + i) * stride] = std::fminf(envelope, result);
+                const float parabola = wsq * sq(i - v[k]) + ff[v[k]];
+                const float border   = wsq * std::fminf(sq(i + 1), sq(len - i));
+                f[(start + i) * stride] = std::fminf(border, parabola);
             }
         } else if (left_border) {
             for (int i = 0; i < len; i++) {
                 while (ranges[k + 1] < i) k++;
-                f[(start + i) * stride] = std::fminf(w2 * sq(i + 1), w2 * sq(i - v[k]) + ff[v[k]]);
+                f[(start + i) * stride] = std::fminf(wsq * sq(i + 1), wsq * sq(i - v[k]) + ff[v[k]]);
             }
         } else if (right_border) {
             for (int i = 0; i < len; i++) {
                 while (ranges[k + 1] < i) k++;
-                f[(start + i) * stride] = std::fminf(w2 * sq(len - i), w2 * sq(i - v[k]) + ff[v[k]]);
+                f[(start + i) * stride] = std::fminf(wsq * sq(len - i), wsq * sq(i - v[k]) + ff[v[k]]);
             }
         } else {
             // No borders - just parabolic result
             for (int i = 0; i < len; i++) {
                 while (ranges[k + 1] < i) k++;
-                f[(start + i) * stride] = w2 * sq(i - v[k]) + ff[v[k]];
+                f[(start + i) * stride] = wsq * sq(i - v[k]) + ff[v[k]];
             }
         }
     };
 
-    // Scan graph to find foreground segments - single loop
+    // Scan graph to find foreground segments (single pass)
     // Key insight: segment boundary when prev didn't connect forward (!(prev & axis_bit))
     // Background has graph=0, so axis_bit check handles both cases
 
@@ -417,7 +415,7 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
         if (!(prev_g & axis_bit)) {
             // Process segment [seg_start, i)
             const int seg_len = i - seg_start;
-            const bool left_border = (black_border || seg_start > 0);
+            const bool left_border = (seg_start > 0) || black_border;
             if (seg_len <= SMALL_THRESHOLD) {
                 process_small_run(seg_start, seg_len, left_border, true);
             } else {
@@ -435,7 +433,7 @@ inline void squared_edt_1d_parabolic_from_graph_ws(
 
     // Final segment
     const int seg_len = n - seg_start;
-    const bool left_border = (black_border || seg_start > 0);
+    const bool left_border = (seg_start > 0) || black_border;
     if (seg_len <= SMALL_THRESHOLD) {
         process_small_run(seg_start, seg_len, left_border, black_border);
     } else {
@@ -462,7 +460,7 @@ inline void edt_pass_parabolic_from_graph_fused_parallel(
 ) {
     if (dims == 0) return;
     const int n = int(shape[axis]);
-    const int64_t stride_ax = strides[axis];
+    const int64_t axis_stride = strides[axis];
     if (n == 0) return;
 
     const AxisPassInfo info(shape, strides, dims, axis);
@@ -473,7 +471,7 @@ inline void edt_pass_parabolic_from_graph_fused_parallel(
         std::vector<float> ff(n), ranges(n + 1);
         info.for_each_line(begin, end, [&](size_t base) {
             squared_edt_1d_parabolic_from_graph_ws<GRAPH_T>(
-                graph + base, output + base, n, stride_ax, axis_bit,
+                graph + base, output + base, n, axis_stride, axis_bit,
                 anisotropy, black_border, v.data(), ff.data(), ranges.data()
             );
         });
@@ -518,9 +516,10 @@ inline void edtsq_from_graph(
     // Pass 0: innermost axis (always bit 1 in the graph encoding)
     {
         const size_t axis = dims - 1;
+        const GRAPH_T axis_bit = GRAPH_T(1) << 1;  // innermost axis: bit 1 of graph encoding
         edt_pass0_from_graph_direct_parallel<GRAPH_T>(
             graph, output,
-            shape, strides, dims, axis, GRAPH_T(2),
+            shape, strides, dims, axis, axis_bit,
             anisotropy[axis], black_border, parallel
         );
     }
@@ -537,7 +536,7 @@ inline void edtsq_from_graph(
 }
 
 //-----------------------------------------------------------------------------
-// Build graph from labels - SINGLE-PASS, unified ND algorithm
+// Build connectivity graph from labels (single-pass, unified ND algorithm)
 //
 // 1D: dedicated linear scan.
 // 2D+: unified ND path (chunk-based background skipping on innermost dim).
@@ -565,20 +564,20 @@ inline void build_connectivity_graph(
     // 1D path: simple linear scan
     //-------------------------------------------------------------------------
     if (dims == 1) {
-        const int64_t n = shape[0];
+        const size_t n = shape[0];
         constexpr GRAPH_T BIT = 0b00000010;  // axis 0 bit for 1D
 
-        auto process_1d = [=](size_t start, size_t end) {
-            for (size_t i = start; i < end; i++) {
+        auto process_1d = [&](size_t begin, size_t end) {
+            for (size_t i = begin; i < end; i++) {
                 const T label = labels[i];
                 GRAPH_T g = (label != 0) ? FG : 0;
-                if (label != 0 && i + 1 < (size_t)n && labels[i + 1] == label) {
+                if (label != 0 && i + 1 < n && labels[i + 1] == label) {
                     g |= BIT;
                 }
                 graph[i] = g;
             }
         };
-        dispatch_parallel((size_t)threads, (size_t)n, (size_t)threads, process_1d);
+        dispatch_parallel((size_t)threads, n, (size_t)threads, process_1d);
         return;
     }
 
@@ -614,6 +613,7 @@ inline void build_connectivity_graph(
     }
 
     // Number of middle dimensions (dims between first and last); 0 for 2D, 1 for 3D, etc.
+    // Safe: dims >= 2 is guaranteed by the dims == 1 early return above.
     const size_t num_mid = dims - 2;
 
     constexpr int64_t CHUNK = 8;  // chunk size for background-skipping in inner loop
@@ -624,8 +624,8 @@ inline void build_connectivity_graph(
         const T* mid_neighbor_row[30];  // Neighbor row pointers for middle dims (max 30 for 32D)
         bool mid_can_check[30];         // Whether we can check each mid neighbor
         GRAPH_T mid_bits[30];           // Bit to set for each mid dimension (constant per call)
-        for (size_t md = 0; md < num_mid; md++)
-            mid_bits[md] = axis_bits[md + 1];
+        for (size_t mid = 0; mid < num_mid; mid++)
+            mid_bits[mid] = axis_bits[mid + 1];
 
         for (int64_t d0 = d0_start; d0 < d0_end; d0++) {
             const int64_t base0 = d0 * first_stride;
@@ -635,7 +635,7 @@ inline void build_connectivity_graph(
             int64_t mid_coords[30] = {0};  // For dims 1..dims-2 (max 30 for 32D)
             int64_t mid_offset = 0;
 
-            for (int64_t m = 0; m < mid_product; m++) {
+            for (int64_t mid = 0; mid < mid_product; mid++) {
                 const int64_t base = base0 + mid_offset;
 
                 // Precompute row pointers for tight inner loop
@@ -644,10 +644,10 @@ inline void build_connectivity_graph(
                 const T* row_d0_next = can_d0 ? (labels + base + first_stride) : nullptr;
 
                 // Precompute middle dimension neighbor info BEFORE inner loop
-                for (size_t md = 0; md < num_mid; md++) {
-                    const size_t d = md + 1;  // Actual dimension index
-                    mid_can_check[md] = (mid_coords[md] + 1 < shape64[d]);
-                    mid_neighbor_row[md] = mid_can_check[md] ? (labels + base + strides[d]) : nullptr;
+                for (size_t mid = 0; mid < num_mid; mid++) {
+                    const size_t d = mid + 1;  // Actual dimension index
+                    mid_can_check[mid] = (mid_coords[mid] + 1 < shape64[d]);
+                    mid_neighbor_row[mid] = mid_can_check[mid] ? (labels + base + strides[d]) : nullptr;
                 }
 
                 // Inner loop over last dimension with chunk-based background skipping
@@ -666,8 +666,8 @@ inline void build_connectivity_graph(
                             if (label != 0) {
                                 if (xi + 1 < last_extent && row[xi + 1] == label) g |= last_bit;
                                 if (can_d0 && row_d0_next[xi] == label) g |= first_bit;
-                                for (size_t md = 0; md < num_mid; md++) {
-                                    if (mid_can_check[md] && mid_neighbor_row[md][xi] == label) g |= mid_bits[md];
+                                for (size_t mid = 0; mid < num_mid; mid++) {
+                                    if (mid_can_check[mid] && mid_neighbor_row[mid][xi] == label) g |= mid_bits[mid];
                                 }
                             }
                             rowg[xi] = g;
@@ -680,17 +680,17 @@ inline void build_connectivity_graph(
                     if (label != 0) {
                         if (x + 1 < last_extent && row[x + 1] == label) g |= last_bit;
                         if (can_d0 && row_d0_next[x] == label) g |= first_bit;
-                        for (size_t md = 0; md < num_mid; md++) {
-                            if (mid_can_check[md] && mid_neighbor_row[md][x] == label) g |= mid_bits[md];
+                        for (size_t mid = 0; mid < num_mid; mid++) {
+                            if (mid_can_check[mid] && mid_neighbor_row[mid][x] == label) g |= mid_bits[mid];
                         }
                     }
                     rowg[x] = g;
                 }
 
-                // Increment mid coords; skip on last m iteration
+                // Increment mid coords; skip on last mid iteration
                 // (mid_coords is re-initialized for each d0 row, so
                 //  the final increment before that reset is always wasted)
-                if (m + 1 < mid_product) {
+                if (mid + 1 < mid_product) {
                     for (size_t d = dims - 2; d >= 1; d--) {
                         mid_coords[d - 1]++;
                         mid_offset += strides[d];
@@ -704,7 +704,7 @@ inline void build_connectivity_graph(
     };
 
     dispatch_parallel((size_t)threads, (size_t)first_extent, (size_t)threads,
-        [&](size_t s, size_t e) { process_dim0_range((int64_t)s, (int64_t)e); });
+        [&](size_t begin, size_t end) { process_dim0_range((int64_t)begin, (int64_t)end); });
 }
 
 //-----------------------------------------------------------------------------
@@ -756,7 +756,7 @@ inline void edtsq_from_labels_fused(
 // Parabolic EDT with argmin tracking (for expand_labels/feature_transform)
 //-----------------------------------------------------------------------------
 
-// Workspace arrays (v_ws[n], ff_ws[n], ranges_ws[n+1]) must be caller-allocated.
+// Workspace arrays (v[n], ff[n], ranges[n+1]) must be caller-allocated.
 // Callers should allocate once per chunk and reuse across scanlines to avoid
 // repeated heap churn inside tight per-line loops.
 // Workspace does not need to be initialized by the caller; this function sets
@@ -768,26 +768,23 @@ inline void squared_edt_1d_parabolic_with_arg_stride(
     const float anisotropy,
     const bool black_border,
     size_t* arg_out,
-    int* v_ws,
-    float* ff_ws,
-    float* ranges_ws
+    int* v,
+    float* ff,
+    float* ranges
 ) {
     if (n == 0) return;
     const int nn = int(n);
-    const float w2 = anisotropy * anisotropy;
+    const float wsq = anisotropy * anisotropy;
 
     int k = 0;
-    int* v = v_ws;
-    float* ff = ff_ws;
-    float* ranges = ranges_ws;
-    v[0] = 0;  // invariant: envelope starts at position 0
+    v[0] = 0;  // seed the lower envelope with the parabola at position 0
     for (int i = 0; i < nn; i++) ff[i] = f[i * stride];
     ranges[0] = -std::numeric_limits<float>::infinity();
     ranges[1] = std::numeric_limits<float>::infinity();
 
     // Use double arithmetic for the same cancellation-resistance as process_large_run.
     auto intersect = [&](int a, int b) -> float {
-        const double d1 = double(b - a) * double(w2);
+        const double d1 = double(b - a) * double(wsq);
         return float((double(ff[b]) - double(ff[a]) + d1 * double(a + b)) / (2.0 * d1));
     };
 
@@ -809,15 +806,15 @@ inline void squared_edt_1d_parabolic_with_arg_stride(
     if (black_border) {
         for (int i = 0; i < nn; i++) {
             while (ranges[k + 1] < i) k++;
-            const float parabola = w2 * sq(i - v[k]) + ff[v[k]];
-            const float border   = w2 * std::fminf(sq(i + 1), sq(nn - i));
+            const float parabola = wsq * sq(i - v[k]) + ff[v[k]];
+            const float border   = wsq * std::fminf(sq(i + 1), sq(nn - i));
             f[i * stride] = std::fminf(border, parabola);
             arg_out[i] = v[k];
         }
     } else {
         for (int i = 0; i < nn; i++) {
             while (ranges[k + 1] < i) k++;
-            f[i * stride] = w2 * sq(i - v[k]) + ff[v[k]];
+            f[i * stride] = wsq * sq(i - v[k]) + ff[v[k]];
             arg_out[i] = v[k];
         }
     }
@@ -829,7 +826,7 @@ inline void squared_edt_1d_parabolic_with_arg_stride(
 
 template <typename INDEX=size_t>
 inline void _nd_expand_init_bases(
-    const uint8_t* seeds,
+    const uint8_t* seed_mask,
     float* dist,
     const size_t* bases,
     const size_t num_lines,
@@ -843,31 +840,31 @@ inline void _nd_expand_init_bases(
     if (n == 0 || num_lines == 0) return;
     const int threads = std::max(1, parallel);
 
-    auto process_chunk = [&](size_t start, size_t end) {
-        std::vector<size_t> arg(n);
-        std::vector<int>   v_ws(n);
-        std::vector<float> ff_ws(n), ranges_ws(n + 1);
-        for (size_t i = start; i < end; ++i) {
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<size_t> arg_out(n);
+        std::vector<int>   v(n);
+        std::vector<float> ff(n), ranges(n + 1);
+        for (size_t i = begin; i < end; ++i) {
             const size_t base = bases[i];
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) {
-                const bool seeded = (seeds[base + j * s] != 0);
+                const bool seeded = (seed_mask[base + j * s] != 0);
                 dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);
                 any_nonseed |= (!seeded);
             }
-            if (any_nonseed) {
-                squared_edt_1d_parabolic_with_arg_stride(
-                    dist + base, n, s, anis,
-                    black_border,
-                    arg.data(),
-                    v_ws.data(), ff_ws.data(), ranges_ws.data());
-                for (size_t j = 0; j < n; ++j)
-                    feat_out[base + j * s] = (INDEX)(base + arg[j] * s);
-            } else {
+            if (!any_nonseed) {
                 // All seeds: each position is its own nearest seed
                 for (size_t j = 0; j < n; ++j)
                     feat_out[base + j * s] = (INDEX)(base + j * s);
+                continue;
             }
+            squared_edt_1d_parabolic_with_arg_stride(
+                dist + base, n, s, anis,
+                black_border,
+                arg_out.data(),
+                v.data(), ff.data(), ranges.data());
+            for (size_t j = 0; j < n; ++j)
+                feat_out[base + j * s] = (INDEX)(base + arg_out[j] * s);
         }
     };
 
@@ -883,30 +880,30 @@ inline void _nd_expand_parabolic_bases(
     const size_t s,
     const float anis,
     const bool black_border,
-    INDEX* feat,
+    INDEX* feat_out,
     const int parallel
 ) {
     if (n == 0 || num_lines == 0) return;
     const int threads = std::max(1, parallel);
 
-    auto process_chunk = [&](size_t start, size_t end) {
-        std::vector<size_t> arg(n);
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<size_t> arg_out(n);
         std::vector<INDEX> feat_line(n);
-        std::vector<int>   v_ws(n);
-        std::vector<float> ff_ws(n), ranges_ws(n + 1);
-        for (size_t i = start; i < end; ++i) {
+        std::vector<int>   v(n);
+        std::vector<float> ff(n), ranges(n + 1);
+        for (size_t i = begin; i < end; ++i) {
             const size_t base = bases[i];
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) any_nonseed |= (dist[base + j * s] != 0.0f);
-            if (!any_nonseed) continue;  // all seeds: dist=0 everywhere, feat already holds self-references
-            for (size_t j = 0; j < n; ++j) feat_line[j] = feat[base + j * s];
+            if (!any_nonseed) continue;  // All seeds: dist=0 everywhere, feat_out already holds self-references
+            for (size_t j = 0; j < n; ++j) feat_line[j] = feat_out[base + j * s];
             squared_edt_1d_parabolic_with_arg_stride(
                 dist + base, n, s, anis,
                 black_border,
-                arg.data(),
-                v_ws.data(), ff_ws.data(), ranges_ws.data());
+                arg_out.data(),
+                v.data(), ff.data(), ranges.data());
             for (size_t j = 0; j < n; ++j) {
-                feat[base + j * s] = feat_line[arg[j]];
+                feat_out[base + j * s] = feat_line[arg_out[j]];
             }
         }
     };
@@ -915,7 +912,7 @@ inline void _nd_expand_parabolic_bases(
 }
 
 inline void _nd_expand_init_labels_bases(
-    const uint8_t* seeds,
+    const uint8_t* seed_mask,
     float* dist,
     const size_t* bases,
     const size_t num_lines,
@@ -924,37 +921,37 @@ inline void _nd_expand_init_labels_bases(
     const float anis,
     const bool black_border,
     const uint32_t* labels_in,
-    uint32_t* label_out,
+    uint32_t* labels_out,
     const int parallel
 ) {
     if (n == 0 || num_lines == 0) return;
     const int threads = std::max(1, parallel);
 
-    auto process_chunk = [&](size_t start, size_t end) {
-        std::vector<size_t> arg(n);
-        std::vector<int>   v_ws(n);
-        std::vector<float> ff_ws(n), ranges_ws(n + 1);
-        for (size_t i = start; i < end; ++i) {
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<size_t> arg_out(n);
+        std::vector<int>   v(n);
+        std::vector<float> ff(n), ranges(n + 1);
+        for (size_t i = begin; i < end; ++i) {
             const size_t base = bases[i];
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) {
-                const bool seeded = (seeds[base + j * s] != 0);
+                const bool seeded = (seed_mask[base + j * s] != 0);
                 dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);
                 any_nonseed |= (!seeded);
             }
-            if (any_nonseed) {
-                squared_edt_1d_parabolic_with_arg_stride(
-                    dist + base, n, s, anis,
-                    black_border,
-                    arg.data(),
-                    v_ws.data(), ff_ws.data(), ranges_ws.data());
-                for (size_t j = 0; j < n; ++j)
-                    label_out[base + j * s] = labels_in[base + arg[j] * s];
-            } else {
+            if (!any_nonseed) {
                 // All seeds: copy labels unchanged (each position is its own nearest seed)
                 for (size_t j = 0; j < n; ++j)
-                    label_out[base + j * s] = labels_in[base + j * s];
+                    labels_out[base + j * s] = labels_in[base + j * s];
+                continue;
             }
+            squared_edt_1d_parabolic_with_arg_stride(
+                dist + base, n, s, anis,
+                black_border,
+                arg_out.data(),
+                v.data(), ff.data(), ranges.data());
+            for (size_t j = 0; j < n; ++j)
+                labels_out[base + j * s] = labels_in[base + arg_out[j] * s];
         }
     };
 
@@ -970,35 +967,33 @@ inline void _nd_expand_parabolic_labels_bases(
     const float anis,
     const bool black_border,
     const uint32_t* labels_in,
-    uint32_t* label_out,
+    uint32_t* labels_out,
     const int parallel
 ) {
     if (n == 0 || num_lines == 0) return;
     const int threads = std::max(1, parallel);
 
-    auto process_chunk = [&](size_t start, size_t end) {
-        std::vector<size_t> arg(n);
-        std::vector<int>   v_ws(n);
-        std::vector<float> ff_ws(n), ranges_ws(n + 1);
-        for (size_t i = start; i < end; ++i) {
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<size_t> arg_out(n);
+        std::vector<int>   v(n);
+        std::vector<float> ff(n), ranges(n + 1);
+        for (size_t i = begin; i < end; ++i) {
             const size_t base = bases[i];
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) any_nonseed |= (dist[base + j * s] != 0.0f);
-            if (any_nonseed) {
-                squared_edt_1d_parabolic_with_arg_stride(
-                    dist + base, n, s, anis,
-                    black_border,
-                    arg.data(),
-                    v_ws.data(), ff_ws.data(), ranges_ws.data());
-                for (size_t j = 0; j < n; ++j) {
-                    label_out[base + j * s] = labels_in[base + arg[j] * s];
-                }
-            } else {
-                // All seeds: copy labels unchanged (self-reference)
-                for (size_t j = 0; j < n; ++j) {
-                    label_out[base + j * s] = labels_in[base + j * s];
-                }
+            if (!any_nonseed) {
+                // All seeds: copy labels unchanged (each position is its own nearest seed)
+                for (size_t j = 0; j < n; ++j)
+                    labels_out[base + j * s] = labels_in[base + j * s];
+                continue;
             }
+            squared_edt_1d_parabolic_with_arg_stride(
+                dist + base, n, s, anis,
+                black_border,
+                arg_out.data(),
+                v.data(), ff.data(), ranges.data());
+            for (size_t j = 0; j < n; ++j)
+                labels_out[base + j * s] = labels_in[base + arg_out[j] * s];
         }
     };
 
@@ -1026,8 +1021,8 @@ inline void _expand_fill_sort_ax_ord(
     const size_t dims
 ) {
     size_t op = 0;
-    for (size_t ii = 0; ii < dims; ++ii)
-        if (ii != exclude_ax) ax_ord[op++] = ii;
+    for (size_t d = 0; d < dims; ++d)
+        if (d != exclude_ax) ax_ord[op++] = d;
     for (size_t i = 1; i < op; ++i) {
         size_t key = ax_ord[i];
         int j = (int)i - 1;
@@ -1065,8 +1060,8 @@ inline void _expand_compute_bases(
 ) {
     size_t coords[32] = {};
     size_t base = 0;
-    for (size_t il = 0; il < num_lines; ++il) {
-        bases[il] = base;
+    for (size_t line = 0; line < num_lines; ++line) {
+        bases[line] = base;
         for (size_t j = 0; j < ord_len; ++j) {
             coords[j]++;
             base += strides[ax_ord[j]];
@@ -1074,6 +1069,18 @@ inline void _expand_compute_bases(
             base -= coords[j] * strides[ax_ord[j]];
             coords[j] = 0;
         }
+    }
+}
+
+// Convert a label array into parallel boolean-seed and uint32-label flat arrays.
+template <typename T>
+inline void _expand_build_seed_arrays(
+    const T* data, const size_t total,
+    uint8_t* seed_mask, uint32_t* labels_flat
+) {
+    for (size_t i = 0; i < total; ++i) {
+        seed_mask[i]  = (data[i] != 0) ? 1 : 0;
+        labels_flat[i] = (uint32_t)data[i];
     }
 }
 
@@ -1143,15 +1150,15 @@ inline void expand_labels_fused(
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
-            const size_t si = seeds[std::min(k, seeds.size() - 1)];
+            const size_t seed_idx = seeds[std::min(k, seeds.size() - 1)];
             if (black_border) {
                 // Border acts as a virtual seed at distance min(i+1, n-i).
                 // If the border is at least as close as the real seed, label = 0.
                 const size_t border_dist = std::min(i + 1, n - i);
-                const size_t seed_dist   = (i >= si) ? (i - si) : (si - i);
+                const size_t seed_dist   = (i >= seed_idx) ? (i - seed_idx) : (seed_idx - i);
                 if (border_dist <= seed_dist) { labels_out[i] = 0; continue; }
             }
-            labels_out[i] = (uint32_t)data[si];
+            labels_out[i] = (uint32_t)data[seed_idx];
         }
         return;
     }
@@ -1168,34 +1175,30 @@ inline void expand_labels_fused(
     std::vector<uint32_t> lab_prev(total);
     std::vector<uint32_t> lab_next(total);
 
-    // Build seeds_flat and labels_flat from data
-    std::vector<uint8_t>  seeds_flat(total);
+    std::vector<uint8_t>  seed_mask(total);
     std::vector<uint32_t> labels_flat(total);
-    for (size_t i = 0; i < total; ++i) {
-        seeds_flat[i]  = (data[i] != 0) ? 1 : 0;
-        labels_flat[i] = (uint32_t)data[i];
-    }
+    _expand_build_seed_arrays(data, total, seed_mask.data(), labels_flat.data());
 
     size_t ax_ord[32];  // stack; dims-1 entries used per axis pass
-    for (size_t a = 0; a < dims; ++a) {
-        const size_t ax  = paxes[a];
-        const size_t n0  = shape[ax];
-        const size_t s0  = strides[ax];
-        const size_t lines = total / n0;
-        const float  anis  = anisotropy[ax];
+    for (size_t pass = 0; pass < dims; ++pass) {
+        const size_t axis      = paxes[pass];
+        const size_t axis_len  = shape[axis];
+        const size_t axis_stride = strides[axis];
+        const size_t lines = total / axis_len;
+        const float  anis  = anisotropy[axis];
 
-        _expand_fill_sort_ax_ord(ax_ord, ax, shape, strides, dims);
+        _expand_fill_sort_ax_ord(ax_ord, axis, shape, strides, dims);
         _expand_compute_bases(bases.data(), ax_ord, shape, strides, dims - 1, lines);
 
-        if (a == 0) {
+        if (pass == 0) {
             _nd_expand_init_labels_bases(
-                seeds_flat.data(), dist.data(), bases.data(),
-                lines, n0, s0, anis, black_border,
+                seed_mask.data(), dist.data(), bases.data(),
+                lines, axis_len, axis_stride, anis, black_border,
                 labels_flat.data(), lab_prev.data(), parallel);
         } else {
             _nd_expand_parabolic_labels_bases(
                 dist.data(), bases.data(),
-                lines, n0, s0, anis, black_border,
+                lines, axis_len, axis_stride, anis, black_border,
                 lab_prev.data(), lab_next.data(), parallel);
             std::swap(lab_prev, lab_next);
         }
@@ -1232,20 +1235,20 @@ inline void expand_labels_features_fused(
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
-            const size_t si = seeds[std::min(k, seeds.size() - 1)];
+            const size_t seed_idx = seeds[std::min(k, seeds.size() - 1)];
             if (black_border) {
                 // Border acts as a virtual seed at distance min(i+1, n-i).
                 // If the border is at least as close as the real seed, label = 0.
                 const size_t border_dist = std::min(i + 1, n - i);
-                const size_t seed_dist   = (i >= si) ? (i - si) : (si - i);
+                const size_t seed_dist   = (i >= seed_idx) ? (i - seed_idx) : (seed_idx - i);
                 if (border_dist <= seed_dist) {
                     labels_out[i]   = 0;
-                    features_out[i] = INDEX(si);  // nearest real seed, same as ND path
+                    features_out[i] = INDEX(seed_idx);  // nearest real seed, same as ND path
                     continue;
                 }
             }
-            labels_out[i]   = (uint32_t)data[si];
-            features_out[i] = INDEX(si);
+            labels_out[i]   = (uint32_t)data[seed_idx];
+            features_out[i] = INDEX(seed_idx);
         }
         return;
     }
@@ -1256,36 +1259,33 @@ inline void expand_labels_features_fused(
     _expand_nd_compute_layout(shape, dims, strides, paxes, total, max_lines);
     if (total == 0) return;
 
+    // Heap allocations
     std::vector<float>    dist(total);
     std::vector<size_t>   bases(max_lines);
-    std::vector<uint8_t>  seeds_flat(total);
+    std::vector<uint8_t>  seed_mask(total);
     std::vector<uint32_t> labels_flat(total);
+    _expand_build_seed_arrays(data, total, seed_mask.data(), labels_flat.data());
 
-    for (size_t i = 0; i < total; ++i) {
-        seeds_flat[i]  = (data[i] != 0) ? 1 : 0;
-        labels_flat[i] = (uint32_t)data[i];
-    }
+    size_t ax_ord[32];  // stack; dims-1 entries used per axis pass
+    for (size_t pass = 0; pass < dims; ++pass) {
+        const size_t axis      = paxes[pass];
+        const size_t axis_len  = shape[axis];
+        const size_t axis_stride = strides[axis];
+        const size_t lines = total / axis_len;
+        const float  anis  = anisotropy[axis];
 
-    size_t ax_ord[32];
-    for (size_t a = 0; a < dims; ++a) {
-        const size_t ax  = paxes[a];
-        const size_t n0  = shape[ax];
-        const size_t s0  = strides[ax];
-        const size_t lines = total / n0;
-        const float  anis  = anisotropy[ax];
-
-        _expand_fill_sort_ax_ord(ax_ord, ax, shape, strides, dims);
+        _expand_fill_sort_ax_ord(ax_ord, axis, shape, strides, dims);
         _expand_compute_bases(bases.data(), ax_ord, shape, strides, dims - 1, lines);
 
-        if (a == 0) {
+        if (pass == 0) {
             _nd_expand_init_bases<INDEX>(
-                seeds_flat.data(), dist.data(), bases.data(),
-                lines, n0, s0, anis, black_border,
+                seed_mask.data(), dist.data(), bases.data(),
+                lines, axis_len, axis_stride, anis, black_border,
                 features_out, parallel);
         } else {
             _nd_expand_parabolic_bases<INDEX>(
                 dist.data(), bases.data(),
-                lines, n0, s0, anis, black_border,
+                lines, axis_len, axis_stride, anis, black_border,
                 features_out, parallel);
         }
     }

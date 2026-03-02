@@ -14,8 +14,7 @@ Key methods:
   build_graph - build connectivity graph from labels
 
 Additional utilities:
-  feature_transform, expand_labels, sdf  (defined here, ported from barrier impl)
-  each  (imported from edt_legacy)  # LEGACY COMPAT
+  feature_transform, expand_labels, sdf, each
 
 Programmatic configuration:
   edt.configure(...) - set threading parameters in-process (see configure docstring)
@@ -58,6 +57,8 @@ _ND_CONFIG = {}
 
 
 def _check_dims(nd):
+    if nd == 0:
+        raise ValueError("EDT requires at least 1 dimension (got a 0-dimensional scalar).")
     if nd > 32:
         raise ValueError(f"EDT supports at most 32 dimensions, got {nd}.")
 
@@ -214,6 +215,7 @@ def _voxel_graph_to_nd(voxel_graph, labels=None):
     (any voxel with connectivity is foreground).
     """
     ndim = voxel_graph.ndim
+    _check_dims(ndim)
     if labels is not None and voxel_graph.shape != labels.shape:
         raise ValueError("voxel_graph shape must match labels")
 
@@ -306,8 +308,8 @@ def edtsq(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_gr
 
     # For F-contiguous arrays, reverse shape and anisotropy so C++ sees a
     # C-order array of reversed shape — same memory, no copy.
-    cpp_shape = tuple(reversed(shape)) if is_fortran else shape
-    cpp_anis  = tuple(reversed(anisotropy)) if is_fortran else anisotropy
+    cpp_shape = shape[::-1] if is_fortran else shape
+    cpp_anis  = anisotropy[::-1] if is_fortran else anisotropy
 
     if os.environ.get('EDT_ND_PROFILE'):
         global _nd_profile_last
@@ -411,6 +413,7 @@ def edtsq_graph(graph, anisotropy=None, black_border=False, parallel=0):
     """
     cdef int nd = graph.ndim
     cdef tuple shape = graph.shape
+    _check_dims(nd)
 
     graph_dtype = _graph_dtype(nd)
     # Connectivity graphs encode direction-specific edge bits per axis.
@@ -512,7 +515,7 @@ def build_graph(labels, parallel=0):
     labels = np.asarray(labels)
     _check_dims(labels.ndim)
     dtype = _resolve_label_dtype(labels)
-    labels = np.ascontiguousarray(labels, dtype=labels.dtype)
+    labels = np.ascontiguousarray(labels)
     if labels.dtype != dtype:
         labels = labels.view(dtype)
     cdef int nd = labels.ndim
@@ -696,7 +699,7 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
     features : ndarray, optional
         If return_features=True, the nearest-seed linear indices.
     """
-    cdef Py_ssize_t nd
+    cdef int nd
     cdef size_t total
     cdef size_t* cshape
     cdef float* canis
@@ -710,7 +713,7 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
     cdef np.ndarray[np.uint32_t, ndim=1] labels_out
     cdef np.ndarray[np.uint32_t, ndim=1] feat_u32
     cdef np.ndarray feat_sz
-    cdef Py_ssize_t ii
+    cdef int i
 
     arr = np.asarray(data)
     _check_dims(arr.ndim)
@@ -727,8 +730,8 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
 
     # For F-contiguous arrays, reverse shape and anisotropy so C++ sees a
     # C-order array of reversed shape — same memory, no copy.
-    cpp_shape = tuple(reversed(arr.shape)) if is_fortran else tuple(arr.shape)
-    cpp_anis  = tuple(reversed(anis)) if is_fortran else anis
+    cpp_shape = arr.shape[::-1] if is_fortran else arr.shape
+    cpp_anis  = anis[::-1] if is_fortran else anis
 
     parallel = _resolve_parallel(parallel)
 
@@ -739,13 +742,13 @@ def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, ret
     if cshape == NULL or canis == NULL:
         if cshape != NULL: free(cshape)
         if canis != NULL: free(canis)
-        raise MemoryError('Allocation failure in expand_labels')
+        raise MemoryError('Allocation failure')
 
     total = 1
-    for ii in range(nd):
-        cshape[ii] = <size_t>cpp_shape[ii]
-        canis[ii] = <float>cpp_anis[ii]
-        total *= cshape[ii]
+    for i in range(nd):
+        cshape[i] = <size_t>cpp_shape[i]
+        canis[i] = <float>cpp_anis[i]
+        total *= cshape[i]
 
     labels_out = np.empty((total,), dtype=np.uint32)
     lout_p = <uint32_t*> np.PyArray_DATA(labels_out)
@@ -894,9 +897,9 @@ def feature_transform(data, anisotropy=None, black_border=False, int parallel=1,
             return np.zeros_like(arr, dtype=np.uint32), np.zeros_like(arr, dtype=np.float32)
         return np.zeros_like(arr, dtype=np.uint32)
 
-    dims = arr.ndim
-    _check_dims(dims)
-    anis = _normalize_anisotropy(anisotropy, dims)
+    nd = arr.ndim
+    _check_dims(nd)
+    anis = _normalize_anisotropy(anisotropy, nd)
     parallel = _resolve_parallel(parallel)
 
     labels, feats = expand_labels(arr, anisotropy=anis, black_border=black_border, parallel=parallel, return_features=True)
