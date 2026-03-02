@@ -616,6 +616,8 @@ inline void build_connectivity_graph(
     // Number of middle dimensions (dims between first and last); 0 for 2D, 1 for 3D, etc.
     const size_t num_mid = dims - 2;
 
+    constexpr int64_t CHUNK = 8;  // chunk size for background-skipping in inner loop
+
     // Process range of first dimension (outer loop) for 2D+
     auto process_dim0_range = [&](int64_t d0_start, int64_t d0_end) {
         // Thread-local storage for precomputed middle dimension info
@@ -649,10 +651,9 @@ inline void build_connectivity_graph(
                 }
 
                 // Inner loop over last dimension with chunk-based background skipping
-                constexpr int64_t CHUNK = 8;
                 int64_t x = 0;
-                const int64_t last_chunked = last_extent - (last_extent % CHUNK);
-                for (; x < last_chunked; x += CHUNK) {
+                const int64_t chunk_end = last_extent - (last_extent % CHUNK);
+                for (; x < chunk_end; x += CHUNK) {
                     T any_fg = row[x]   | row[x+1] | row[x+2] | row[x+3] |
                                row[x+4] | row[x+5] | row[x+6] | row[x+7];
                     if (any_fg == 0) {
@@ -981,9 +982,9 @@ inline void _nd_expand_parabolic_labels_bases(
         std::vector<float> ff_ws(n), ranges_ws(n + 1);
         for (size_t i = start; i < end; ++i) {
             const size_t base = bases[i];
-            bool any_nonzero = false;
-            for (size_t j = 0; j < n; ++j) any_nonzero |= (dist[base + j * s] != 0.0f);
-            if (any_nonzero) {
+            bool any_nonseed = false;
+            for (size_t j = 0; j < n; ++j) any_nonseed |= (dist[base + j * s] != 0.0f);
+            if (any_nonseed) {
                 squared_edt_1d_parabolic_with_arg_stride(
                     dist + base, n, s, anis,
                     black_border,
@@ -1076,6 +1077,46 @@ inline void _expand_compute_bases(
     }
 }
 
+// Collect seed positions and pairwise midpoints for a 1D expand_labels pass.
+// Returns false (seeds/mids left empty) when no seeds exist.
+template <typename T>
+inline bool _expand_1d_setup(
+    const T* data, const size_t n,
+    std::vector<size_t>& seeds, std::vector<double>& mids
+) {
+    for (size_t i = 0; i < n; ++i)
+        if (data[i] != 0) seeds.push_back(i);
+    if (seeds.empty()) return false;
+    mids.resize(seeds.size() - 1);
+    for (size_t i = 0; i < mids.size(); ++i)
+        mids[i] = (seeds[i] + seeds[i + 1]) * 0.5;
+    return true;
+}
+
+// Compute C-order strides, axis processing order, total element count,
+// and maximum scanline count for expand_labels ND passes.
+// strides[] and paxes[] must be caller-allocated arrays of size >= dims.
+// If total == 0, max_lines is set to 0 and strides/paxes are left uninitialized.
+inline void _expand_nd_compute_layout(
+    const size_t* shape, const size_t dims,
+    size_t* strides, size_t* paxes,
+    size_t& total, size_t& max_lines
+) {
+    total = 1;
+    size_t s = 1;
+    for (size_t d = dims; d-- > 0;) {
+        strides[d] = s;
+        s *= shape[d];
+        total *= shape[d];
+    }
+    if (total == 0) { max_lines = 0; return; }
+    _expand_sort_axes(paxes, shape, strides, dims);
+    size_t min_shape = shape[0];
+    for (size_t d = 1; d < dims; ++d)
+        if (shape[d] < min_shape) min_shape = shape[d];
+    max_lines = total / min_shape;  // max scanlines over all axis passes
+}
+
 // labels-only mode
 template <typename T>
 inline void expand_labels_fused(
@@ -1093,18 +1134,12 @@ inline void expand_labels_fused(
     if (dims == 1) {
         const size_t n = shape[0];
         if (n == 0) return;
-        // Find seeds
         std::vector<size_t> seeds;
-        for (size_t i = 0; i < n; ++i)
-            if (data[i] != 0) seeds.push_back(i);
-        if (seeds.empty()) {
+        std::vector<double> mids;
+        if (!_expand_1d_setup(data, n, seeds, mids)) {
             std::fill(labels_out, labels_out + n, uint32_t(0));
             return;
         }
-        // Midpoints between adjacent real seeds
-        std::vector<double> mids(seeds.size() > 1 ? seeds.size() - 1 : 0);
-        for (size_t i = 0; i < mids.size(); ++i)
-            mids[i] = (seeds[i] + seeds[i + 1]) * 0.5;
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
@@ -1122,26 +1157,10 @@ inline void expand_labels_fused(
     }
 
     // ND path
-    size_t total = 1;
-    size_t strides[32];
-    {
-        size_t s = 1;
-        for (size_t d = dims; d-- > 0;) {
-            strides[d] = s;
-            s *= shape[d];
-            total *= shape[d];
-        }
-    }
+    size_t total, max_lines;
+    size_t strides[32], paxes[32];
+    _expand_nd_compute_layout(shape, dims, strides, paxes, total, max_lines);
     if (total == 0) return;
-
-    size_t paxes[32];
-    _expand_sort_axes(paxes, shape, strides, dims);
-
-    // max_lines = total / smallest axis size (that axis has the most scanlines)
-    size_t min_shape = shape[0];
-    for (size_t d = 1; d < dims; ++d)
-        if (shape[d] < min_shape) min_shape = shape[d];
-    const size_t max_lines = total / min_shape;
 
     // Heap allocations
     std::vector<float>    dist(total);
@@ -1204,17 +1223,12 @@ inline void expand_labels_features_fused(
         const size_t n = shape[0];
         if (n == 0) return;
         std::vector<size_t> seeds;
-        for (size_t i = 0; i < n; ++i)
-            if (data[i] != 0) seeds.push_back(i);
-        if (seeds.empty()) {
+        std::vector<double> mids;
+        if (!_expand_1d_setup(data, n, seeds, mids)) {
             std::fill(labels_out, labels_out + n, uint32_t(0));
             std::fill(features_out, features_out + n, INDEX(0));
             return;
         }
-        // Midpoints between adjacent real seeds
-        std::vector<double> mids(seeds.size() > 1 ? seeds.size() - 1 : 0);
-        for (size_t i = 0; i < mids.size(); ++i)
-            mids[i] = (seeds[i] + seeds[i + 1]) * 0.5;
         size_t k = 0;
         for (size_t i = 0; i < n; ++i) {
             while (k < mids.size() && (double)i >= mids[k]) ++k;
@@ -1237,25 +1251,10 @@ inline void expand_labels_features_fused(
     }
 
     // ND path
-    size_t total = 1;
-    size_t strides[32];
-    {
-        size_t s = 1;
-        for (size_t d = dims; d-- > 0;) {
-            strides[d] = s;
-            s *= shape[d];
-            total *= shape[d];
-        }
-    }
+    size_t total, max_lines;
+    size_t strides[32], paxes[32];
+    _expand_nd_compute_layout(shape, dims, strides, paxes, total, max_lines);
     if (total == 0) return;
-
-    size_t paxes[32];
-    _expand_sort_axes(paxes, shape, strides, dims);
-
-    size_t min_shape = shape[0];
-    for (size_t d = 1; d < dims; ++d)
-        if (shape[d] < min_shape) min_shape = shape[d];
-    const size_t max_lines = total / min_shape;
 
     std::vector<float>    dist(total);
     std::vector<size_t>   bases(max_lines);

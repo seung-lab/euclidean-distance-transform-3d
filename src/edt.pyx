@@ -234,7 +234,6 @@ def _voxel_graph_to_nd(voxel_graph, labels=None):
     # Use minimal dtype based on ndim (not input dtype) to avoid large intermediates
     mask_dtype = _graph_dtype(ndim)
     graph = (voxel_graph.astype(mask_dtype, copy=False) & mask_dtype(pos_mask)) << 1
-    # Keep mask_dtype - don't truncate to uint8 (5D+ needs higher bits)
 
     # Add foreground marker at bit 0 - infer from voxel_graph if no labels provided
     if labels is not None:
@@ -511,6 +510,7 @@ def build_graph(labels, parallel=0):
     # For signed/float types, use .view() to reinterpret as same-width
     # unsigned — zero-copy, and equality semantics are identical.
     labels = np.asarray(labels)
+    _check_dims(labels.ndim)
     dtype = _resolve_label_dtype(labels)
     labels = np.ascontiguousarray(labels, dtype=labels.dtype)
     if labels.dtype != dtype:
@@ -823,6 +823,7 @@ def configure(
     if min_lines_per_thread is not None:
         _ND_CONFIG['EDT_ND_MIN_LINES_PER_THREAD'] = int(min_lines_per_thread)
 
+
 def _env_int(name, default):
     if name in _ND_CONFIG:
         return _ND_CONFIG[name]
@@ -830,6 +831,7 @@ def _env_int(name, default):
         return int(os.environ.get(name, default))
     except Exception:
         return default
+
 
 def _adaptive_thread_limit_nd(parallel, shape):
     """Cap thread count so each thread has enough work to justify its overhead.
