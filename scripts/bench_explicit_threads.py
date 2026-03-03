@@ -266,7 +266,7 @@ def run_benchmark(
                     reps,
                 )
                 nd_time, nd_out, nd_err, nd_profile = _time_and_run(
-                    lambda a, parallel=parallel: edt.edtsq_nd(
+                    lambda a, parallel=parallel: edt.edtsq(
                         a,
                         anisotropy=anis,
                         black_border=False,
@@ -274,7 +274,7 @@ def run_benchmark(
                     ),
                     arr,
                     reps,
-                    profile_fetcher=edt.edtsq_nd_last_profile,
+                    profile_fetcher=lambda: edt._nd_profile_last,
                 )
 
                 if legacy_out is not None and nd_out is not None:

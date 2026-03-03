@@ -24,7 +24,7 @@ os.environ['EDT_ND_PROFILE'] = '1'
 arr = np.zeros((384, 384, 384), dtype=np.uint8)
 arr[192, 192, 192] = 1
 edt.edtsq_nd(arr, parallel=4)
-print(edt.edtsq_nd_last_profile())
+print(edt._nd_profile_last)
 PY
 ```
 
