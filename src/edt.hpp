@@ -14,7 +14,7 @@
  *   O(N) per scanline, parallelized across scanlines.
  *   For edtsq_from_graph: step 1 is skipped (caller supplies the pre-built graph).
  *
- * See src/README.mid for graph bit encoding, memory layout, and algorithm details.
+ * See src/README.md for graph bit encoding, memory layout, and algorithm details.
  */
 
 #ifndef EDT_HPP
@@ -64,11 +64,11 @@ inline size_t compute_threads(size_t desired, size_t total_lines, size_t axis_le
     // Further cap based on work per pass (total_work = voxels along this axis sweep)
     const size_t total_work = axis_len * total_lines;
     if (total_work <= 60000) {
-        threads = std::min<size_t>(threads, 4);
+        threads = std::min<size_t>(threads, 4);   // small pass: diminishing returns above 4T
     } else if (total_work <= 120000) {
-        threads = std::min<size_t>(threads, 8);
+        threads = std::min<size_t>(threads, 8);   // medium pass: cap at 8T
     } else if (total_work <= 400000) {
-        threads = std::min<size_t>(threads, 12);
+        threads = std::min<size_t>(threads, 12);  // large pass: cap at 12T
     }
 
     return std::max<size_t>(1, threads);
@@ -255,7 +255,7 @@ inline void edt_pass0_from_graph_direct_parallel(
     if (n == 0) return;
 
     const AxisPassInfo info(shape, strides, dims, axis);
-    const size_t threads = compute_threads(parallel, info.total_lines, n);
+    const size_t threads = compute_threads(parallel, info.total_lines, (size_t)n);
 
     auto process_range = [&](size_t begin, size_t end) {
         info.for_each_line(begin, end, [&](size_t base) {
@@ -464,7 +464,7 @@ inline void edt_pass_parabolic_from_graph_fused_parallel(
     if (n == 0) return;
 
     const AxisPassInfo info(shape, strides, dims, axis);
-    const size_t threads = compute_threads(parallel, info.total_lines, n);
+    const size_t threads = compute_threads(parallel, info.total_lines, (size_t)n);
 
     auto process_range = [&](size_t begin, size_t end) {
         std::vector<int>   v(n);
@@ -553,9 +553,9 @@ inline void build_connectivity_graph(
 ) {
     if (dims == 0) return;
 
-    size_t voxels = 1;
-    for (size_t d = 0; d < dims; d++) voxels *= shape[d];
-    if (voxels == 0) return;
+    size_t total = 1;
+    for (size_t d = 0; d < dims; d++) total *= shape[d];
+    if (total == 0) return;
 
     const int threads = std::max(1, parallel);
     constexpr GRAPH_T fg_bit = 0b00000001;  // Foreground bit (bit 0)
@@ -849,7 +849,7 @@ inline void _nd_expand_init_bases(
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) {
                 const bool seeded = (seed_mask[base + j * s] != 0);
-                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);
+                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);  // /4: large sentinel that won't overflow in parabola arithmetic
                 any_nonseed |= (!seeded);
             }
             if (!any_nonseed) {
@@ -936,7 +936,7 @@ inline void _nd_expand_init_labels_bases(
             bool any_nonseed = false;
             for (size_t j = 0; j < n; ++j) {
                 const bool seeded = (seed_mask[base + j * s] != 0);
-                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);
+                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);  // /4: large sentinel that won't overflow in parabola arithmetic
                 any_nonseed |= (!seeded);
             }
             if (!any_nonseed) {
