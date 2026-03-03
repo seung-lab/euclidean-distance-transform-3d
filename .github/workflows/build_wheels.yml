@@ -26,7 +26,7 @@ jobs:
           - os: windows-11-arm
             archs_windows: "ARM64"
             cibw_build: "cp311-* cp312-* cp313-* cp314-*"  # cp310 lacks win_arm64 support
-          - os: macos-13
+          - os: macos-15-intel
             archs_macos: "x86_64"
           - os: macos-latest
             archs_macos: "arm64"
