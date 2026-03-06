@@ -76,6 +76,16 @@ extensions = [
     extra_link_args=extra_link_args_legacy,
     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
   ),
+  # General Lp distance transform
+  setuptools.Extension(
+    'edt_lp',
+    sources=['LP/edt_lp.pyx'],
+    language='c++',
+    include_dirs=['LP', str(NumpyImport())],
+    extra_compile_args=extra_compile_args_nd,
+    extra_link_args=extra_link_args_nd,
+    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+  ),
 ]
 
 setuptools.setup(

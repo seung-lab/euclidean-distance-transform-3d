@@ -21,34 +21,35 @@
 #define EDT_HPP
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <memory>
-#include <vector>
-#include <future>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 #include "threadpool.h"
 
 namespace nd {
 
-// Tuning parameter
-static size_t ND_CHUNKS_PER_THREAD = 1;
+// Tuning parameter: more chunks = better load balancing with atomic work-stealing
+static size_t ND_CHUNKS_PER_THREAD = 4;
 
 inline void set_tuning(size_t chunks_per_thread) {
     if (chunks_per_thread > 0) ND_CHUNKS_PER_THREAD = chunks_per_thread;
 }
 
-// Shared thread pool keyed by thread count; created lazily on first use
-inline ThreadPool& shared_pool_for(size_t threads) {
+// Shared fork-join pool keyed by thread count; created lazily on first use
+inline ForkJoinPool& shared_pool_for(size_t threads) {
     static std::mutex mutex;
-    static std::unordered_map<size_t, std::unique_ptr<ThreadPool>> pools;
+    static std::unordered_map<size_t, std::unique_ptr<ForkJoinPool>> pools;
     std::lock_guard<std::mutex> lock(mutex);
     auto& entry = pools[threads];
     if (!entry) {
-        entry = std::make_unique<ThreadPool>(threads);
+        entry = std::make_unique<ForkJoinPool>(threads);
     }
     return *entry;
 }
@@ -74,8 +75,34 @@ inline size_t compute_threads(size_t desired, size_t total_lines, size_t axis_le
     return std::max<size_t>(1, threads);
 }
 
+// Static buffer cache for expand_labels — avoids repeated allocation/page-fault
+// overhead on repeated calls (like ncolor's module-level np.empty() globals).
+// Each slot independently tracks its allocation size and reuses if sufficient.
+struct ExpandBufCache {
+    static constexpr int N_SLOTS = 8;
+    void* bufs[N_SLOTS] = {};
+    size_t sizes[N_SLOTS] = {};
+
+    void* get(int slot, size_t bytes) {
+        if (bytes <= sizes[slot]) return bufs[slot];
+        std::free(bufs[slot]);
+        bufs[slot] = std::malloc(bytes);
+        sizes[slot] = bytes;
+        return bufs[slot];
+    }
+    ~ExpandBufCache() {
+        for (int i = 0; i < N_SLOTS; i++) std::free(bufs[i]);
+    }
+};
+
+inline ExpandBufCache& expand_cache() {
+    static ExpandBufCache cache;
+    return cache;
+}
+
 // Distribute [0, total) into up to max_chunks chunks across threads.
 // Calls work(begin, end) directly when threads==1; otherwise via shared pool.
+// Uses atomic work-stealing: each thread claims chunks via fetch_add.
 // Blocks until all chunks complete.
 template <typename F>
 inline void dispatch_parallel(size_t threads, size_t total, size_t max_chunks, F work) {
@@ -85,14 +112,16 @@ inline void dispatch_parallel(size_t threads, size_t total, size_t max_chunks, F
     }
     const size_t n_chunks = std::min(max_chunks, total);
     const size_t chunk_sz = (total + n_chunks - 1) / n_chunks;
-    ThreadPool& pool = shared_pool_for(threads);
-    std::vector<std::future<void>> pending;
-    pending.reserve(n_chunks);
-    for (size_t begin = 0; begin < total; begin += chunk_sz) {
-        const size_t end = std::min(total, begin + chunk_sz);
-        pending.push_back(pool.enqueue([=]() { work(begin, end); }));
-    }
-    for (auto& f : pending) f.get();
+    std::atomic<size_t> next{0};
+    ForkJoinPool& pool = shared_pool_for(threads);
+    pool.parallel([&]() {
+        size_t idx;
+        while ((idx = next.fetch_add(1, std::memory_order_relaxed)) < n_chunks) {
+            const size_t begin = idx * chunk_sz;
+            const size_t end = std::min(total, begin + chunk_sz);
+            work(begin, end);
+        }
+    });
 }
 
 // Precomputed per-pass iteration layout for an EDT axis pass.
@@ -752,340 +781,30 @@ inline void edtsq_from_labels_fused(
     else                 _edtsq_fused_typed<T, uint64_t>(labels, output, shape, anisotropy, dims, black_border, parallel, total);
 }
 
-//-----------------------------------------------------------------------------
-// Parabolic EDT with argmin tracking (for expand_labels/feature_transform)
-//-----------------------------------------------------------------------------
+//=============================================================================
+// Expand labels: gather/scatter pipeline with seed-skipping
+//=============================================================================
 
-// Workspace arrays (v[n], ff[n], ranges[n+1]) must be caller-allocated.
-// Callers should allocate once per chunk and reuse across scanlines to avoid
-// repeated heap churn inside tight per-line loops.
-// Workspace does not need to be initialized by the caller; this function sets
-// all required entries before use.
-inline void squared_edt_1d_parabolic_with_arg_stride(
-    float* f,
-    const size_t n,
-    const size_t stride,
-    const float anisotropy,
-    const bool black_border,
-    size_t* arg_out,
-    int* v,
-    float* ff,
-    float* ranges
-) {
-    if (n == 0) return;
-    const int nn = int(n);
-    const float wsq = anisotropy * anisotropy;
-
-    int k = 0;
-    v[0] = 0;  // seed the lower envelope with the parabola at position 0
-    for (int i = 0; i < nn; i++) ff[i] = f[i * stride];
-    ranges[0] = -std::numeric_limits<float>::infinity();
-    ranges[1] = std::numeric_limits<float>::infinity();
-
-    // Use double arithmetic for the same cancellation-resistance as process_large_run.
-    auto intersect = [&](int a, int b) -> float {
-        const double d1 = double(b - a) * double(wsq);
-        return float((double(ff[b]) - double(ff[a]) + d1 * double(a + b)) / (2.0 * d1));
-    };
-
-    float s;
-    for (int i = 1; i < nn; i++) {
-        s = intersect(v[k], i);
-        while (k > 0 && s <= ranges[k]) {
-            k--;
-            s = intersect(v[k], i);
-        }
-        k++;
-        v[k] = i;
-        ranges[k] = s;
-        ranges[k + 1] = std::numeric_limits<float>::infinity();
-    }
-
-    // Output pass: hoisted outside loop to avoid per-iteration branch.
-    k = 0;
-    if (black_border) {
-        for (int i = 0; i < nn; i++) {
-            while (ranges[k + 1] < i) k++;
-            const float parabola = wsq * sq(i - v[k]) + ff[v[k]];
-            const float border   = wsq * std::fminf(sq(i + 1), sq(nn - i));
-            f[i * stride] = std::fminf(border, parabola);
-            arg_out[i] = v[k];
-        }
-    } else {
-        for (int i = 0; i < nn; i++) {
-            while (ranges[k + 1] < i) k++;
-            f[i * stride] = wsq * sq(i - v[k]) + ff[v[k]];
-            arg_out[i] = v[k];
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Expand labels helpers (for ND expand_labels/feature_transform)
-//-----------------------------------------------------------------------------
-
-template <typename INDEX=size_t>
-inline void _nd_expand_init_bases(
-    const uint8_t* seed_mask,
-    float* dist,
-    const size_t* bases,
-    const size_t num_lines,
-    const size_t n,
-    const size_t s,
-    const float anis,
-    const bool black_border,
-    INDEX* feat_out,
-    const int parallel
-) {
-    if (n == 0 || num_lines == 0) return;
-    const int threads = std::max(1, parallel);
-
-    auto process_chunk = [&](size_t begin, size_t end) {
-        std::vector<size_t> arg_out(n);
-        std::vector<int>   v(n);
-        std::vector<float> ff(n), ranges(n + 1);
-        for (size_t i = begin; i < end; ++i) {
-            const size_t base = bases[i];
-            bool any_nonseed = false;
-            for (size_t j = 0; j < n; ++j) {
-                const bool seeded = (seed_mask[base + j * s] != 0);
-                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);  // /4: large sentinel that won't overflow in parabola arithmetic
-                any_nonseed |= (!seeded);
-            }
-            if (!any_nonseed) {
-                // All seeds: each position is its own nearest seed
-                for (size_t j = 0; j < n; ++j)
-                    feat_out[base + j * s] = (INDEX)(base + j * s);
-                continue;
-            }
-            squared_edt_1d_parabolic_with_arg_stride(
-                dist + base, n, s, anis,
-                black_border,
-                arg_out.data(),
-                v.data(), ff.data(), ranges.data());
-            for (size_t j = 0; j < n; ++j)
-                feat_out[base + j * s] = (INDEX)(base + arg_out[j] * s);
-        }
-    };
-
-    dispatch_parallel(threads, num_lines, (size_t)threads * ND_CHUNKS_PER_THREAD, process_chunk);
-}
-
-template <typename INDEX=size_t>
-inline void _nd_expand_parabolic_bases(
-    float* dist,
-    const size_t* bases,
-    const size_t num_lines,
-    const size_t n,
-    const size_t s,
-    const float anis,
-    const bool black_border,
-    INDEX* feat_out,
-    const int parallel
-) {
-    if (n == 0 || num_lines == 0) return;
-    const int threads = std::max(1, parallel);
-
-    auto process_chunk = [&](size_t begin, size_t end) {
-        std::vector<size_t> arg_out(n);
-        std::vector<INDEX> feat_line(n);
-        std::vector<int>   v(n);
-        std::vector<float> ff(n), ranges(n + 1);
-        for (size_t i = begin; i < end; ++i) {
-            const size_t base = bases[i];
-            bool any_nonseed = false;
-            for (size_t j = 0; j < n; ++j) any_nonseed |= (dist[base + j * s] != 0.0f);
-            if (!any_nonseed) continue;  // All seeds: dist=0 everywhere, feat_out already holds self-references
-            for (size_t j = 0; j < n; ++j) feat_line[j] = feat_out[base + j * s];
-            squared_edt_1d_parabolic_with_arg_stride(
-                dist + base, n, s, anis,
-                black_border,
-                arg_out.data(),
-                v.data(), ff.data(), ranges.data());
-            for (size_t j = 0; j < n; ++j) {
-                feat_out[base + j * s] = feat_line[arg_out[j]];
-            }
-        }
-    };
-
-    dispatch_parallel(threads, num_lines, (size_t)threads * ND_CHUNKS_PER_THREAD, process_chunk);
-}
-
-inline void _nd_expand_init_labels_bases(
-    const uint8_t* seed_mask,
-    float* dist,
-    const size_t* bases,
-    const size_t num_lines,
-    const size_t n,
-    const size_t s,
-    const float anis,
-    const bool black_border,
-    const uint32_t* labels_in,
-    uint32_t* labels_out,
-    const int parallel
-) {
-    if (n == 0 || num_lines == 0) return;
-    const int threads = std::max(1, parallel);
-
-    auto process_chunk = [&](size_t begin, size_t end) {
-        std::vector<size_t> arg_out(n);
-        std::vector<int>   v(n);
-        std::vector<float> ff(n), ranges(n + 1);
-        for (size_t i = begin; i < end; ++i) {
-            const size_t base = bases[i];
-            bool any_nonseed = false;
-            for (size_t j = 0; j < n; ++j) {
-                const bool seeded = (seed_mask[base + j * s] != 0);
-                dist[base + j * s] = seeded ? 0.0f : (std::numeric_limits<float>::max() / 4.0f);  // /4: large sentinel that won't overflow in parabola arithmetic
-                any_nonseed |= (!seeded);
-            }
-            if (!any_nonseed) {
-                // All seeds: copy labels unchanged (each position is its own nearest seed)
-                for (size_t j = 0; j < n; ++j)
-                    labels_out[base + j * s] = labels_in[base + j * s];
-                continue;
-            }
-            squared_edt_1d_parabolic_with_arg_stride(
-                dist + base, n, s, anis,
-                black_border,
-                arg_out.data(),
-                v.data(), ff.data(), ranges.data());
-            for (size_t j = 0; j < n; ++j)
-                labels_out[base + j * s] = labels_in[base + arg_out[j] * s];
-        }
-    };
-
-    dispatch_parallel(threads, num_lines, (size_t)threads * ND_CHUNKS_PER_THREAD, process_chunk);
-}
-
-inline void _nd_expand_parabolic_labels_bases(
-    float* dist,
-    const size_t* bases,
-    const size_t num_lines,
-    const size_t n,
-    const size_t s,
-    const float anis,
-    const bool black_border,
-    const uint32_t* labels_in,
-    uint32_t* labels_out,
-    const int parallel
-) {
-    if (n == 0 || num_lines == 0) return;
-    const int threads = std::max(1, parallel);
-
-    auto process_chunk = [&](size_t begin, size_t end) {
-        std::vector<size_t> arg_out(n);
-        std::vector<int>   v(n);
-        std::vector<float> ff(n), ranges(n + 1);
-        for (size_t i = begin; i < end; ++i) {
-            const size_t base = bases[i];
-            bool any_nonseed = false;
-            for (size_t j = 0; j < n; ++j) any_nonseed |= (dist[base + j * s] != 0.0f);
-            if (!any_nonseed) {
-                // All seeds: copy labels unchanged (each position is its own nearest seed)
-                for (size_t j = 0; j < n; ++j)
-                    labels_out[base + j * s] = labels_in[base + j * s];
-                continue;
-            }
-            squared_edt_1d_parabolic_with_arg_stride(
-                dist + base, n, s, anis,
-                black_border,
-                arg_out.data(),
-                v.data(), ff.data(), ranges.data());
-            for (size_t j = 0; j < n; ++j)
-                labels_out[base + j * s] = labels_in[base + arg_out[j] * s];
-        }
-    };
-
-    dispatch_parallel(threads, num_lines, (size_t)threads * ND_CHUNKS_PER_THREAD, process_chunk);
-}
-
-//-----------------------------------------------------------------------------
-// Fused expand_labels orchestration (C++ replacement for Cython orchestration)
-//
-// expand_labels_fused       - labels-only output
-// expand_labels_features_fused - labels + feature indices output
-//
-// The four _nd_expand_*_bases helpers above do the per-axis work;
-// these functions supply the axis loop, base computation, and memory.
-//-----------------------------------------------------------------------------
-
-// Fill ax_ord[0..count-1] with all axis indices except exclude_ax, sorted by
-// stride (innermost/smallest first), longer axis as tiebreaker.
-// count = dims-1 when exclude_ax is a valid axis; dims when exclude_ax==dims (no exclusion).
-inline void _expand_fill_sort_ax_ord(
-    size_t* ax_ord,
-    const size_t exclude_ax,
-    const size_t* shape,
-    const size_t* strides,
-    const size_t dims
-) {
-    size_t op = 0;
-    for (size_t d = 0; d < dims; ++d)
-        if (d != exclude_ax) ax_ord[op++] = d;
-    for (size_t i = 1; i < op; ++i) {
-        size_t key = ax_ord[i];
-        int j = (int)i - 1;
-        while (j >= 0 && (strides[ax_ord[j]] > strides[key] ||
-               (strides[ax_ord[j]] == strides[key] && shape[ax_ord[j]] < shape[key]))) {
-            ax_ord[j + 1] = ax_ord[j];
-            --j;
-        }
-        ax_ord[j + 1] = key;
-    }
-}
-
-// Sort all dims axis indices into paxes[0..dims-1], innermost first.
-// Delegates to _expand_fill_sort_ax_ord with no exclusion (exclude_ax=dims).
+// Sort all axes by stride ascending (innermost first)
 inline void _expand_sort_axes(
     size_t* paxes,
     const size_t* shape,
     const size_t* strides,
     const size_t dims
 ) {
-    _expand_fill_sort_ax_ord(paxes, dims, shape, strides, dims);
-}
-
-// Compute start offsets for each of `num_lines` scanlines, given the axes
-// in ax_ord[0..ord_len-1], filling bases[0..num_lines-1].
-// Uses a carry-ripple counter (ax_ord[0] varies fastest) to avoid integer
-// division; amortized O(1) per line instead of O(ord_len) divisions.
-inline void _expand_compute_bases(
-    size_t* bases,
-    const size_t* ax_ord,
-    const size_t* shape,
-    const size_t* strides,
-    const size_t ord_len,
-    const size_t num_lines
-) {
-    size_t coords[32] = {};
-    size_t base = 0;
-    for (size_t line = 0; line < num_lines; ++line) {
-        bases[line] = base;
-        for (size_t j = 0; j < ord_len; ++j) {
-            coords[j]++;
-            base += strides[ax_ord[j]];
-            if (coords[j] < shape[ax_ord[j]]) break;
-            base -= coords[j] * strides[ax_ord[j]];
-            coords[j] = 0;
+    for (size_t d = 0; d < dims; ++d) paxes[d] = d;
+    for (size_t i = 1; i < dims; ++i) {
+        size_t key = paxes[i];
+        int j = (int)i - 1;
+        while (j >= 0 && (strides[paxes[j]] > strides[key] ||
+               (strides[paxes[j]] == strides[key] && shape[paxes[j]] < shape[key]))) {
+            paxes[j + 1] = paxes[j];
+            --j;
         }
+        paxes[j + 1] = key;
     }
 }
 
-// Convert a label array into parallel boolean-seed and uint32-label flat arrays.
-template <typename T>
-inline void _expand_build_seed_arrays(
-    const T* data, const size_t total,
-    uint8_t* seed_mask, uint32_t* labels_flat
-) {
-    for (size_t i = 0; i < total; ++i) {
-        seed_mask[i]  = (data[i] != 0) ? 1 : 0;
-        labels_flat[i] = (uint32_t)data[i];
-    }
-}
-
-// Collect seed positions and pairwise midpoints for a 1D expand_labels pass.
-// Returns false (seeds/mids left empty) when no seeds exist.
 template <typename T>
 inline bool _expand_1d_setup(
     const T* data, const size_t n,
@@ -1100,29 +819,516 @@ inline bool _expand_1d_setup(
     return true;
 }
 
-// Compute C-order strides, axis processing order, total element count,
-// and maximum scanline count for expand_labels ND passes.
-// strides[] and paxes[] must be caller-allocated arrays of size >= dims.
-// If total == 0, max_lines is set to 0 and strides/paxes are left uninitialized.
-inline void _expand_nd_compute_layout(
-    const size_t* shape, const size_t dims,
-    size_t* strides, size_t* paxes,
-    size_t& total, size_t& max_lines
+//-----------------------------------------------------------------------------
+// Pass 0: seed-skipping + midpoint optimization (L2)
+// All seeds have dist=0, so all intersections are midpoints (a+b)/2.
+//-----------------------------------------------------------------------------
+
+inline void _expand_pass0(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    const size_t n,
+    const size_t num_lines,
+    const float anis,
+    const bool black_border,
+    const int parallel
 ) {
-    total = 1;
-    size_t s = 1;
-    for (size_t d = dims; d-- > 0;) {
-        strides[d] = s;
-        s *= shape[d];
-        total *= shape[d];
-    }
-    if (total == 0) { max_lines = 0; return; }
-    _expand_sort_axes(paxes, shape, strides, dims);
-    size_t min_shape = shape[0];
-    for (size_t d = 1; d < dims; ++d)
-        if (shape[d] < min_shape) min_shape = shape[d];
-    max_lines = total / min_shape;  // max scanlines over all axis passes
+    if (n == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, n);
+    const float wsq = anis * anis;
+    const float HUGE_DIST = std::numeric_limits<float>::max() / 4.0f;
+
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<int> v(n);
+        std::vector<uint32_t> lbl_save(n);
+
+        for (size_t line = begin; line < end; ++line) {
+            uint32_t* ll = lbl + line * n;
+            float*    dd = dist + line * n;
+
+            int n_seeds = 0;
+            bool any_nonseed = false;
+            for (size_t j = 0; j < n; ++j) {
+                if (ll[j] != 0) {
+                    dd[j] = 0.0f;
+                    v[n_seeds++] = (int)j;
+                } else {
+                    dd[j] = HUGE_DIST;
+                    any_nonseed = true;
+                }
+            }
+            if (!any_nonseed) continue;
+            if (n_seeds == 0) {
+                // No seeds: with black_border, fill dist with border distances
+                // so subsequent passes see realistic distances. Labels stay 0.
+                if (black_border) {
+                    for (size_t i = 0; i < n; ++i)
+                        dd[i] = wsq * std::fminf(sq((int)i + 1), sq((int)n - (int)i));
+                }
+                continue;
+            }
+
+            std::memcpy(lbl_save.data(), ll, n * sizeof(uint32_t));
+
+            int k = 0;
+            if (black_border) {
+                for (size_t i = 0; i < n; ++i) {
+                    while (k + 1 < n_seeds &&
+                           (double)i > (double)(v[k] + v[k + 1]) * 0.5) ++k;
+                    const float envelope = wsq * sq((int)i - v[k]);
+                    const float border = wsq * std::fminf(sq((int)i + 1), sq((int)n - (int)i));
+                    dd[i] = std::fminf(border, envelope);
+                    ll[i] = lbl_save[v[k]];
+                }
+            } else {
+                for (size_t i = 0; i < n; ++i) {
+                    while (k + 1 < n_seeds &&
+                           (double)i > (double)(v[k] + v[k + 1]) * 0.5) ++k;
+                    dd[i] = wsq * sq((int)i - v[k]);
+                    ll[i] = lbl_save[v[k]];
+                }
+            }
+        }
+    };
+    dispatch_parallel(threads, num_lines, threads * ND_CHUNKS_PER_THREAD, process_chunk);
 }
+
+template <typename INDEX>
+inline void _expand_pass0_feat(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    INDEX* __restrict__ feat,
+    const size_t n,
+    const size_t num_lines,
+    const float anis,
+    const bool black_border,
+    const int parallel
+) {
+    if (n == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, n);
+    const float wsq = anis * anis;
+    const float HUGE_DIST = std::numeric_limits<float>::max() / 4.0f;
+
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<int> v(n);
+        std::vector<uint32_t> lbl_save(n);
+        std::vector<INDEX> feat_save(n);
+
+        for (size_t line = begin; line < end; ++line) {
+            uint32_t* ll = lbl + line * n;
+            float*    dd = dist + line * n;
+            INDEX*    ff = feat + line * n;
+
+            int n_seeds = 0;
+            bool any_nonseed = false;
+            for (size_t j = 0; j < n; ++j) {
+                if (ll[j] != 0) {
+                    dd[j] = 0.0f;
+                    v[n_seeds++] = (int)j;
+                } else {
+                    dd[j] = HUGE_DIST;
+                    any_nonseed = true;
+                }
+            }
+            if (!any_nonseed) continue;
+            if (n_seeds == 0) {
+                if (black_border) {
+                    for (size_t i = 0; i < n; ++i)
+                        dd[i] = wsq * std::fminf(sq((int)i + 1), sq((int)n - (int)i));
+                }
+                continue;
+            }
+
+            std::memcpy(lbl_save.data(), ll, n * sizeof(uint32_t));
+            std::memcpy(feat_save.data(), ff, n * sizeof(INDEX));
+
+            int k = 0;
+            if (black_border) {
+                for (size_t i = 0; i < n; ++i) {
+                    while (k + 1 < n_seeds &&
+                           (double)i > (double)(v[k] + v[k + 1]) * 0.5) ++k;
+                    const float envelope = wsq * sq((int)i - v[k]);
+                    const float border = wsq * std::fminf(sq((int)i + 1), sq((int)n - (int)i));
+                    dd[i] = std::fminf(border, envelope);
+                    ll[i] = lbl_save[v[k]];
+                    ff[i] = feat_save[v[k]];
+                }
+            } else {
+                for (size_t i = 0; i < n; ++i) {
+                    while (k + 1 < n_seeds &&
+                           (double)i > (double)(v[k] + v[k + 1]) * 0.5) ++k;
+                    dd[i] = wsq * sq((int)i - v[k]);
+                    ll[i] = lbl_save[v[k]];
+                    ff[i] = feat_save[v[k]];
+                }
+            }
+        }
+    };
+    dispatch_parallel(threads, num_lines, threads * ND_CHUNKS_PER_THREAD, process_chunk);
+}
+
+//-----------------------------------------------------------------------------
+// Passes 1+: standard L2 envelope on contiguous (num_lines, n) data.
+//-----------------------------------------------------------------------------
+
+inline void _expand_parabolic(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    const size_t n,
+    const size_t num_lines,
+    const float anis,
+    const bool black_border,
+    const int parallel
+) {
+    if (n == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, n);
+    const float wsq = anis * anis;
+    const int nn = (int)n;
+
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<int>      v(n);
+        std::vector<float>    ff(n), ranges(n + 1);
+        std::vector<uint32_t> lbl_save(n);
+
+        for (size_t line = begin; line < end; ++line) {
+            uint32_t* ll = lbl + line * n;
+            float*    dd = dist + line * n;
+
+            bool any_nonzero = false;
+            for (size_t j = 0; j < n; ++j) {
+                if (dd[j] != 0.0f) { any_nonzero = true; break; }
+            }
+            if (!any_nonzero) continue;
+
+            std::memcpy(ff.data(), dd, n * sizeof(float));
+            std::memcpy(lbl_save.data(), ll, n * sizeof(uint32_t));
+
+            // Build lower envelope (L2 closed-form intersect, float precision)
+            int k = 0;
+            v[0] = 0;
+            ranges[0] = -std::numeric_limits<float>::infinity();
+            ranges[1] = std::numeric_limits<float>::infinity();
+
+            // Float-precision intersect using difference-of-squares factorization
+            // to minimize catastrophic cancellation.
+            auto intersect = [&](int a, int b) -> float {
+                const float denom = 2.0f * wsq * float(b - a);
+                return (ff[b] - ff[a] + wsq * float((b + a) * (b - a))) / denom;
+            };
+
+            float s;
+            for (int i = 1; i < nn; i++) {
+                s = intersect(v[k], i);
+                while (k > 0 && s <= ranges[k]) {
+                    k--;
+                    s = intersect(v[k], i);
+                }
+                k++;
+                v[k] = i;
+                ranges[k] = s;
+                ranges[k + 1] = std::numeric_limits<float>::infinity();
+            }
+
+            // Output pass
+            k = 0;
+            if (black_border) {
+                for (int i = 0; i < nn; i++) {
+                    while (ranges[k + 1] < i) k++;
+                    const float envelope = wsq * sq(i - v[k]) + ff[v[k]];
+                    const float border = wsq * std::fminf(sq(i + 1), sq(nn - i));
+                    dd[i] = std::fminf(border, envelope);
+                    ll[i] = lbl_save[v[k]];
+                }
+            } else {
+                for (int i = 0; i < nn; i++) {
+                    while (ranges[k + 1] < i) k++;
+                    dd[i] = wsq * sq(i - v[k]) + ff[v[k]];
+                    ll[i] = lbl_save[v[k]];
+                }
+            }
+        }
+    };
+    dispatch_parallel(threads, num_lines, threads * ND_CHUNKS_PER_THREAD, process_chunk);
+}
+
+template <typename INDEX>
+inline void _expand_parabolic_feat(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    INDEX* __restrict__ feat,
+    const size_t n,
+    const size_t num_lines,
+    const float anis,
+    const bool black_border,
+    const int parallel
+) {
+    if (n == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, n);
+    const float wsq = anis * anis;
+    const int nn = (int)n;
+
+    auto process_chunk = [&](size_t begin, size_t end) {
+        std::vector<int>      v(n);
+        std::vector<float>    ff(n), ranges(n + 1);
+        std::vector<uint32_t> lbl_save(n);
+        std::vector<INDEX>    feat_save(n);
+
+        for (size_t line = begin; line < end; ++line) {
+            uint32_t* ll = lbl + line * n;
+            float*    dd = dist + line * n;
+            INDEX*    ft = feat + line * n;
+
+            bool any_nonzero = false;
+            for (size_t j = 0; j < n; ++j) {
+                if (dd[j] != 0.0f) { any_nonzero = true; break; }
+            }
+            if (!any_nonzero) continue;
+
+            std::memcpy(ff.data(), dd, n * sizeof(float));
+            std::memcpy(lbl_save.data(), ll, n * sizeof(uint32_t));
+            std::memcpy(feat_save.data(), ft, n * sizeof(INDEX));
+
+            int k = 0;
+            v[0] = 0;
+            ranges[0] = -std::numeric_limits<float>::infinity();
+            ranges[1] = std::numeric_limits<float>::infinity();
+
+            auto intersect = [&](int a, int b) -> float {
+                const float denom = 2.0f * wsq * float(b - a);
+                return (ff[b] - ff[a] + wsq * float((b + a) * (b - a))) / denom;
+            };
+
+            float s;
+            for (int i = 1; i < nn; i++) {
+                s = intersect(v[k], i);
+                while (k > 0 && s <= ranges[k]) {
+                    k--;
+                    s = intersect(v[k], i);
+                }
+                k++;
+                v[k] = i;
+                ranges[k] = s;
+                ranges[k + 1] = std::numeric_limits<float>::infinity();
+            }
+
+            k = 0;
+            if (black_border) {
+                for (int i = 0; i < nn; i++) {
+                    while (ranges[k + 1] < i) k++;
+                    const float envelope = wsq * sq(i - v[k]) + ff[v[k]];
+                    const float border = wsq * std::fminf(sq(i + 1), sq(nn - i));
+                    dd[i] = std::fminf(border, envelope);
+                    ll[i] = lbl_save[v[k]];
+                    ft[i] = feat_save[v[k]];
+                }
+            } else {
+                for (int i = 0; i < nn; i++) {
+                    while (ranges[k + 1] < i) k++;
+                    dd[i] = wsq * sq(i - v[k]) + ff[v[k]];
+                    ll[i] = lbl_save[v[k]];
+                    ft[i] = feat_save[v[k]];
+                }
+            }
+        }
+    };
+    dispatch_parallel(threads, num_lines, threads * ND_CHUNKS_PER_THREAD, process_chunk);
+}
+
+//-----------------------------------------------------------------------------
+// Blocked transpose with streaming stores for non-contiguous axis processing.
+// Uses non-temporal stores for the strided writes to avoid read-for-ownership
+// cache line fetches, which cause 16x bandwidth amplification on x86.
+// 3 barriers per axis (transpose → process → transpose back).
+//-----------------------------------------------------------------------------
+
+constexpr size_t TRANSPOSE_BLOCK = 64;
+
+// Transpose A planes of (rows × cols) → (cols × rows), one array.
+// Read-sequential (inner loop over c) with strided writes using a small
+// register-resident tile to amortize write-combining. Block size 64.
+template <typename T>
+inline void _transpose_planes_nt(
+    const T* __restrict__ src, T* __restrict__ dst,
+    const size_t A, const size_t rows, const size_t cols,
+    const size_t threads
+) {
+    const size_t ncb = (cols + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t nrb = (rows + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t bpp = nrb * ncb;
+    const size_t total = A * bpp;
+
+    dispatch_parallel(threads, total, threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            for (size_t idx = begin; idx < end; ++idx) {
+                const size_t a   = idx / bpp;
+                const size_t blk = idx % bpp;
+                const size_t rb  = blk / ncb;
+                const size_t cb  = blk % ncb;
+                const size_t r0 = rb * TRANSPOSE_BLOCK, r1 = std::min(r0 + TRANSPOSE_BLOCK, rows);
+                const size_t c0 = cb * TRANSPOSE_BLOCK, c1 = std::min(c0 + TRANSPOSE_BLOCK, cols);
+                const T* sp = src + a * rows * cols;
+                T* dp = dst + a * cols * rows;
+                for (size_t r = r0; r < r1; ++r)
+                    for (size_t c = c0; c < c1; ++c)
+                        dp[c * rows + r] = sp[r * cols + c];
+            }
+        }
+    );
+}
+
+// Fused transpose of two arrays
+template <typename T1, typename T2>
+inline void _transpose_planes_2_nt(
+    const T1* __restrict__ s1, T1* __restrict__ d1,
+    const T2* __restrict__ s2, T2* __restrict__ d2,
+    const size_t A, const size_t rows, const size_t cols,
+    const size_t threads
+) {
+    const size_t ncb = (cols + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t nrb = (rows + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t bpp = nrb * ncb;
+    const size_t total = A * bpp;
+
+    dispatch_parallel(threads, total, threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            for (size_t idx = begin; idx < end; ++idx) {
+                const size_t a   = idx / bpp;
+                const size_t blk = idx % bpp;
+                const size_t rb  = blk / ncb;
+                const size_t cb  = blk % ncb;
+                const size_t r0 = rb * TRANSPOSE_BLOCK, r1 = std::min(r0 + TRANSPOSE_BLOCK, rows);
+                const size_t c0 = cb * TRANSPOSE_BLOCK, c1 = std::min(c0 + TRANSPOSE_BLOCK, cols);
+                const size_t plane = a * rows * cols;
+                const size_t tplane = a * cols * rows;
+                for (size_t r = r0; r < r1; ++r)
+                    for (size_t c = c0; c < c1; ++c) {
+                        d1[tplane + c * rows + r] = s1[plane + r * cols + c];
+                        d2[tplane + c * rows + r] = s2[plane + r * cols + c];
+                    }
+            }
+        }
+    );
+}
+
+// Fused transpose of three arrays
+template <typename T1, typename T2, typename T3>
+inline void _transpose_planes_3_nt(
+    const T1* __restrict__ s1, T1* __restrict__ d1,
+    const T2* __restrict__ s2, T2* __restrict__ d2,
+    const T3* __restrict__ s3, T3* __restrict__ d3,
+    const size_t A, const size_t rows, const size_t cols,
+    const size_t threads
+) {
+    const size_t ncb = (cols + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t nrb = (rows + TRANSPOSE_BLOCK - 1) / TRANSPOSE_BLOCK;
+    const size_t bpp = nrb * ncb;
+    const size_t total = A * bpp;
+
+    dispatch_parallel(threads, total, threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            for (size_t idx = begin; idx < end; ++idx) {
+                const size_t a   = idx / bpp;
+                const size_t blk = idx % bpp;
+                const size_t rb  = blk / ncb;
+                const size_t cb  = blk % ncb;
+                const size_t r0 = rb * TRANSPOSE_BLOCK, r1 = std::min(r0 + TRANSPOSE_BLOCK, rows);
+                const size_t c0 = cb * TRANSPOSE_BLOCK, c1 = std::min(c0 + TRANSPOSE_BLOCK, cols);
+                const size_t plane = a * rows * cols;
+                const size_t tplane = a * cols * rows;
+                for (size_t r = r0; r < r1; ++r)
+                    for (size_t c = c0; c < c1; ++c) {
+                        const size_t si = plane + r * cols + c;
+                        const size_t di = tplane + c * rows + r;
+                        d1[di] = s1[si];
+                        d2[di] = s2[si];
+                        d3[di] = s3[si];
+                    }
+            }
+        }
+    );
+}
+
+//-----------------------------------------------------------------------------
+// Strided variants: streaming transpose → contiguous process → streaming transpose back.
+//-----------------------------------------------------------------------------
+
+inline void _expand_pass0_strided(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    uint32_t* __restrict__ ws_lbl,
+    float* __restrict__ ws_dist,
+    const size_t B, const size_t C, const size_t A,
+    const float anis, const bool black_border, const int parallel
+) {
+    const size_t num_lines = A * C;
+    if (B == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, B);
+
+    _transpose_planes_nt(lbl, ws_lbl, A, B, C, threads);
+    _expand_pass0(ws_lbl, ws_dist, B, num_lines, anis, black_border, parallel);
+    _transpose_planes_2_nt(ws_lbl, lbl, ws_dist, dist, A, C, B, threads);
+}
+
+inline void _expand_parabolic_strided(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    uint32_t* __restrict__ ws_lbl,
+    float* __restrict__ ws_dist,
+    const size_t B, const size_t C, const size_t A,
+    const float anis, const bool black_border, const int parallel
+) {
+    const size_t num_lines = A * C;
+    if (B == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, B);
+
+    _transpose_planes_2_nt(lbl, ws_lbl, dist, ws_dist, A, B, C, threads);
+    _expand_parabolic(ws_lbl, ws_dist, B, num_lines, anis, black_border, parallel);
+    _transpose_planes_2_nt(ws_lbl, lbl, ws_dist, dist, A, C, B, threads);
+}
+
+template <typename INDEX>
+inline void _expand_pass0_feat_strided(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    INDEX* __restrict__ feat,
+    uint32_t* __restrict__ ws_lbl,
+    float* __restrict__ ws_dist,
+    INDEX* __restrict__ ws_feat,
+    const size_t B, const size_t C, const size_t A,
+    const float anis, const bool black_border, const int parallel
+) {
+    const size_t num_lines = A * C;
+    if (B == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, B);
+
+    _transpose_planes_2_nt(lbl, ws_lbl, feat, ws_feat, A, B, C, threads);
+    _expand_pass0_feat(ws_lbl, ws_dist, ws_feat, B, num_lines, anis, black_border, parallel);
+    _transpose_planes_3_nt(ws_lbl, lbl, ws_dist, dist, ws_feat, feat, A, C, B, threads);
+}
+
+template <typename INDEX>
+inline void _expand_parabolic_feat_strided(
+    uint32_t* __restrict__ lbl,
+    float* __restrict__ dist,
+    INDEX* __restrict__ feat,
+    uint32_t* __restrict__ ws_lbl,
+    float* __restrict__ ws_dist,
+    INDEX* __restrict__ ws_feat,
+    const size_t B, const size_t C, const size_t A,
+    const float anis, const bool black_border, const int parallel
+) {
+    const size_t num_lines = A * C;
+    if (B == 0 || num_lines == 0) return;
+    const size_t threads = compute_threads(parallel, num_lines, B);
+
+    _transpose_planes_3_nt(lbl, ws_lbl, dist, ws_dist, feat, ws_feat, A, B, C, threads);
+    _expand_parabolic_feat(ws_lbl, ws_dist, ws_feat, B, num_lines, anis, black_border, parallel);
+    _transpose_planes_3_nt(ws_lbl, lbl, ws_dist, dist, ws_feat, feat, A, C, B, threads);
+}
+
+//=============================================================================
+// Expand labels orchestrators (transpose pipeline with cached buffers)
+//=============================================================================
 
 // labels-only mode
 template <typename T>
@@ -1152,8 +1358,6 @@ inline void expand_labels_fused(
             while (k < mids.size() && (double)i >= mids[k]) ++k;
             const size_t seed_idx = seeds[std::min(k, seeds.size() - 1)];
             if (black_border) {
-                // Border acts as a virtual seed at distance min(i+1, n-i).
-                // If the border is at least as close as the real seed, label = 0.
                 const size_t border_dist = std::min(i + 1, n - i);
                 const size_t seed_dist   = (i >= seed_idx) ? (i - seed_idx) : (seed_idx - i);
                 if (border_dist <= seed_dist) { labels_out[i] = 0; continue; }
@@ -1163,48 +1367,54 @@ inline void expand_labels_fused(
         return;
     }
 
-    // ND path
-    size_t total, max_lines;
+    // ND path: streaming transpose pipeline with cached buffers
+    size_t total = 1;
     size_t strides[32], paxes[32];
-    _expand_nd_compute_layout(shape, dims, strides, paxes, total, max_lines);
+    for (size_t d = dims; d-- > 0;) { strides[d] = total; total *= shape[d]; }
     if (total == 0) return;
 
-    // Heap allocations
-    std::vector<float>    dist(total);
-    std::vector<size_t>   bases(max_lines);
-    std::vector<uint32_t> lab_prev(total);
-    std::vector<uint32_t> lab_next(total);
+    _expand_sort_axes(paxes, shape, strides, dims);
 
-    std::vector<uint8_t>  seed_mask(total);
-    std::vector<uint32_t> labels_flat(total);
-    _expand_build_seed_arrays(data, total, seed_mask.data(), labels_flat.data());
+    // Slots: 0=lbl, 1=dist, 2=ws_lbl, 3=ws_dist
+    auto& cache = expand_cache();
+    uint32_t* lbl     = (uint32_t*)cache.get(0, total * sizeof(uint32_t));
+    float*    dist    = (float*)cache.get(1, total * sizeof(float));
+    uint32_t* ws_lbl  = (uint32_t*)cache.get(2, total * sizeof(uint32_t));
+    float*    ws_dist = (float*)cache.get(3, total * sizeof(float));
 
-    size_t ax_ord[32];  // stack; dims-1 entries used per axis pass
+    const size_t par_threads = compute_threads(parallel, total, 1);
+    dispatch_parallel(par_threads, total, par_threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            for (size_t i = begin; i < end; ++i)
+                lbl[i] = (uint32_t)data[i];
+        });
+
     for (size_t pass = 0; pass < dims; ++pass) {
-        const size_t axis      = paxes[pass];
-        const size_t axis_len  = shape[axis];
-        const size_t axis_stride = strides[axis];
-        const size_t lines = total / axis_len;
-        const float  anis  = anisotropy[axis];
+        const size_t axis     = paxes[pass];
+        const size_t axis_len = shape[axis];
+        const float  anis     = anisotropy[axis];
 
-        _expand_fill_sort_ax_ord(ax_ord, axis, shape, strides, dims);
-        _expand_compute_bases(bases.data(), ax_ord, shape, strides, dims - 1, lines);
-
-        if (pass == 0) {
-            _nd_expand_init_labels_bases(
-                seed_mask.data(), dist.data(), bases.data(),
-                lines, axis_len, axis_stride, anis, black_border,
-                labels_flat.data(), lab_prev.data(), parallel);
+        if (strides[axis] == 1) {
+            const size_t num_lines = total / axis_len;
+            if (pass == 0)
+                _expand_pass0(lbl, dist, axis_len, num_lines, anis, black_border, parallel);
+            else
+                _expand_parabolic(lbl, dist, axis_len, num_lines, anis, black_border, parallel);
         } else {
-            _nd_expand_parabolic_labels_bases(
-                dist.data(), bases.data(),
-                lines, axis_len, axis_stride, anis, black_border,
-                lab_prev.data(), lab_next.data(), parallel);
-            std::swap(lab_prev, lab_next);
+            const size_t C = strides[axis];
+            const size_t B = axis_len;
+            const size_t A = total / (B * C);
+            if (pass == 0)
+                _expand_pass0_strided(lbl, dist, ws_lbl, ws_dist, B, C, A, anis, black_border, parallel);
+            else
+                _expand_parabolic_strided(lbl, dist, ws_lbl, ws_dist, B, C, A, anis, black_border, parallel);
         }
     }
 
-    std::copy(lab_prev.begin(), lab_prev.end(), labels_out);
+    dispatch_parallel(par_threads, total, par_threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            std::memcpy(labels_out + begin, lbl + begin, (end - begin) * sizeof(uint32_t));
+        });
 }
 
 // labels + feature indices mode
@@ -1237,13 +1447,11 @@ inline void expand_labels_features_fused(
             while (k < mids.size() && (double)i >= mids[k]) ++k;
             const size_t seed_idx = seeds[std::min(k, seeds.size() - 1)];
             if (black_border) {
-                // Border acts as a virtual seed at distance min(i+1, n-i).
-                // If the border is at least as close as the real seed, label = 0.
                 const size_t border_dist = std::min(i + 1, n - i);
                 const size_t seed_dist   = (i >= seed_idx) ? (i - seed_idx) : (seed_idx - i);
                 if (border_dist <= seed_dist) {
                     labels_out[i]   = 0;
-                    features_out[i] = INDEX(seed_idx);  // nearest real seed, same as ND path
+                    features_out[i] = INDEX(seed_idx);
                     continue;
                 }
             }
@@ -1253,46 +1461,63 @@ inline void expand_labels_features_fused(
         return;
     }
 
-    // ND path
-    size_t total, max_lines;
+    // ND path: streaming transpose pipeline with feature tracking
+    size_t total = 1;
     size_t strides[32], paxes[32];
-    _expand_nd_compute_layout(shape, dims, strides, paxes, total, max_lines);
+    for (size_t d = dims; d-- > 0;) { strides[d] = total; total *= shape[d]; }
     if (total == 0) return;
 
-    // Heap allocations
-    std::vector<float>    dist(total);
-    std::vector<size_t>   bases(max_lines);
-    std::vector<uint8_t>  seed_mask(total);
-    std::vector<uint32_t> labels_flat(total);
-    _expand_build_seed_arrays(data, total, seed_mask.data(), labels_flat.data());
+    _expand_sort_axes(paxes, shape, strides, dims);
 
-    size_t ax_ord[32];  // stack; dims-1 entries used per axis pass
+    // Slots: 0=lbl, 1=dist, 2=ws_lbl, 3=ws_dist
+    auto& cache = expand_cache();
+    uint32_t* lbl     = (uint32_t*)cache.get(0, total * sizeof(uint32_t));
+    float*    dist    = (float*)cache.get(1, total * sizeof(float));
+    uint32_t* ws_lbl  = (uint32_t*)cache.get(2, total * sizeof(uint32_t));
+    float*    ws_dist = (float*)cache.get(3, total * sizeof(float));
+
+    // Feat/ws_feat use separate malloc (template type can't easily cache)
+    INDEX* feat    = (INDEX*)std::malloc(total * sizeof(INDEX));
+    INDEX* ws_feat = (INDEX*)std::malloc(total * sizeof(INDEX));
+
+    const size_t par_threads = compute_threads(parallel, total, 1);
+    dispatch_parallel(par_threads, total, par_threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            for (size_t i = begin; i < end; ++i) {
+                lbl[i]  = (uint32_t)data[i];
+                feat[i] = (INDEX)i;
+            }
+        });
+
     for (size_t pass = 0; pass < dims; ++pass) {
-        const size_t axis      = paxes[pass];
-        const size_t axis_len  = shape[axis];
-        const size_t axis_stride = strides[axis];
-        const size_t lines = total / axis_len;
-        const float  anis  = anisotropy[axis];
+        const size_t axis     = paxes[pass];
+        const size_t axis_len = shape[axis];
+        const float  anis     = anisotropy[axis];
 
-        _expand_fill_sort_ax_ord(ax_ord, axis, shape, strides, dims);
-        _expand_compute_bases(bases.data(), ax_ord, shape, strides, dims - 1, lines);
-
-        if (pass == 0) {
-            _nd_expand_init_bases<INDEX>(
-                seed_mask.data(), dist.data(), bases.data(),
-                lines, axis_len, axis_stride, anis, black_border,
-                features_out, parallel);
+        if (strides[axis] == 1) {
+            const size_t num_lines = total / axis_len;
+            if (pass == 0)
+                _expand_pass0_feat(lbl, dist, feat, axis_len, num_lines, anis, black_border, parallel);
+            else
+                _expand_parabolic_feat(lbl, dist, feat, axis_len, num_lines, anis, black_border, parallel);
         } else {
-            _nd_expand_parabolic_bases<INDEX>(
-                dist.data(), bases.data(),
-                lines, axis_len, axis_stride, anis, black_border,
-                features_out, parallel);
+            const size_t C = strides[axis];
+            const size_t B = axis_len;
+            const size_t A = total / (B * C);
+            if (pass == 0)
+                _expand_pass0_feat_strided(lbl, dist, feat, ws_lbl, ws_dist, ws_feat, B, C, A, anis, black_border, parallel);
+            else
+                _expand_parabolic_feat_strided(lbl, dist, feat, ws_lbl, ws_dist, ws_feat, B, C, A, anis, black_border, parallel);
         }
     }
 
-    // Resolve feature indices to labels
-    for (size_t i = 0; i < total; ++i)
-        labels_out[i] = labels_flat[(size_t)features_out[i]];
+    dispatch_parallel(par_threads, total, par_threads * ND_CHUNKS_PER_THREAD,
+        [&](size_t begin, size_t end) {
+            std::memcpy(labels_out + begin, lbl + begin, (end - begin) * sizeof(uint32_t));
+            std::memcpy(features_out + begin, feat + begin, (end - begin) * sizeof(INDEX));
+        });
+    std::free(feat);
+    std::free(ws_feat);
 }
 
 } // namespace nd
