@@ -33,6 +33,13 @@
 #include <vector>
 #include "threadpool.h"
 
+// MSVC uses __restrict (no trailing underscores); GCC/Clang use __restrict__
+#ifdef _MSC_VER
+  #define RESTRICT __restrict
+#else
+  #define RESTRICT __restrict__
+#endif
+
 namespace nd {
 
 // Tuning parameter: more chunks = better load balancing with atomic work-stealing
@@ -825,8 +832,8 @@ inline bool _expand_1d_setup(
 //-----------------------------------------------------------------------------
 
 inline void _expand_pass0(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
     const size_t n,
     const size_t num_lines,
     const float anis,
@@ -895,9 +902,9 @@ inline void _expand_pass0(
 
 template <typename INDEX>
 inline void _expand_pass0_feat(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    INDEX* __restrict__ feat,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    INDEX* RESTRICT feat,
     const size_t n,
     const size_t num_lines,
     const float anis,
@@ -972,8 +979,8 @@ inline void _expand_pass0_feat(
 //-----------------------------------------------------------------------------
 
 inline void _expand_parabolic(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
     const size_t n,
     const size_t num_lines,
     const float anis,
@@ -1053,9 +1060,9 @@ inline void _expand_parabolic(
 
 template <typename INDEX>
 inline void _expand_parabolic_feat(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    INDEX* __restrict__ feat,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    INDEX* RESTRICT feat,
     const size_t n,
     const size_t num_lines,
     const float anis,
@@ -1148,7 +1155,7 @@ constexpr size_t TRANSPOSE_BLOCK = 64;
 // register-resident tile to amortize write-combining. Block size 64.
 template <typename T>
 inline void _transpose_planes_nt(
-    const T* __restrict__ src, T* __restrict__ dst,
+    const T* RESTRICT src, T* RESTRICT dst,
     const size_t A, const size_t rows, const size_t cols,
     const size_t threads
 ) {
@@ -1179,8 +1186,8 @@ inline void _transpose_planes_nt(
 // Fused transpose of two arrays
 template <typename T1, typename T2>
 inline void _transpose_planes_2_nt(
-    const T1* __restrict__ s1, T1* __restrict__ d1,
-    const T2* __restrict__ s2, T2* __restrict__ d2,
+    const T1* RESTRICT s1, T1* RESTRICT d1,
+    const T2* RESTRICT s2, T2* RESTRICT d2,
     const size_t A, const size_t rows, const size_t cols,
     const size_t threads
 ) {
@@ -1213,9 +1220,9 @@ inline void _transpose_planes_2_nt(
 // Fused transpose of three arrays
 template <typename T1, typename T2, typename T3>
 inline void _transpose_planes_3_nt(
-    const T1* __restrict__ s1, T1* __restrict__ d1,
-    const T2* __restrict__ s2, T2* __restrict__ d2,
-    const T3* __restrict__ s3, T3* __restrict__ d3,
+    const T1* RESTRICT s1, T1* RESTRICT d1,
+    const T2* RESTRICT s2, T2* RESTRICT d2,
+    const T3* RESTRICT s3, T3* RESTRICT d3,
     const size_t A, const size_t rows, const size_t cols,
     const size_t threads
 ) {
@@ -1253,10 +1260,10 @@ inline void _transpose_planes_3_nt(
 //-----------------------------------------------------------------------------
 
 inline void _expand_pass0_strided(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    uint32_t* __restrict__ ws_lbl,
-    float* __restrict__ ws_dist,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    uint32_t* RESTRICT ws_lbl,
+    float* RESTRICT ws_dist,
     const size_t B, const size_t C, const size_t A,
     const float anis, const bool black_border, const int parallel
 ) {
@@ -1270,10 +1277,10 @@ inline void _expand_pass0_strided(
 }
 
 inline void _expand_parabolic_strided(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    uint32_t* __restrict__ ws_lbl,
-    float* __restrict__ ws_dist,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    uint32_t* RESTRICT ws_lbl,
+    float* RESTRICT ws_dist,
     const size_t B, const size_t C, const size_t A,
     const float anis, const bool black_border, const int parallel
 ) {
@@ -1288,12 +1295,12 @@ inline void _expand_parabolic_strided(
 
 template <typename INDEX>
 inline void _expand_pass0_feat_strided(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    INDEX* __restrict__ feat,
-    uint32_t* __restrict__ ws_lbl,
-    float* __restrict__ ws_dist,
-    INDEX* __restrict__ ws_feat,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    INDEX* RESTRICT feat,
+    uint32_t* RESTRICT ws_lbl,
+    float* RESTRICT ws_dist,
+    INDEX* RESTRICT ws_feat,
     const size_t B, const size_t C, const size_t A,
     const float anis, const bool black_border, const int parallel
 ) {
@@ -1308,12 +1315,12 @@ inline void _expand_pass0_feat_strided(
 
 template <typename INDEX>
 inline void _expand_parabolic_feat_strided(
-    uint32_t* __restrict__ lbl,
-    float* __restrict__ dist,
-    INDEX* __restrict__ feat,
-    uint32_t* __restrict__ ws_lbl,
-    float* __restrict__ ws_dist,
-    INDEX* __restrict__ ws_feat,
+    uint32_t* RESTRICT lbl,
+    float* RESTRICT dist,
+    INDEX* RESTRICT feat,
+    uint32_t* RESTRICT ws_lbl,
+    float* RESTRICT ws_dist,
+    INDEX* RESTRICT ws_feat,
     const size_t B, const size_t C, const size_t A,
     const float anis, const bool black_border, const int parallel
 ) {
