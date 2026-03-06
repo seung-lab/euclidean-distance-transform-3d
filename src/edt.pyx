@@ -49,8 +49,8 @@ _nd_profile_last = None
 
 # Thread limiting: cap threads so each gets at least this much work.
 # Both criteria are computed; whichever allows FEWER threads wins (both must hold).
-_ND_MIN_VOXELS_PER_THREAD_DEFAULT = 4000
-_ND_MIN_LINES_PER_THREAD_DEFAULT = 32
+_ND_MIN_VOXELS_PER_THREAD_DEFAULT = 2000
+_ND_MIN_LINES_PER_THREAD_DEFAULT = 16
 
 # In-process overrides set via configure(), take priority over env vars
 _ND_CONFIG = {}
