@@ -24,7 +24,12 @@ Rewritten by William Silversmith and Kevin Cutler, 2025-2026.
   #include <immintrin.h>
   #define FORKJOIN_PAUSE() _mm_pause()
 #elif defined(__aarch64__) || defined(_M_ARM64)
-  #define FORKJOIN_PAUSE() __asm__ __volatile__("yield")
+  #ifdef _MSC_VER
+    #include <intrin.h>
+    #define FORKJOIN_PAUSE() __yield()
+  #else
+    #define FORKJOIN_PAUSE() __asm__ __volatile__("yield")
+  #endif
 #else
   #define FORKJOIN_PAUSE() ((void)0)
 #endif
