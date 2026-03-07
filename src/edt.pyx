@@ -21,8 +21,8 @@ Programmatic configuration:
 
 Environment Variables (runtime):
   EDT_ADAPTIVE_THREADS         - 0/1, enable adaptive thread limiting by array size (default: 1)
-  EDT_ND_MIN_VOXELS_PER_THREAD - min voxels per thread (default: 4000)
-  EDT_ND_MIN_LINES_PER_THREAD  - min scanlines per thread (default: 32)
+  EDT_ND_MIN_VOXELS_PER_THREAD - min voxels per thread (default: 2000)
+  EDT_ND_MIN_LINES_PER_THREAD  - min scanlines per thread (default: 16)
   EDT_ND_PROFILE               - if set, record shape/thread info in edt._nd_profile_last (default: off)
 
 Environment Variables (build-time):
@@ -192,7 +192,15 @@ cdef extern from "edt.hpp" namespace "nd":
 
 
 def set_tuning(chunks_per_thread=1):
-    """Set tuning parameters for ND EDT."""
+    """Set internal tuning parameters.
+
+    Parameters
+    ----------
+    chunks_per_thread : int
+        Number of work chunks per thread for atomic work-stealing dispatch.
+        Higher values improve load balancing at the cost of more fetch_add calls.
+        Default 1 (matches ND_CHUNKS_PER_THREAD C++ default of 4 set at module init).
+    """
     _nd_set_tuning(chunks_per_thread)
 
 
@@ -383,7 +391,13 @@ def edt(labels=None, anisotropy=None, black_border=False, parallel=0, voxel_grap
     """
     Compute Euclidean distance transform.
 
-    Returns the square root of edtsq.
+    Same as edtsq but returns actual distances (square root of squared distances).
+    Parameters, voxel_graph, and anisotropy behave identically to edtsq.
+
+    Returns
+    -------
+    ndarray
+        Euclidean distance transform (float32).
     """
     dt = edtsq(labels, anisotropy, black_border, parallel, voxel_graph, order)
     return np.sqrt(dt, out=dt)
@@ -663,7 +677,11 @@ def sdf(data, anisotropy=None, black_border=False, int parallel=0):
 
 
 def sdfsq(data, anisotropy=None, black_border=False, int parallel=0):
-    """Squared SDF - same as sdf but with squared distances."""
+    """Squared SDF — same as sdf() but returns squared distances (no sqrt).
+
+    Foreground pixels get +edtsq(fg), background pixels get -edtsq(bg).
+    Faster than sdf() when downstream code uses squared distances directly.
+    """
     dt = edtsq(data, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
     dt -= edtsq(data == 0, anisotropy=anisotropy, black_border=black_border, parallel=parallel)
     return dt
@@ -675,7 +693,6 @@ try:
 except ImportError:
     legacy = None
 
-# expand_labels and feature_transform - ported from barrier implementation
 def expand_labels(data, anisotropy=None, black_border=False, int parallel=1, return_features=False):
     """Expand nonzero labels to zeros by nearest-neighbor in Euclidean metric (ND).
 
@@ -840,8 +857,8 @@ def _adaptive_thread_limit_nd(parallel, shape):
     """Cap thread count so each thread has enough work to justify its overhead.
 
     Two criteria, both must hold (whichever allows fewer threads wins):
-      - voxels per thread >= EDT_ND_MIN_VOXELS_PER_THREAD (default 4000)
-      - scan lines per thread >= EDT_ND_MIN_LINES_PER_THREAD (default 32)
+      - voxels per thread >= EDT_ND_MIN_VOXELS_PER_THREAD (default 2000)
+      - scan lines per thread >= EDT_ND_MIN_LINES_PER_THREAD (default 16)
 
     Applies uniformly for all dims >= 2.
     Disable entirely with EDT_ADAPTIVE_THREADS=0 or edt.configure(adaptive_threads=False).

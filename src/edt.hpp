@@ -789,7 +789,7 @@ inline void edtsq_from_labels_fused(
 }
 
 //=============================================================================
-// Expand labels: gather/scatter pipeline with seed-skipping
+// Expand labels: blocked-transpose pipeline with seed-skipping
 //=============================================================================
 
 // Sort all axes by stride ascending (innermost first)
@@ -1334,7 +1334,7 @@ inline void _expand_parabolic_feat_strided(
 }
 
 //=============================================================================
-// Expand labels orchestrators (transpose pipeline with cached buffers)
+// Expand labels orchestrators (blocked-transpose pipeline with cached buffers)
 //=============================================================================
 
 // labels-only mode
@@ -1374,7 +1374,7 @@ inline void expand_labels_fused(
         return;
     }
 
-    // ND path: streaming transpose pipeline with cached buffers
+    // ND path: blocked-transpose pipeline with cached buffers
     size_t total = 1;
     size_t strides[32], paxes[32];
     for (size_t d = dims; d-- > 0;) { strides[d] = total; total *= shape[d]; }
@@ -1468,7 +1468,7 @@ inline void expand_labels_features_fused(
         return;
     }
 
-    // ND path: streaming transpose pipeline with feature tracking
+    // ND path: blocked-transpose pipeline with feature tracking
     size_t total = 1;
     size_t strides[32], paxes[32];
     for (size_t d = dims; d-- > 0;) { strides[d] = total; total *= shape[d]; }
