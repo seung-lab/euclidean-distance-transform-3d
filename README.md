@@ -1,4 +1,4 @@
-[![PyPI version](https://badge.fury.io/py/edt.svg)](https://badge.fury.io/py/edt) [![DOI](https://zenodo.org/badge/142239683.svg)](https://zenodo.org/doi/10.5281/zenodo.10815870)
+[![PyPI version](https://badge.fury.io/py/edt.svg)](https://badge.fury.io/py/edt) [![Tests](https://github.com/kevinjohncutler/edt/actions/workflows/tests.yml/badge.svg)](https://github.com/kevinjohncutler/edt/actions/workflows/tests.yml) [![DOI](https://zenodo.org/badge/142239683.svg)](https://zenodo.org/doi/10.5281/zenodo.10815870)
 
 ## Multi-Label Anisotropic 3D Euclidean Distance Transform (MLAEDT-3D)
 
@@ -45,9 +45,9 @@ pip install edt --no-binary :all:
 
 ### Python Usage
 
-Consult `help(edt)` after importing. The edt module contains: `edt` and `edtsq` which compute the euclidean and squared euclidean distance respectively. Both functions select dimension based on the shape of the numpy array fed to them. 1D, 2D, and 3D volumes are supported. 1D processing is extremely fast. Numpy boolean arrays are handled specially for faster processing.  
+Consult `help(edt)` after importing. The module exposes `edt` and `edtsq`, which now delegate to the unified ND backend (`edt_nd` / `edtsq_nd`) and therefore support any dimensionality ≥1 without selecting specialised kernels. Boolean inputs are still handled efficiently.  
 
-If for some reason you'd like to use a specific 'D' function, `edt1d`, `edt1dsq`, `edt2d`, `edt2dsq`, `edt3d`, and `edt3dsq` are available.
+Legacy 1D/2D/3D entry points remain available through `edt.legacy` (clone the upstream repository into `original_repo/` and build it to enable them). For convenience the names (`edt`, `edtsq`, `sdf`, etc.) are re-exported as thin aliases that forward to the packaged legacy module once it is built. For new code, prefer the ND APIs.
 
 The two optional parameters are `anisotropy` and `black_border`. Anisotropy is used to correct for distortions in voxel space, e.g. if X and Y were acquired with a microscope, but the Z axis was cut more corsely. 
 
@@ -74,10 +74,8 @@ sdf = edt.sdf(...) # same arguments as edt
 for label, image in edt.each(labels, dt, in_place=True):
   process(image) # stand in for whatever you'd like to do
 
-# There is also a voxel_graph argument that can be used for dealing
-# with shapes that loop around to touch themselves. This works by
-# using a voxel connectivity graph represented as a image of bitfields
-# that describe the permissible directions of travel at each voxel.
+# Constrained connectivity via voxel_graph: each voxel encodes which
+# of its 2*ndim directions are permissible as a bitmask (uint8).
 # Voxels with an impermissible direction are treated as eroded
 # by 0.5 in that direction instead of being 1 unit from black.
 # WARNING: This is an experimental feature and uses 8x+ memory.
@@ -352,6 +350,37 @@ def ndimage_test():
     extracted = (labels == segid)
     extracted = ndimage.distance_transform_edt(extracted)
 
+```
+
+### Environment Variables
+
+Threading behavior can be controlled via environment variables or programmatically using `edt.configure()`.
+
+**Runtime:**
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `EDT_ADAPTIVE_THREADS` | `1` | Enable adaptive thread limiting based on array size. Set to `0` to always use the requested thread count. |
+| `EDT_ND_MIN_VOXELS_PER_THREAD` | `50000` | Minimum voxels per thread for ND≥4 arrays. |
+| `EDT_ND_MIN_LINES_PER_THREAD` | `32` | Minimum lines per thread for ND≥4 arrays. |
+| `EDT_ND_PROFILE` | unset | Set to `1` to enable per-call profiling output. |
+
+**Build-time:**
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `EDT_MARCH_NATIVE` | `1` | Compile with `-march=native` for the current CPU. Set to `0` to disable. |
+
+**Programmatic override** (takes priority over environment variables):
+
+```python
+import edt
+
+# Disable adaptive thread limiting for this process
+edt.configure(adaptive_threads=False)
+
+# Lower thread thresholds for small arrays
+edt.configure(min_voxels_per_thread=1000, min_lines_per_thread=4)
 ```
 
 ### References

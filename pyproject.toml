@@ -1,7 +1,13 @@
 [build-system]
-requires = [
-    "setuptools",
-    "wheel",
-    "numpy",
-    "cython",
-]
+requires = ["setuptools>=61", "setuptools_scm>=8", "wheel", "numpy", "cython"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["upstream"]
+pythonpath = ["src"]

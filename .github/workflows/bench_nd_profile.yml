@@ -1,0 +1,108 @@
+name: ND Benchmark Profile
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy
+
+      - name: Install package (editable)
+        run: python -m pip install -e .
+
+      - name: Run legacy vs ND benchmark
+        run: |
+          set -euo pipefail
+          # Dense (structured) templates
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 128x128,512x512,1024x1024,2048x2048 --template structured --grid-base 8x8 \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_structured_2d.csv
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 96x96x96,192x192x192 --template structured --grid-base 8x8x8 \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_structured_3d.csv
+
+          # Sparse (mod8) templates
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 128x128,512x512,1024x1024,2048x2048 --template structured_mod8 --grid-base 8x8 \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_structured_mod8_2d.csv
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 96x96x96,192x192x192 --template structured_mod8 --grid-base 8x8x8 \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_structured_mod8_3d.csv
+
+          # Circle templates (2D only)
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 128x128,512x512,1024x1024,2048x2048 --template circles_small \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_circles_small_2d.csv
+          python scripts/bench_explicit_threads.py \
+            --parallels 1,2,4,8 --reps 20 --dtype uint16 --profile \
+            --shapes 128x128,512x512,1024x1024,2048x2048 --template circles_large \
+            --output benchmarks/legacy_vs_nd_explicit_ci.template_circles_large_2d.csv
+
+      - name: Summarize results
+        run: |
+          python - <<'PY'
+          import csv
+          import os
+          from pathlib import Path
+
+          header = [
+              "shape",
+              "dims",
+              "parallel",
+              "legacy_ms",
+              "nd_ms",
+              "ratio",
+              "nd_parallel_used",
+              "max_abs_diff",
+          ]
+
+          def render_table(title, csv_path):
+              title = title.replace("\n", " ").strip()
+              if not csv_path.exists():
+                  return f"### {title}\n\nMissing CSV: `{csv_path}`\n"
+              with csv_path.open() as fp:
+                  reader = csv.DictReader(fp)
+                  rows = list(reader)
+              if not rows:
+                  return f"### {title}\n\nNo benchmark rows captured.\n"
+              table = [f"### {title}\n", "| " + " | ".join(header) + " |"]
+              table.append("| " + " | ".join(["---"] * len(header)) + " |")
+              for row in rows:
+                  table.append("| " + " | ".join(row[h] for h in header) + " |")
+              return "\n".join(table) + "\n"
+
+          sections = []
+          sections.append(render_table("Structured (dense) 2D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_structured_2d.csv")))
+          sections.append(render_table("Structured (dense) 3D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_structured_3d.csv")))
+          sections.append(render_table("Structured mod8 (sparse) 2D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_structured_mod8_2d.csv")))
+          sections.append(render_table("Structured mod8 (sparse) 3D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_structured_mod8_3d.csv")))
+          sections.append(render_table("Circles small 2D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_circles_small_2d.csv")))
+          sections.append(render_table("Circles large 2D", Path("benchmarks/legacy_vs_nd_explicit_ci.template_circles_large_2d.csv")))
+
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          summary_path.write_text("## ND Benchmark Profile\n\n" + "\n".join(sections))
+          PY
+
+      - name: Upload benchmark CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-vs-nd-explicit-results
+          path: benchmarks/legacy_vs_nd_explicit_ci.template_*.csv
+          if-no-files-found: error

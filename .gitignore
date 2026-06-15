@@ -40,9 +40,16 @@
 .pytest_cache
 cpp/test
 
+# Cython-generated C++ (rebuilt on every install)
 src/edt.cpp
+legacy/edt.cpp
+LP/edt_lp.cpp
+
+# LP build dir
+LP/build/
 
 test.py
 test2.py
 test3.py
 test4.py
+benchmarks/*.csv

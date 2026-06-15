@@ -1,16 +1,20 @@
 CHANGES
 =======
 
-2.4.1
------
-
+* faster expand labels
+* working feature trasnform
+* fix: add in non-functional order parameter for edt, sdf, edtsq
+* docs: remove order parameter from documentation
+* ci: update to upload artifacts v4
+* license: change to LGPLv3+
+* ci: remove python subdirectory
+* docs: update compilation instructions
+* refactor: remove confusing C++ section
+* docs: add more comprehensive cpp directions to main README
+* BREAKING: redesign: remove unnecessary order argument
 * fix: ensure works with numpy 2.0
 * release(2.4.1): compile with numpy 2.0
 * docs: add zenodo release
-
-2.4.0
------
-
 * build: update cibuildwheel
 * refactor: use std::unique\_ptr for memory management
 * refactor: remove d\* field
@@ -23,10 +27,6 @@ CHANGES
 * test: use streamlined install
 * build: bump to cpp17 and update both copies of threadpool.h
 * fix: update version number and threadpool.h to modern c++
-
-2.3.2
------
-
 * build: update for py312
 * docs: describe voxel\_graph parameter
 * fix: use cython.binding(True) on headline methods
@@ -38,38 +38,18 @@ CHANGES
 * update build
 * chore: update supported python versions
 * chore: remove appveyor
-
-2.3.1
------
-
 * release(2.3.1): update build system
 * fix: update build for py311
 * build: add py311 to tox
 * chore: update edt.cpp
 * install: delay numpy invocation
-
-2.3.0
------
-
 * release(2.3.0): adds sdf, sdfsq functions + fixes trailing zero bug
 * feat(sdf): adds signed distance function  (#44)
-
-2.2.0
------
-
 * feat: edt.each — extract individual dts rapidly (#42)
 * chore: update changelog
-
-2.1.3
------
-
 * release(2.1.3): fixes an off-by-one error
 * test: check to make sure this error doesn't come back
 * fix: off-by-one error when comparing last label of column
-
-2.1.2
------
-
 * release(2.1.2): fixes overflow from ambiguous cast on MVCC
 * build: try with statement
 * build: try a different way of writing package dir
@@ -79,45 +59,21 @@ CHANGES
 * build: add GHA builds again
 * fix: large array NaN on Windows (#39)
 * install: make sure windows builds in release mode (#38)
-
-2.1.1
------
-
 * release(2.1.1): recompile binaries against oldest-supported-numpy
 * chore: set numpy builds to oldest-supported-numpy
-
-2.1.0
------
-
 * release(2.1.0): experimental voxel\_graph feature
 * feat: edt with voxel connectivity graph (#28)
-
-2.0.5
------
-
 * release(2.0.5): fixes np.bool deprecation warnings
 * fix: remove deprecation warning for np.bool in guts of edt.pyx (#33)
 * chore: try without cibuildwheel
 * chore: try github actions
-
-2.0.4
------
-
 * release(2.0.4): support py39 on Windows via AppVeyor
 * chore: support for py39 on Windows
 * chore: update travis to drop py27 py35
 * chore: update build system for m1 and py36+
-
-2.0.3
------
-
 * release(2.0.3): fixes segfault caused by small anisotropies
 * fix: resolves logic around infinities (#30)
 * docs: whitespace change to get appveyor to run
-
-2.0.2
------
-
 * chore: update artifacts path
 * chore: don't change directory twice
 * chore: try changing directory in appveyor
@@ -125,10 +81,6 @@ CHANGES
 * release(2.0.2): python3.9 support
 * docs: new figure useful for understanding multi-label strategy
 * install: get py35 to compile on MacOS
-
-2.0.1
------
-
 * release(2.0.1): support huge arrays
 * chore: copy new version of cpp to cpp folder
 * refactor: change C-style casts to C++ style casts
@@ -137,10 +89,6 @@ CHANGES
 * redesign(BREAKING): auto-detect C or F order unless specified (#22)
 * chore: update changelog
 * fix: Markdown compatibilities with PyPI changes
-
-1.4.0
------
-
 * release(1.4.0): faster y and z passes
 * perf: ensure sequential access during envelope computation (#20)
 * fix: compiler warnings about unused captured variables
@@ -153,65 +101,33 @@ CHANGES
 * docs: remove duplicate text
 * docs: stop dunking on scipy's anisotropy handling
 * chore: cleanup Trove classifiers
-
-1.3.2
------
-
 * chore: set content type to markdown for PyPI
 * release: 1.3.2
 * chore: update changelog
 * fix: voxel computation overflowing
 * fix: test.py -> automated\_test.py
-
-1.3.1
------
-
 * release: 1.3.1 -- Last version didn't include threadpool.h for py27
 * chore: add threadpool.h to MANIFEST.in
-
-1.3.0
------
-
 * release: 1.3.0 - parallel and memory improvements
 * docs: move example to the top of README
 * perf: remove last memory spike in edt3d (#14)
 * feat: parallel implementation  (#13)
 * fix: compiler warnings about an uninitialized pointer
 * perf: remove one of two memory spikes at end
-
-1.2.4
------
-
 * release: version 1.2.4
 * fix: high anisotropy causes defects (#12)
 * docs: explain factoring trick
 * docs: discuss memory fragmentation
 * chore: remove binary support for python3.4
-
-1.2.3
------
-
 * fix: ensure contiguous memory is fed to C++ routines
 * docs: added SNEMI3D benchmark to README.md
-
-1.2.2
------
-
 * fix: numpy arrays should be acceptable as anisotropy values
-
-1.2.1
------
-
 * docs: Authors file
 * docs: added some comparisons to scipy
 * fix: ensure scipy version downloaded for 2.7
 * fix: memory leak in squared\_edt\_1d\_parabolic
 * docs: Updated pip installation for binaries
 * docs: updated edt movie
-
-1.2.0
------
-
 * feat: add docker build for "manylinux" binaries
 * chore: bump version of Cython bindings to 1.2.0
 * docs: updated ChangeLog
@@ -220,81 +136,37 @@ CHANGES
 * fix: C vs. Fortran Order Issues
 * test: test 2D lopsided anisotropy
 * fix: multi-segment logic not properly accounting for left border
-
-1.1.4
------
-
 * perf: handle anisotropy more efficiently by reducing multiplications
 * docs: added derivation of anisotropic interception eqn
 * fix: int vs size\_t warnings
-
-1.1.3
------
-
 * fix: parabolic intercept not accounting for anisotropy
-
-1.1.2
------
-
 * perf: made previous fix cheaper
 * fix: unsafe reading during write phase
 * Improve performance of binary EDT on black pixels (#6)
-
-1.1.0
------
-
 * docs: added black\_border to README
 * feat: black\_border parameter (#4)
 * perf: speed up processing of black regions
 * docs: minor help text updates
 * Update README.md
 * Add files via upload
-
-1.0.6
------
-
 * docs: include License in manifest
 * fix: handle C vs Fortran order arrays properly
-
-1.0.5
------
-
 * fix: memory leak
 * docs: added Mejister et al to comment
 * Update README.md
 * Update README.md
 * docs: added PyPI package installation instructions
-
-1.0.4
------
-
 * fix: add edt.hpp to MANIFEST.in to ensure packaging
-
-1.0.3
------
-
 * fix: change edt.hpp from cpp dir to python dir
 * chore: copy edt.hpp from cpp to python
-
-1.0.2
------
-
 * test: made 3D test more stringent
 * fix: 3D edt had wrong dimension order
 * test: updated 3d cpp test to be more precise
 * fix: tried to be too clever and screwed up the intercept calculation
 * fix: boolean specialization of edt3dsq now actually selected
 * fix: boolean specialization of edt2dsq now actually selected
-
-1.0.1
------
-
 * chore: update setup.cfg
 * docs: add PyPI badge
-
-1.0.0
------
-
 * chore: setup for pypi distribution
 * docs: mention fast sweep method for performance improvments
 * docs: added info about boolean arrays in python
