@@ -33,6 +33,9 @@ setuptools.setup(
     setuptools.Extension(
       'edt',
       sources=[ 'src/edt.pyx' ],
+      define_macros=[
+        ("NPY_NO_DEPRECATED_API", 1),
+      ],
       language='c++',
       include_dirs=[ 'src', str(NumpyImport()) ],
       extra_compile_args=extra_compile_args,
