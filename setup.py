@@ -19,7 +19,7 @@ if sys.platform == 'win32':
   ]
 else:
   extra_compile_args += [
-    '-std=c++17', '-O3', '-ffast-math', '-pthread'
+    '-std=c++17', '-O3', '-pthread',
   ]
 
 if sys.platform == 'darwin':
