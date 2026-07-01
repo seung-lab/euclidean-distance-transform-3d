@@ -894,7 +894,12 @@ def test_sdf(dtype):
   res = edt.sdf(labels)
   assert np.all(res == ans)
 
+# Issue https://github.com/seung-lab/euclidean-distance-transform-3d/issues/61
+def test_binary_field():
+  a = np.ones((16, 16), dtype=bool)
+  a[8, 8] = False
 
-
+  dt = edt.edtsq(a)
+  assert np.isfinite(dt).all(), "edt returned all-inf"
 
 
