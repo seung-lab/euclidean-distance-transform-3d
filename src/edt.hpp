@@ -947,7 +947,12 @@ float* binary_edtsq(
   const float wx, const float wy, const float wz,
   const bool black_border=false, const int parallel=1, float* output=NULL) {
 
-  return pyedt::_binary_edt3dsq(labels, sx, sy, sz, wx, wy, wz, parallel, output);
+  return pyedt::_binary_edt3dsq(
+    labels,
+    sx, sy, sz,
+    wx, wy, wz,
+    black_border, parallel, output
+  );
 }
 
 
